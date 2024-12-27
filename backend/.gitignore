@@ -1,0 +1,67 @@
+# Python Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+.venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment variables
+*.env
+.env.*
+
+# Logs
+*.log
+*.log.*
+
+# FastAPI specific
+instance/
+app.db
+app.sqlite
+
+# Test output
+.pytest_cache/
+.tox/
+.coverage
+coverage.xml
+*.cover
+nosetests.xml
+coverage*.xml
+*.cover
+
+# MyPy
+.mypy_cache/
+
+# Pylint
+.pylint.d/
+
+# Pyre
+.pyre/
+
+# Pytest
+.cache/
+
+# IDE specific
+.idea/
+.vscode/
+*.swp
+*~
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+
+# PyCharm
+*.idea/
+
+# OS Specific
+.DS_Store
+Thumbs.db
+
+# FastAPI static/uploads
+/static/
