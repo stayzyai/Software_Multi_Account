@@ -58,3 +58,4 @@ class ForgotPasswordRequest(BaseModel):
 class ChatRequest(BaseModel):
     prompt: str
     max_tokens: int = 100
+    messsages: Optional[str] = None

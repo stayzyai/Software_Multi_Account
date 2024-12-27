@@ -18,6 +18,7 @@ import logging
 import os
 import uuid
 from sqlalchemy.exc import NoResultFound
+from app.common.open_ai import get_gpt_response
 
 load_dotenv()
 
@@ -321,3 +322,27 @@ async def refresh_access_token(refresh_token: str = Depends(get_token), db: Sess
         raise exc
     except Exception as e:
         raise HTTPException(status_code=500, detail={"message": f"An error occurred while refreshing tokens: {str(e)}"})
+
+@router.post("/ai-suggestion")
+def chat_with_gpt(request: ChatRequest):
+    try:
+        model_id = get_latest_model_id()
+        print("model Id: ", model_id)
+        prompt = request.prompt
+        if request.messsages is None:
+            request.messsages = ""
+        gpt_response = get_gpt_response(model_id, prompt, request.messsages)
+        if gpt_response is None:
+            raise HTTPException(status_code=400, detail="Some error occurred. Please try again.")
+        logging.info(f"chat gpt response{gpt_response}")
+        content = gpt_response["choices"][0]["message"]["content"]
+        interaction_data = {
+                "prompt": request.messsages,
+                "completion": content
+                }
+        store_chat(interaction_data)
+        return {"model": model_id, "answer": content}
+
+    except requests.exceptions.RequestException as req_err:
+        logging.error(f"Error at chat {req_err}")
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(req_err)}")
