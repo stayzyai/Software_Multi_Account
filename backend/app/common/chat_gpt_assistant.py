@@ -15,10 +15,9 @@ def get_latest_model_id():
         stayzy_models = [model for model in models.data if model.owned_by == "stayzy"]
         if stayzy_models:
             latest_model = max(stayzy_models, key=lambda model: model.created)
-            print(latest_model)
             return latest_model.id
     except Exception as e:
-        print(f"Error retrieving models: {e}")
+        logging.error(f"Error at retrieving models: {e}")
 
 def train_chat_gpt():
     try:
@@ -33,7 +32,7 @@ def train_chat_gpt():
                 logging.error("The training file is empty.")
                 return
 
-            print('Uploading file...')
+            logging.info('Uploading file...')
             try:
                 response = client.files.create(file=open(CHAT_DATA_FILE, "rb"), purpose='fine-tune')
                 logging.info(f"File uploaded: {response}")
@@ -46,13 +45,13 @@ def train_chat_gpt():
                     training_file=file_id,
                     model=EXISTING_MODEL_ID
                 )
-                print('Fine-tuning job created...', job)
+                logging.info('Fine-tuning job created...', job)
                 job_id = job.id
             except Exception as e:
                 logging.error(f"Error creating fine-tuning job: {e}")
                 return
 
-            print('Fine-tuning in-progress...')
+            logging.info('Fine-tuning in-progress...')
             while True:
                 try:
                     job_status = client.fine_tuning.jobs.retrieve(job_id)
@@ -74,7 +73,7 @@ def train_chat_gpt():
     finally:
         if 'job_status' in locals() and job_status.status == "succeeded":
             os.environ['CHAT_GPT_MODEL_ID'] = job_status.fine_tuned_model
-            print(f"Fine-tuning Done: {job_status}")
+            logging.info(f"Fine-tuning Done: {job_status}")
             delete_old_files_and_models()
 
 def delete_old_files_and_models():

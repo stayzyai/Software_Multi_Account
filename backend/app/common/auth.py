@@ -5,7 +5,7 @@ from passlib.context import CryptContext
 from dotenv import load_dotenv
 import os
 load_dotenv()
-
+import logging
 
 SECRET_KEY = os.getenv('JWT_SECRET_KEY')
 ALGORITHM = "HS256"
@@ -36,7 +36,7 @@ def decode_token(token):
 def decode_access_token(token):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=ALGORITHM)
-        print("Decoded payload:", payload)
+        logging.info("Decoded payload:", payload)
 
         if payload.get("exp") < datetime.utcnow().timestamp():
             raise HTTPException(
@@ -53,12 +53,9 @@ def decode_access_token(token):
             headers={"WWW-Authenticate": "Bearer"},
         )
     except Exception as e:
-        print("Error decoding token:", str(e))
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        logging.error("Error decoding token:", str(e))
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate token",
+            headers={"WWW-Authenticate": "Bearer"},)
 
 def get_token(authorization: str = Header(None)):
     if authorization is None:

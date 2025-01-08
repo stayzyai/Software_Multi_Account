@@ -49,7 +49,6 @@ def update_user(user: UserUpdate, db: Session = Depends(get_db), token: str = De
         raise exc
 
     except Exception as e:
-        print("Error updating user:", str(e))
         logging.error(f"************Error updating user********{str(e)}")
         raise HTTPException(
             status_code=500,
@@ -72,7 +71,6 @@ def get_all_users(db: Session = Depends(get_db), token: str = Depends(get_token)
         offset = (page - 1) * page_size
         users = db.query(User).filter(User.role != Role.admin).order_by(User.created_at.desc()).offset(offset).limit(page_size).all()
         total_count = db.query(User).filter(User.role != Role.admin).count()
-        print(total_count)
 
         response = UsersDetailResponse(detail=UserResponse(message="User fetched successfully...", data=[UserList(id=user.id, firstname=user.firstname, 
                         lastname=user.lastname, email=user.email, role=user.role, created_at=user.created_at)for user in users],total_count=total_count))
@@ -149,7 +147,6 @@ def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_tok
 def chat_with_gpt(request: ChatRequest):
     try:
         model_id = get_latest_model_id()
-        print("model Id: ", model_id)
         prompt = request.prompt
         if request.messsages is None:
             request.messsages = ""

@@ -2,7 +2,7 @@ import os
 from openai import OpenAI
 from dotenv import load_dotenv
 load_dotenv()
-
+import logging
 client = OpenAI(api_key=os.getenv("CHAT_GPT_API_KEY"))
 
 def get_gpt_response(mode_id, prompt, content):
@@ -17,5 +17,5 @@ def get_gpt_response(mode_id, prompt, content):
         response = chat_completion.choices[0].message.content
         return response
     except Exception as e:
-        print(f"Error at get gpt response {e}")
+        logging.info(f"Error at get gpt response {e}")
         return None
