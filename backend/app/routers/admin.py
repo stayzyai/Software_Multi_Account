@@ -7,6 +7,7 @@ from app.schemas.user import Role
 from app.schemas.admin import UserUpdateSchema
 from app.common.user_query import admin_update_user, get_user_statics, get_automated_message_statics, get_ticket_statics
 from app.schemas.user import  UserDelete
+import logging
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -75,11 +76,8 @@ def update_user(
         raise exc
 
     except Exception as e:
-        print("Error updating user:", str(e))
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error updating user: {str(e)}"
-        )
+        logging.info("Error updating user:", str(e))
+        raise HTTPException(status_code=500, detail=f"Error updating user: {str(e)}")
 
 @router.get("/get-statistics")
 def get_statistics(db: Session = Depends(get_db),token: str = Depends(get_token)):

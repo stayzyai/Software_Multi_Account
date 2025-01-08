@@ -3,6 +3,8 @@ from app.database.db import Base, engine
 from app.routers.main import main_router
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+from app.common.chat_gpt_assistant import train_chat_gpt
+from apscheduler.schedulers.background import BackgroundScheduler
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -20,6 +22,15 @@ app.add_middleware(
 )
 
 app.include_router(main_router)
+
+def start_scheduler():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(train_chat_gpt, 'cron', hour=00, minute=00)
+    scheduler.start()
+
+@app.on_event("startup")
+async def startup_event():
+    start_scheduler()
 
 @app.get("/")
 async def root():
