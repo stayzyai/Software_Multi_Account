@@ -32,6 +32,9 @@ export function DashboardComponent({ role = "admin" }) {
 
   useEffect(()=>{
       const getHostawayAuth = async() => {
+        if (role === "admin"){
+          return
+        }
         try{
           const response = await api.get("/hostaway/get-hostaway-account");
           if(response?.data?.detail?.valid){
