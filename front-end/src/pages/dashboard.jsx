@@ -19,7 +19,7 @@ import HostawayConnectModal from "../components/user/hostaway/hostawayconnect";
 export function DashboardComponent({ role = "admin" }) {
   const [activeSection, setActiveSection] = useState("home");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isOpen, setOpenModal] = useState(null)
+  const [isOpen, setOpenModal] = useState(false)
   const [iconToggle, setIconToggle] = useState(false);
 
   const toggleSidebar = () => {

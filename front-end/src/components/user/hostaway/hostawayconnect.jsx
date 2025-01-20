@@ -33,7 +33,7 @@ const HostawayConnectModal = ({ setOpenModal, isOpen, activeSection }) => {
     };
     setTimeout(() => {
       checkHostawayAccount();
-    }, 100);
+    }, 500);
   }, [activeSection]);
 
   const handleInputChange = (e) => {
@@ -72,7 +72,7 @@ const HostawayConnectModal = ({ setOpenModal, isOpen, activeSection }) => {
       <div className="bg-white rounded-lg shadow-lg w-[500px] p-6 md:ml-52 mx-2 md:mx-0">
         <div className="flex justify-end">
           <span
-            className="cursor-pointer font-bold"
+            className="cursor-pointer font-bold active:bg-gray-50 hover:bg-opacity-50 p-1.5 rounded hover:bg-gray-50"
             onClick={() => setOpenModal(false)}
           >
             <IoMdClose size={18} />
