@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Stayzy AI",
+  "version": "1.0.0",
+  "description": "A chrome extension genrate AI suggestion for Hostaway",
+  "permissions": ["storage","tabs"],
+  "action": {
+    "default_popup": "index.html"
+  },
+
+  "content_scripts": [
+    {
+      "js": ["src/content.tsx"],
+      "matches": ["https://dashboard.hostaway.com/*"]
+    }
+  ],
+  "background": {
+    "service_worker": "src/background.js"
+  }
+}

@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%; 
+    --foreground: 0 0% 3.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+@layer base {
+  body {
+    @apply bg-background text-foreground m-0 p-4;
+    /* width: auto; */
+    /* min-width: 300px; */
+    /* max-width: 400px; */
+    height: auto;
+    box-sizing: border-box;
+  }
+
+}
