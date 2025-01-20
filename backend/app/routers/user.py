@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from app.schemas.user import UserUpdate, ChangePasswordRequest, UserProfile, ChatRequest
-from app.models.user import User
+from app.models.user import User, ChromeExtensionToken
 from app.database.db import get_db
-from app.common.auth import verify_password, get_password_hash, decode_access_token, get_token
+from app.common.auth import verify_password, get_password_hash, decode_access_token, get_token, get_hostaway_key
 from app.common.user_query import update_user_details
 from app.schemas.user import Role
 from app.schemas.admin import UserList, UsersDetailResponse, UserResponse
@@ -15,7 +15,8 @@ from dotenv import load_dotenv
 import requests
 import logging
 from app.common.open_ai import get_gpt_response
-
+import uuid
+from sqlalchemy.exc import NoResultFound
 load_dotenv()
 
 router = APIRouter(prefix="/user", tags=["users"])
@@ -144,8 +145,11 @@ def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_tok
 
 
 @router.post("/ai-suggestion")
-def chat_with_gpt(request: ChatRequest):
+def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str = Depends(get_hostaway_key)):
     try:
+        token_record = db.query(ChromeExtensionToken).filter(ChromeExtensionToken.key == key).first()
+        if token_record is None:
+            raise HTTPException(status_code=404, detail="extension key not found")
         model_id = get_latest_model_id()
         prompt = request.prompt
         if request.messsages is None:
@@ -164,3 +168,53 @@ def chat_with_gpt(request: ChatRequest):
     except requests.exceptions.RequestException as req_err:
         logging.error(f"Error at chat {req_err}")
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(req_err)}")
+
+@router.get("/genrate-extension-key")
+def genrate_extension_key(token: str = Depends(get_token), db: Session = Depends(get_db)):
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if db_user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_token = db.query(ChromeExtensionToken).filter(ChromeExtensionToken.user_id==user_id).first()
+        key = uuid.uuid4()
+        if user_token:
+            user_token.key = key
+            db.commit()
+            return {"detail": {"message": "Key genrated successfully", "key": key}}
+        new_key = ChromeExtensionToken(key=key, user_id=user_id)
+        db.add(new_key)
+        db.commit()
+        return {"detail": {"message": "Key genrated successfully", "key": key}}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail={"message": f"An error occurred at genrate token: {str(e)}"})
+
+@router.get("/get-extension-key")
+def get_extension_key(token: str = Depends(get_token), db: Session = Depends(get_db)):
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if db_user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        user_token = db.query(ChromeExtensionToken).filter(ChromeExtensionToken.user_id==user_id).first()
+        if user_token:
+            return {"detail": {"message": "Key fetched successfully", "key": user_token.key}}
+        return {"detail": {"message": "Key not found", "key": user_token}}
+    except Exception as e:
+        logging.error(f"Error at get extension key {str(e)}")
+        raise HTTPException(status_code=500, detail={"message": f"An error occurred at get token: {str(e)}"})
+
+@router.get("/validate-extension-token")
+def validate_token(key: str, db: Session = Depends(get_db)):
+    try:
+        token_record = db.query(ChromeExtensionToken).filter(ChromeExtensionToken.key == key.strip()).first()
+        if token_record:
+            return {"detail": {"message": "Token is valid", "status": True}}
+        else:
+            return {"detail": {"message": "Token is invalid", "status": False}}
+    except NoResultFound:
+        raise HTTPException(status_code=404, detail="Token not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail={"message": f"An error occurred: {str(e)}"})

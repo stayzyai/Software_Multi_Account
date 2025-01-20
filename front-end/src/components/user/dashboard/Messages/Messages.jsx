@@ -35,19 +35,19 @@ const Messages = ({ setOpenMessage, setChatInfo }) => {
 
   return (
     <div className="flex flex-col space-y-6 py-4">
-      <div className="overflow-hidden bg-white rounded-[14px] shadow-md mx-1 border-[.2px] border-gray-200">
-        <div className="flex justify-between p-4">
+      <div className="overflow-hidden bg-white rounded-[14px] shadow-md mx-1 border-[0.2px] border-gray-400">
+        <div className="flex justify-between p-5">
           <h2 className="text-lg font-semibold">Latest Messages</h2>
-          <div className="flex gap-6">
-            <div className="flex text-[14px] cursor-pointer">
+          <div className="flex gap-6 mr-4">
+            <div className="flex gap-2 text-[14px] cursor-pointer">
               <button>Date</button>
               <img src="/icons/down.svg" alt="down" width={14} height={14} />
             </div>
-            <div className="flex text-[14px] cursor-pointer">
+            <div className="flex gap-2 text-[14px] cursor-pointer">
               <button>Listing</button>
               <img src="/icons/down.svg" alt="down" width={14} height={14} />
             </div>
-            <div className="flex text-[14px] cursor-pointer">
+            <div className="flex gap-2 text-[14px] cursor-pointer">
               <button>Task</button>
               <img src="/icons/down.svg" alt="down" width={14} height={14} />
             </div>
@@ -57,7 +57,7 @@ const Messages = ({ setOpenMessage, setChatInfo }) => {
           {messages?.map((item, index) => (
             <div
               key={index}
-              className="grid grid-cols-[auto_1fr_auto_auto] items-center px-6 py-4 gap-4"
+              className="grid grid-cols-[auto_1fr_auto_auto] items-center px-6 py-3 gap-4"
             >
               <input
                 type="checkbox"
@@ -74,7 +74,7 @@ const Messages = ({ setOpenMessage, setChatInfo }) => {
                   className="cursor-pointer w-full"
                 >
                   <p className="font-medium text-gray-800">{item.name}</p>
-                  <p className="text-sm text-[#7F7F7F]">{item.message}</p>
+                  <p className="text-sm text-[#7F7F7F] hidden md:block">{item.message}</p>
                 </div>
               </div>
             </div>

@@ -81,13 +81,12 @@ def delete_old_files_and_models():
         latest_model_id = get_latest_model_id()
         files = client.files.list()
         for file in files.data:
-            file_id = file.id
             try:
                 if file.filename == 'chat_interaction.jsonl':
-                    client.files.delete(file_id)
-                    logging.info(f"Deleted file: {file_id}")
+                    client.files.delete(file.id)
+                    logging.info(f"Deleted file: {file.id}")
             except Exception as e:
-                logging.error(f"Error deleting file {file_id}: {e}")
+                logging.error(f"Error deleting file {file.id}: {e}")
     except Exception as e:
         logging.error(f"Error retrieving file list: {e}")
     try:

@@ -28,15 +28,15 @@ const Home = ({ toggleSidebar, role }) => {
 
   return (
     <div>
-      <div className="bg-[#FCFDFC] overflow-y-auto">
-        <Header title={"Dashboard"} toggleSidebar={toggleSidebar} role={role} />
-        <div className="border-t border-gray-400">
+      <div className="bg-[#FCFDFC] overflow-y-auto min-h-fit">
+        <div className="pb-24">
+          <Header title={"Dashboard"} toggleSidebar={toggleSidebar} role={role}/>
+        </div>
           <div className="px-12">
             <Overview />
-            <ContentCard />
             <Messages />
+            <ContentCard />
           </div>
-        </div>
       </div>
     </div>
   );

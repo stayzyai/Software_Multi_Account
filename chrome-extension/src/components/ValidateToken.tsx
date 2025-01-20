@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import SuccessPage from "./Success";
 import LogoutPage from "./Logout";
+import { getApi } from "@/API/api";
 
 const ValidateToken = () => {
   const [token, setToken] = useState("");
@@ -18,8 +19,13 @@ const ValidateToken = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
- 
-    if (token == "1234") {
+    let response;
+    try {
+      response = await getApi("/user/validate-extension-token", token);
+    } catch (e) {
+      console.log("Error at validate token: ", e);
+    }
+    if (response?.detail?.status) {
       setValid(true);
       chrome.storage.local.set({ hostawaytokenValidated: token }, () => {
         console.log("Token validation status saved");

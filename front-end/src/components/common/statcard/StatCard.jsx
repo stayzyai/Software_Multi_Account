@@ -3,7 +3,7 @@ import { ArrowUpRight, ArrowDownRight } from "lucide-react";
 
 const StatCard = ({ title, icon, stats }) => {
   return (
-    <Card>
+    <Card className="shadow-lg">
       <CardHeader className="flex flex-row items-center justify-between space-y-0">
         <CardTitle className="text-sm text-gray-500 font-medium">{title}</CardTitle>
         {/* {icon} */}

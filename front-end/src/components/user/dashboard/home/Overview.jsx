@@ -11,18 +11,18 @@ export const Overview = () => {
   return (
     <>
       <div>
-        <div className="flex items-center justify-between mt-4 px-4">
-          <span className="text-[22px] font-medium text-[#060606]">
+        <div className="flex items-center justify-between mt-2 px-2">
+          <span style={{"webkit-text-stroke-width":"0.5px"}} className="text-[22px] text-[#060606]">
             Overview
           </span>
-          <div className="flex items-center">
+          <div className="flex gap-3 items-center bg-white rounded-[17px] p-[2px_14px] h-[34px] ">
             <p className="text-sm text-center"> Last 30 days</p>
             <button className="p-1 hover:bg-gray-100 rounded-full">
               <ChevronDown className="h-4 w-4 text-gray-600" />
             </button>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 md:gap-3 gap-6 mb-8 p-4 md:p-1 mt-2 lg:grid-cols-4 lg:gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 md:gap-3 gap-6 mb-3 p-4 md:p-1 mt-2 lg:grid-cols-4 lg:gap-6">
           <StatCard
             title="Total Automated Messages"
             icon={<MessageCircle />}

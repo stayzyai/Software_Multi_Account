@@ -50,7 +50,7 @@ const ContentCard = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 p-2">
+    <div className="flex flex-col lg:flex-row gap-6 p-1 my-6">
       <div className="lg:mb-0 mb-6">
         <DataTable
           {...tasksData}

@@ -12,7 +12,7 @@ const MessageTab = ({ toggleSidebar }) => {
       {!openMessage ? (
         <div>
           <Header title="Messages" toggleSidebar={toggleSidebar}/>
-          <div className="border-b border-black pt-4 pb-1 mb-12 bg-white">
+          <div className="border-b border-black mt-[82px] pb-1 mb-12 bg-white">
             <div className="xl:flex justify-between">
               <div className="flex mx-7 space-x-5">
                 <button className="px-4 py-2 text-[#000606] lg:text-[18px] bg-[#EBEBEB] rounded-full text-[15px]">
