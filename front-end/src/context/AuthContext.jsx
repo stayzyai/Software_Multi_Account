@@ -18,6 +18,8 @@ export const AuthProvider = ({ children }) => {
     removeItem("token");
     removeItem("refreshToken");
     removeItem("userRole");
+    removeItem("isHostwayAccount")
+    removeItem("hostawayMessage")
     setUserRole(null);
     setIsAuthenticated(false);
   }, []);

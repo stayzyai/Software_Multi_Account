@@ -76,3 +76,14 @@ def create_refresh_token(data: dict):
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
+
+def get_hostaway_key(authorization: str = Header(None)):
+    try:
+        if authorization is None:
+            raise HTTPException(status_code=401, detail="Authorization header is missing")
+        key_type, key = authorization.split()
+        if key_type.lower() != "bearer":
+            raise HTTPException(status_code=401, detail="Invalid key type")
+        return key
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Invalid authorization format")

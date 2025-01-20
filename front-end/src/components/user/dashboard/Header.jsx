@@ -35,12 +35,12 @@ const Header = ({ title, toggleSidebar, role, messages }) => {
   }, [isDropDownOpen]);
 
   return (
-    <div
-      className={`mt-6 bg-[#FCFDFC] flex items-center justify-between px-7 pb-2 ${
-        title === "Dashboard" || title === "Messages" || title === "Listings"
+    <div style={{width:"-webkit-fill-available"}}
+      className={`fixed top-0 pt-6 bg-[#FCFDFC] flex items-center justify-between px-7 pb-2 ${title === "Messages" ? "": "border-b border-gray-400"} ${
+        title === "Dashboard" || title === "Messages" || title === "Listings" || title === "Integrations"
           ? "bg-white flex items-center justify-between px-7 pb-2"
           : "flex items-center justify-between px-7 pb-2"
-      }`}
+      } `}
     >
       <div className="flex items-center gap-4">
         <button
@@ -50,7 +50,7 @@ const Header = ({ title, toggleSidebar, role, messages }) => {
           <Menu className="h-5 w-5 text-gray-600" />
         </button>
         {title !== "Chat" && (
-          <h1 className="xl:text-[32px] font-normal hidden md:block text-2xl">
+          <h1  style={{"-webkit-text-stroke-width": ".5px", "-webkit-text-stroke-color":"#060606"}} className="xl:text-[32px] font-normal hidden md:block text-2xl">
             {title}
           </h1>
         )}
@@ -68,7 +68,7 @@ const Header = ({ title, toggleSidebar, role, messages }) => {
 
         <button
           className={`${
-            messages ? "invisible" : "p-2 rounded-full"
+            messages || title =="Dashboard" ? "invisible" : "p-2 rounded-full"
           }`}
         >
           <img
@@ -119,7 +119,7 @@ const DropdownMenu = ({ role }) => {
     dispatch(clearUser)
     logout();
     toast.success("Logged out successfully");
-    navigate(`/${role}/login`);
+    navigate(`/user/login`);
   };
 
   return (

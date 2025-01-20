@@ -1,4 +1,10 @@
+import { useState } from "react";
+
+
 const MessageBookingDetails = () => {
+
+const [activeSession, setActiveSession] = useState("booking")
+
   const timeDetails = [
     {
       timeIn: {
@@ -24,7 +30,11 @@ const MessageBookingDetails = () => {
   return (
     <div className="border-l hidden xl:block">
       <div className="bg-[#FCFDFC] p-7 space-y-6 xl:w-96 lg:w-80">
-        <h2 className="text-lg font-semibold mb-10">Booking Details</h2>
+        <div className="flex gap-8 mb-10 text-lg">
+          <h2 onClick={()=>setActiveSession("booking")} className={`cursor-pointer ${activeSession === "booking"?"font-semibold underline":""}`}>Booking</h2>
+          <h2 onClick={()=>setActiveSession("issue")} className={`cursor-pointer ${activeSession === "issue"?"font-semibold underline":""}`}>Issues</h2>
+          <h2 onClick={()=>setActiveSession("upsell")} className={`cursor-pointer ${activeSession === "upsell"?"font-semibold underline":""}`}>Upsell</h2>
+        </div>
         <div>
           {timeDetails.map((item, index) => {
             return (
