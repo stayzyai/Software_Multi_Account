@@ -15,6 +15,7 @@ import { useEffect } from "react";
 import api from "@/api/api";
 import { setItem } from "../helpers/localstorage";
 import HostawayConnectModal from "../components/user/hostaway/hostawayconnect";
+import HostawayAccount from "../components/user/dashboard/HostawayAccount";
 
 export function DashboardComponent({ role = "admin" }) {
   const [activeSection, setActiveSection] = useState("home");
@@ -102,6 +103,9 @@ return (
               )}
               {activeSection === "integrations" && (
                 <Integrations toggleSidebar={toggleSidebar}/>
+              )}
+                {activeSection === "hostawayaccount" && (
+                <HostawayAccount toggleSidebar={toggleSidebar} setOpenModal={setOpenModal}/>
               )}
             </>
           )}
