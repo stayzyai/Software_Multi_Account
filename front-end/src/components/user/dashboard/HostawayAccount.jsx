@@ -47,7 +47,7 @@ const handleDeleteAccount = async()=>{
 
   return (
     <>
-      <Header title={"Account"} toggleSidebar={toggleSidebar} role={"user"} />
+      <Header title={"Setting"} toggleSidebar={toggleSidebar} role={"user"} />
       <div className="bg-[#FCFDFC] dark:bg-gray-900 flex pt-28 justify-center p-4">
       <div className="w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200">
         <div className="p-6 sm:p-8">
@@ -68,7 +68,7 @@ const handleDeleteAccount = async()=>{
                 className="w-full border border-red-600 sm:w-auto mt-6 px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md transition duration-300 ease-in-out flex items-center justify-center"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Delete account
+                Remove account
               </button>
             </div>
           ) : (

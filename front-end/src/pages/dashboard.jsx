@@ -104,7 +104,7 @@ return (
               {activeSection === "integrations" && (
                 <Integrations toggleSidebar={toggleSidebar}/>
               )}
-                {activeSection === "hostawayaccount" && (
+                {activeSection === "setting" && (
                 <HostawayAccount toggleSidebar={toggleSidebar} setOpenModal={setOpenModal}/>
               )}
             </>

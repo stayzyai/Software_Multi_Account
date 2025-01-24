@@ -14,7 +14,7 @@ const navigationConfig = {
     { id: "staff", label: "Staff", icon: "/icons/staff.png" },
     { id: "tasks", label: "Tasks", icon: "/icons/task.png" },
     { id: "integrations", label: "Integrations", icon: "/icons/integration.png"},
-    { id: "hostawayaccount", label: "Hostaway", icon: Settings},
+    { id: "setting", label: "Setting", icon: Settings},
   ],
 };
 
