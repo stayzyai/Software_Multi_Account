@@ -37,7 +37,7 @@ const Header = ({ title, toggleSidebar, role, messages }) => {
   return (
     <div style={{width:"-webkit-fill-available"}}
       className={`fixed top-0 pt-6 bg-[#FCFDFC] flex items-center justify-between px-7 pb-2 ${title === "Messages" ? "": "border-b border-gray-400"} ${
-        title === "Dashboard" || title === "Messages" || title === "Listings" || title === "Integrations"
+        title === "Dashboard" || title === "Messages" || title === "Listings" || title === "Integrations" || title === "Account"
           ? "bg-white flex items-center justify-between px-7 pb-2"
           : "flex items-center justify-between px-7 pb-2"
       } `}

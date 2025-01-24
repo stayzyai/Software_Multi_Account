@@ -13,14 +13,13 @@ const navigationConfig = {
     { id: "listings", label: "Listings", icon: "/icons/listing.png" },
     { id: "staff", label: "Staff", icon: "/icons/staff.png" },
     { id: "tasks", label: "Tasks", icon: "/icons/task.png" },
-    { id: "integrations", label: "Integrations", icon: "/icons/integration.png",
-    },
+    { id: "integrations", label: "Integrations", icon: "/icons/integration.png"},
+    { id: "hostawayaccount", label: "Hostaway", icon: Settings},
   ],
 };
 
 const Sidebar = ({ role = "admin", onNavigation, isOpen, toggleSidebar, iconToggle, setIconToggle }) => {
   const [activeTab, setActiveTab] = useState("home");
-  // const [iconToggle, setIconToggle] = useState(false);
   const navItems = navigationConfig[role];
 
   const handleToggle = () => {
@@ -29,13 +28,13 @@ const Sidebar = ({ role = "admin", onNavigation, isOpen, toggleSidebar, iconTogg
 
   return (
     <aside style={{height:"-webkit-fill-available"}}
-      className={`min-h-fit z-50
+      className={`min-h-fit z-50 pb-16
       fixed inset-y-0 p-6
       bg-gradient-to-r to-[#2D8062] from-[#0E2E23] text-white
       transform transition-transform duration-300 ease-in-out
       ${isOpen ? "translate-x-0" : "-translate-x-full"}
       md:relative md:translate-x-0
-    ${iconToggle ?" xl:w-[8%] lg:w-[12%] md:w-[16%] w-[35%] ":" lg:w-[260px] w-[200px] "}`}
+    ${iconToggle ?" 2xl:w-[160px] xl:w-[9%] lg:w-[12%] md:w-[16%] w-[35%] ":" lg:w-[260px] w-[200px] "}`}
     >
       <div className="flex items-center justify-between mb-8">
         <div
@@ -43,11 +42,11 @@ const Sidebar = ({ role = "admin", onNavigation, isOpen, toggleSidebar, iconTogg
             iconToggle && "mb-4"
           }`}
         >
-          <img src="/logo.svg" alt="logo" className={`${iconToggle? "w-60 h-12": "w-48 h-12"}`} />
+          <img src="/logo.svg" alt="logo" className={`${iconToggle? "w-60 h-12": "w-48 h-12"}`}/>
           <img
             onClick={handleToggle}
             className={`hidden md:block rounded-full lg:p-2 p-2 bg-white cursor-pointer absolute border-[0.2px] border-gray-500 ${
-              iconToggle ? " rotate-180 lg:ml-32 md:ml-32 ml-[162px] xl:ml-[120px] 2xl:ml-[150px] ":" lg:ml-[260px]  ml-52 "
+              iconToggle ? " rotate-180 lg:ml-36 md:ml-36 ml-[162px] xl:ml-[120px] 2xl:ml-[150px]":" lg:ml-[260px]  ml-52 "
             }`}
             src="/icons/side.svg"
             alt="side logo"
@@ -76,7 +75,7 @@ const Sidebar = ({ role = "admin", onNavigation, isOpen, toggleSidebar, iconTogg
                   ${
                     iconToggle
                       ? "rounded-xl scale-110 px-4 py-3 my-1"
-                      : "w-[90%] gap-4 px-4 lg:px-6 py-3 rounded-3xl"
+                      : "w-[90%] gap-2 px-4 lg:px-6 py-3 rounded-3xl"
                   } 
                   ${
                     isActive
@@ -103,11 +102,11 @@ const Sidebar = ({ role = "admin", onNavigation, isOpen, toggleSidebar, iconTogg
             </div>
           );
         })}
-        {role == "user" && <div className={`mt-72 flex items-center justify-center bg-[#E8E8E8] rounded-full w-12 h-12 absolute ${iconToggle ?"ml-1":"ml-6"}"}`}>
-          <img src="/icons/questions.svg" alt="Question Icon" />
-        </div>}
         </div>
       </nav>
+      {role == "user" && <div className={`flex items-center justify-center bg-[#E8E8E8] rounded-full w-12 h-12 absolute ${iconToggle ?"ml-1":"ml-6"}"}`}>
+          <img src="/icons/questions.svg" alt="Question Icon" />
+        </div>}
     </aside>
   );
 };

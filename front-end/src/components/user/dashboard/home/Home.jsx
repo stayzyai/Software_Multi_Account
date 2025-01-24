@@ -32,7 +32,7 @@ const Home = ({ toggleSidebar, role }) => {
         <div className="pb-24">
           <Header title={"Dashboard"} toggleSidebar={toggleSidebar} role={role}/>
         </div>
-          <div className="px-12">
+          <div className="md:px-12 px-2">
             <Overview />
             <Messages />
             <ContentCard />

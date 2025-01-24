@@ -69,7 +69,7 @@ def get_hostaway_account(db: Session = Depends(get_db), token: str = Depends(get
         if account.expires_at <= current_time:
             return JSONResponse(content={"detail": {"valid": False, "message": "hostaway token expired"}}, status_code=400)
         else:
-            return JSONResponse(content={"detail": {"id": user_id,  "valid": True, "message": "hostaway token is valid"}}, status_code=200)
+            return JSONResponse(content={"detail": {"id": user_id,  "valid": True, "message": "hostaway token is valid", "data":{"account_id": account.account_id, "secret_id": account.secret_id}}}, status_code=200)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error at get hostaway account: {str(e)}")
 
@@ -82,13 +82,13 @@ def delete_authentication(db: Session = Depends(get_db), token: str = Depends(ge
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
-        access_token = account.hostaway_token
-        if not access_token:
-            raise HTTPException(status_code=400, detail={"message": "hostaway access token cannot be empty"})
-        response = revoke_hostaway_authentication(access_token)
+        # access_token = account.hostaway_token
+        if not account:
+            raise HTTPException(status_code=400, detail={"message": "hostaway account not found"})
+        # response = revoke_hostaway_authentication(access_token)
         db.delete(account)
         db.commit()
-        return {"detail": {"message": " Hostaway account has been successfully removed", "data": response}}
+        return {"detail": {"message": " Hostaway account has been successfully removed"}}
     except HTTPException as exc:
         logging.error(f"****error at hostaway remove authentication*****{exc}")
         raise exc
