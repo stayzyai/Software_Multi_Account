@@ -17,8 +17,9 @@ def get_list(params: str, id: int,  db: Session = Depends(get_db), key: str = De
         if token_record is None:
             raise HTTPException(status_code=404, detail="extension key not found")
         account = db.query(HostawayAccount).filter(HostawayAccount.user_id == token_record.user_id).first()
-        if account:
-            token = account.hostaway_token
+        if account is None:
+            raise HTTPException(status_code=404, detail="hostaway account not found")
+        token = account.hostaway_token
         response = hostaway_get_request(token, params, id)
         data = json.loads(response)
         if data['status'] == 'success':
