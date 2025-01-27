@@ -9,7 +9,7 @@ import { FaRegCopy } from "react-icons/fa";
 import HostawayAccount from "./setting/HostawayAccount";
 import SettingShimmer from "../../common/shimmer/settingShimmer";
 
-const Integrations = ({ toggleSidebar }) => {
+const Integrations = ({ toggleSidebar, setOpenModal}) => {
   const [extensionKey, setExtensionKey] = useState("");
   const [isHovered, setIsHovered] = useState(false);
   const [hostawayAccount, setHostawayAccount] = useState(null);
@@ -64,7 +64,7 @@ const Integrations = ({ toggleSidebar }) => {
       {!loading ? (
         <div>
           <div>
-            <HostawayAccount toggleSidebar={toggleSidebar} />
+            <HostawayAccount toggleSidebar={toggleSidebar} setOpenModal={setOpenModal}/>
           </div>
           <div className="flex justify-center pt-3 mx-8">
             <div className="w-full mx-auto p-7 bg-white shadow-md rounded-md border">

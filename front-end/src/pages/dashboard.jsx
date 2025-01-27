@@ -102,7 +102,7 @@ return (
                 <Tasks toggleSidebar={toggleSidebar} />
               )}
               {activeSection === "integrations" && (
-                <Integrations toggleSidebar={toggleSidebar}/>
+                <Integrations toggleSidebar={toggleSidebar} setOpenModal={setOpenModal}/>
               )}
                 {activeSection === "setting" && (
                 <MainSetting toggleSidebar={toggleSidebar} setOpenModal={setOpenModal}/>
