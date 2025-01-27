@@ -46,7 +46,7 @@ const Sidebar = ({ role = "admin", onNavigation, isOpen, toggleSidebar, iconTogg
           <img
             onClick={handleToggle}
             className={`hidden md:block rounded-full lg:p-2 p-2 bg-white cursor-pointer absolute border-[0.2px] border-gray-500 ${
-              iconToggle ? " rotate-180 lg:ml-36 md:ml-36 ml-[162px] xl:ml-[120px] 2xl:ml-[150px]":" lg:ml-[260px]  ml-52 "
+              iconToggle ? " rotate-180 lg:ml-32 md:ml-32 ml-[162px] xl:ml-[120px] 2xl:ml-[150px]":" lg:ml-[260px]  ml-52 "
             }`}
             src="/icons/side.svg"
             alt="side logo"
