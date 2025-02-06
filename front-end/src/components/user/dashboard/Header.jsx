@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { useSelector, useDispatch } from "react-redux";
 import { clearUser } from "./../../../store/userSlice";
 
-const Header = ({ title, toggleSidebar, role, messages }) => {
+
+const Header = ({ title, toggleSidebar, role, messages, openListingName, opneListingDetails, setOpenListingDetails }) => {
   const [isDropDownOpen, setIsDropDownOpen] = React.useState(false);
   const dropdownRef = React.useRef(null);
   const firstname = useSelector((state) => state.user.firstname);
@@ -36,47 +37,55 @@ const Header = ({ title, toggleSidebar, role, messages }) => {
 
   return (
     <div style={{width:"-webkit-fill-available"}}
-      className={`fixed top-0 pt-6 bg-[#FCFDFC] flex items-center justify-between px-7 pb-2 ${title === "Messages" ? "": "border-b border-gray-400"} ${
+      className={`fixed top-0 bg-[#FCFDFC] flex items-center justify-between pb-2 ${title === "Chat" ? "pt-3": "pt-6"} ${title === "Messages" || title === "Chat" ? "": "border-b border-gray-400"} ${
         title === "Dashboard" || title === "Messages" || title === "Listings" || title === "Integrations" || title === "Setting"
           ? "bg-white flex items-center justify-between px-7 pb-2"
-          : "flex items-center justify-between px-7 pb-2"
+          : "flex items-center justify-between pb-2"
       } `}
     >
-      <div className="flex items-center gap-4">
+      <div
+       className="flex items-center gap-4">
         <button
           onClick={toggleSidebar}
           className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 md:hidden focus:outline-none"
         >
           <Menu className="h-5 w-5 text-gray-600" />
         </button>
-        {title !== "Chat" && (
-          <h1  style={{"-webkit-text-stroke-width": ".5px", "-webkit-text-stroke-color":"#060606"}} className="xl:text-[32px] font-normal hidden md:block text-2xl">
+        {!opneListingDetails && title !== "Chat" && (
+          <h1  style={{"-webkit-text-stroke-width": "0.5px", "-webkit-text-stroke-color":"#060606"}} className="xl:text-[32px] font-normal hidden md:block text-2xl">
             {title}
           </h1>
         )}
+          {opneListingDetails && (
+          <div className="flex items-center font-normal xl:text-2xl md:text-xl text-sm">
+            <button onClick={()=>{setOpenListingDetails(false)}} >
+            {title}
+          </button >
+          <ChevronDown className="sm:h-6 sm:w-7 h-4 -rotate-90"/>
+          <div className="xl:text-2xl md:text-lg text-sm font-normal cursor-pointer" style={{"-webkit-text-stroke-width": "0.2px", "-webkit-text-stroke-color":"#060606"}}>{openListingName}</div>
+        </div>)}
       </div>
-
-      <div className={`flex items-center gap-4 ${title === "Chat" && "gap-8"}`}>
+      <div className={`flex items-center ${title === "Chat" ? "":"gap-4"}`}>
         <div className="relative flex items-center">
           <img className="absolute left-4 w-4 h-4" src="/search.svg" />
           <input
             type="text"
-            placeholder="Search "
-            className="pl-12 pr-4 py-2 xl:w-[450px] bg-[#E8E8E8] rounded-full focus:outline-none hidden lg:block w-[300px]"
+            placeholder="Search"
+            className={`pl-12 pr-4 bg-[#E8E8E8] rounded-full focus:outline-none hidden lg:block ${title !== "Chat"?"w-[300px] xl:w-[450px] py-2":"w-[244px] py-3"}`}
           />
         </div>
 
         <button
           className={`${
-            messages || title =="Dashboard" ? "invisible" : "p-2 rounded-full"
+            messages || title =="Dashboard" || title =="Messages"  ? "invisible" : "p-2 rounded-full"
           }`}
         >
-          <img
+          {/* <img
             src="/message-text.png"
             alt="User avatar"
             width={30}
             height={30}
-          />
+          /> */}
         </button>
 
         <div
@@ -90,7 +99,7 @@ const Header = ({ title, toggleSidebar, role, messages }) => {
             width={38}
             height={38}
           />
-          <div className="hidden md:block text-nowrap">
+          <div className={`${title === "Chat" ? "hidden":"hidden md:block text-nowrap"}`}>
             <p className="text-sm font-medium capitalize">{`${firstname} ${lastname}`}</p>
             <p className="text-xs text-gray-500 capitalize">{userRole}</p>
           </div>

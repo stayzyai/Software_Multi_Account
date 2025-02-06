@@ -99,7 +99,7 @@ const Integrations = ({ toggleSidebar, setOpenModal}) => {
                       </button>
                     </div>
                     <button
-                      className="p-1.5 px-3 border border-green-100 bg-green-800 active:bg-green-700 rounded-md font-semibold shadow-md text-white w-full md:w-auto mt-4 md:mt-0 lg:text-base md:text-xs"
+                      className="p-1.5 px-3 border border-green-600 bg-green-800 hover:bg-green-900 active:bg-green-700 rounded-md font-semibold shadow-md text-white w-full md:w-auto mt-4 md:mt-0 lg:text-base md:text-xs"
                       onClick={handleGenrateKey}
                     >
                       Generate new key
@@ -111,7 +111,7 @@ const Integrations = ({ toggleSidebar, setOpenModal}) => {
                       Extension key not found. Please generate a key.
                     </div>
                     <button
-                      className="p-1.5 px-3 border border-green-100 bg-green-800 active:bg-green-700 rounded-md font-semibold shadow-md text-white w-full md:w-auto mt-4 md:mt-0"
+                      className="p-1.5 px-3 border border-green-600 bg-green-800 hover:bg-green-600 active:bg-green-700 rounded-md font-semibold shadow-md text-white w-full md:w-auto mt-4 md:mt-0"
                       onClick={handleGenrateKey}
                     >
                       Generate new key

@@ -3,7 +3,7 @@ from app.schemas.hostaway import HostawayAuthentication
 from sqlalchemy.orm import Session
 from app.database.db import get_db
 from app.common.auth import get_token, decode_access_token
-from app.models.user import User, HostawayAccount
+from app.models.user import User, HostawayAccount, ChromeExtensionToken
 from app.common.hostaway_setup import hostaway_authentication, revoke_hostaway_authentication
 import logging
 from datetime import datetime, timedelta
@@ -82,11 +82,13 @@ def delete_authentication(db: Session = Depends(get_db), token: str = Depends(ge
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
+        chrome_extension = db.query(ChromeExtensionToken).filter(ChromeExtensionToken.user_id == user_id).first()
         # access_token = account.hostaway_token
         if not account:
             raise HTTPException(status_code=400, detail={"message": "hostaway account not found"})
         # response = revoke_hostaway_authentication(access_token)
         db.delete(account)
+        db.delete(chrome_extension)
         db.commit()
         return {"detail": {"message": " Hostaway account has been successfully removed"}}
     except HTTPException as exc:

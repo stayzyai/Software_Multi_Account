@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from app.schemas.user import UserUpdate, ChangePasswordRequest, UserProfile, ChatRequest
 from app.models.user import User, ChromeExtensionToken
@@ -14,9 +14,12 @@ from app.common.chat_gpt_assistant import get_latest_model_id
 from dotenv import load_dotenv
 import requests
 import logging
-from app.common.open_ai import get_gpt_response
+from app.common.open_ai import get_gpt_response, nearby_spots_gpt_response
 import uuid
 from sqlalchemy.exc import NoResultFound
+import os
+import httpx
+from app.common.chat_query import haversine_distance
 load_dotenv()
 
 router = APIRouter(prefix="/user", tags=["users"])
@@ -149,6 +152,12 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
     try:
         token_record = db.query(ChromeExtensionToken).filter(ChromeExtensionToken.key == key).first()
         if token_record is None:
+            decode_token = decode_access_token(key)
+            user_id = decode_token['sub']
+            if user_id is None:
+                raise HTTPException(status_code=404, detail="User ID not found in token")
+            token_record = True
+        if token_record is None:
             raise HTTPException(status_code=404, detail="extension key not found")
         model_id = get_latest_model_id()
         prompt = request.prompt
@@ -218,3 +227,44 @@ def validate_token(key: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Token not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail={"message": f"An error occurred: {str(e)}"})
+
+@router.post("/nearby-places")
+async def get_nearby_places(request: Request, token: str = Depends(get_token), db: Session = Depends(get_db)):
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if db_user is None:
+            raise HTTPException(status_code=404, detail="User not found")
+        GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+        MAP_URL = os.getenv("MAP_URL")
+        body = await request.json()
+        lat, lng = body.get("lat"), body.get("lng")
+        place_types = ["restaurant", "shopping_mall", "park", "tourist_attraction"]
+        all_results = {}
+        async with httpx.AsyncClient() as client:
+            for place_type in place_types:
+                params = {"location": f"{lat},{lng}", "radius": 500,
+                    "type": place_type,
+                    "key": GOOGLE_MAPS_API_KEY
+                }
+                response = await client.get(MAP_URL, params=params)
+                data = response.json()
+                if "results" in data:
+                    all_results[place_type] = [
+                        { "name": place["name"],
+                            "address": place.get("vicinity", "N/A"),
+                            "distance_meter": round(
+                                haversine_distance(lat, lng,
+                                    place["geometry"]["location"]["lat"],
+                                    place["geometry"]["location"]["lng"]
+                                ), 2
+                            )
+                        } for place in data["results"][:2]
+                    ]
+        nearby_spots = nearby_spots_gpt_response(all_results)
+        return {"results": nearby_spots}
+
+    except Exception as e:
+        logging.error(f"Error at get near places {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching nearby places: {str(e)}")

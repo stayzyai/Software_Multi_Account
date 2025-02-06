@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 from app.common.chat_gpt_assistant import train_chat_gpt
 from apscheduler.schedulers.background import BackgroundScheduler
+from app.websocket import sio_app
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -32,6 +33,8 @@ def start_scheduler():
 async def startup_event():
     start_scheduler()
 
-@app.get("/")
+app.mount("/", sio_app)
+
+@app.get("/api")
 async def root():
    return {"message": "working"}
