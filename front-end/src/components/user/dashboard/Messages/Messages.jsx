@@ -153,7 +153,9 @@ const Messages = ({ handleClickMessages, title }) => {
           </div>
         </div>
       ) : (
-        <MessageShimmer />
+        <div className={`title === "Dashboard" ? "mt-6":"mt-12"`}>
+          <MessageShimmer />
+        </div>
       )}
     </div>
   );
