@@ -1,147 +1,143 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "../Header";
 import MessageBookingDetails from "./MessageBookingDetails";
+import ChatMessages from "./MessagesChat";
+import { FiChevronsRight } from "react-icons/fi";
+import { sendMessages } from "../../../../helpers/Message"
+import { toast } from "sonner";
+import { simplifiedResult } from "../../../../helpers/Message";
+import { useSelector } from "react-redux";
 
-const MessageDetails = ({ setOpenMessage, chatInfo, toggleSidebar }) => {
-  const [messages, setMessages] = useState([
-    { sender: "bot", text: "Hello! How can I assist you?" },
-  ]);
+const MessageDetails = ({ chatInfo, toggleSidebar, handleClickMessages, setOpenMessage }) => {
+
+  const conversation = useSelector((state)=>state.conversation.conversations)
+  const  messsage = useSelector((state)=>state.messages)
+  const [openBooking, setOpenBooking] = useState(false);
+  const [openSidebarMessage, setOpenSidebarMessage] = useState(false);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
+  const [messageLoader, setMessagesLoader] = useState(false)
+  const [fromatedConversation, setFormatedConversation] = useState([])
 
-  const handleSendMessage = () => {
+useEffect(()=>{
+  setFormatedConversation(simplifiedResult(conversation, messsage))
+},[])
+
+const getFirstTwoWords = (name)=>{
+  const words = name?.split(' ');
+  const firstTwoWords = words?.slice(0, 2).join(' ');
+  return firstTwoWords
+}
+  const handleSendMessage = async(chat_id) => {
     if (input.trim()) {
-      const userMessage = { sender: "user", text: input };
-      setMessages([...messages, userMessage]);
-
-      setTimeout(() => {
-        const botResponse = {
-          sender: "bot",
-          text: "Here's a response from the bot.",
-        };
-        setMessages((prevMessages) => [...prevMessages, botResponse]);
-      }, 1000);
-
+      setMessagesLoader(true)
+      const payload = { "body": input, "communicationType": "channel"}
       setInput("");
+      const data = await sendMessages(chat_id, payload)
+      if(data?.length > 0){
+        setMessages([...messages, data[0]]);
+        toast.success("Messages sent")
+      }else{
+        toast.error("An error occurred while sending messages. Please try again")
+      }
+      setMessagesLoader(false)
     }
   };
 
   return (
     <div className="flex max-h-screen bg-[#fff]">
       {/* Sidebar with Messages */}
-      <div className="lg:w-1/2 xl:w-1/5 bg-[#FCFDFC] border-r sm:block hidden">
-        <div className="flex gap-2 mb-4 pl-5 mt-7">
+      <div className={`transition-all duration-300 ${ openSidebarMessage ? "z-50 sm:z-0 fixed sm:sticky top-[70px] sm:top-0 h-full sm:h-auto left-0 bg-white": "hidden md:block"} lg:w-[220px] xl:w-[257px] bg-[#FCFDFC] border-r border-gray-300`}>
+        <div className="flex gap-2 pl-6 mt-4">
           <button onClick={() => setOpenMessage(false)}>
-            <img
-              src="/icons/left.svg"
-              alt="down icon"
-              width={12}
-              height={10}
-              className=""
-            />
+            <img src="/icons/left.svg" alt="down icon" width={12} height={10} />
           </button>
-          <span className="text-[24px] font-medium">Messages</span>
+          <span style={{ "-webkit-text-stroke-width": "0.5px" }} className="text-2xl font-medium"> Messages </span>
+        </div>
+        <div className="flex justify-end mx-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="21"
+            height="21"
+            viewBox="0 0 21 21"
+            fill="none"
+          >
+            <path
+              d="M5.65385 10.5H15.3462M3.5 6.125H17.5M8.88461 14.875H12.1154"
+              stroke="black"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
         </div>
         <div className="space-y-4">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div
-              key={index}
-              className="flex items-center space-x-2 cursor-pointer mt-10 bg-white rounded-3xl w-full px-2 h-12"
-            >
-              <img
-                src="/avatar.png"
-                alt="User Avatar"
-                className="w-10 h-10 rounded-full"
-              />
-              <div className="flex justify-between w-full text-[#292D32] text-nowrap text-sm">
-                <div>
-                  <p className="text-sm text-nowrap">Henry Smith</p>
-                  <span className="text-[#292D3270] text-xs text-nowrap">
-                    Test Message
-                  </span>
+          {fromatedConversation?.map((item, index) => (
+            <div key={index} onClick={()=>handleClickMessages(item?.id, fromatedConversation)} className="flex items-center space-x-2 cursor-pointer mt-[14px] bg-white rounded-3xl w-full xl:px-3 px-1 h-12">
+              {item?.recipientPicture ? (<img className="w-10 h-10 rounded-full" src={item.recipientPicture} alt="Avatar"/>
+              ):(<div className="w-[50px] h-[42px] rounded-full bg-green-800 flex items-center justify-center text-xl text-white font-semibold">
+                  {item?.recipientName[0]}
                 </div>
-                <div className="text-xs">1:05 pm</div>
+              )}
+              <div className="flex justify-between w-full text-[#292D32] text-nowrap text-base">
+                <div>
+                  <p>{getFirstTwoWords(item?.recipientName)}</p>
+                  <div className="w-[124px] text-[#292D3270] text-xs overflow-hidden truncate whitespace-nowrap">
+                    {item?.conversationMessages !== ""? item?.conversationMessages: "Click here to reply"}
+                  </div>
+                </div>
+                <div className="text-xs">{item?.messageReceivedOn}</div>
               </div>
-              {/* */}
             </div>
           ))}
         </div>
+        <button onClick={() => setOpenSidebarMessage(!openSidebarMessage)} className="bg-gray-100 p-1 py-2 rounded-lg sm:hidden ml-44">
+          <FiChevronsRight size={24} />
+        </button>
       </div>
-
       {/* Chat Content Area */}
       <div className="flex-1 flex flex-col bg-[#FCFDFC]">
-        <div className="border-b">
-          <Header title="Chat" messages={messages} toggleSidebar={toggleSidebar}/>
-        </div>
-
-        {/* Chat Messages */}
-        <div className="flex h-[848px]">
-          <div className="w-full flex flex-col mb-6">
-            {chatInfo?.map((item, index) => (
-              <div key={index} className="w-full p-2 flex gap-2 bg-white rounded-3xl">
-                  <button className="block sm:hidden" onClick={() => setOpenMessage(false)}>
-                    <img src="/icons/left.svg" alt="down icon" width={12} height={10}/>
-                  </button>
-                <img
-                  src={item.image}
-                  alt="down icon"
-                  className="rounded-full w-10 h-10"
-                />
-                <div>
-                  <span className="text-[14px]">{item.name}</span>
-                  <p className="text-[12px] text-[#292D3270]">
-                    Property Manager
-                  </p>
-                </div>
-                <img
-                  src="/icons/down.svg"
-                  alt="down icon"
-                  width={14}
-                  height={14}
-                />
-              </div>
-        
-            ))}
-            <div className="flex-1 overflow-y-auto p-4">
-              {messages.map((msg, index) => (
-                <div
-                  key={index}
-                  className={`mb-4 p-2 rounded-lg max-w-xs ${
-                    msg.sender === "user"
-                      ? "bg-[#F1F1F1] text-left ml-auto"
-                      : "bg-[#F1F1F1] text-left mr-auto"
-                  }`}
-                >
-                  {msg.text}
+        <div className="border-b border-gray-400">
+          <div className="flex mt-3 bg-white">
+            <div className="2xl:w-[66%] xl:w-[60%] w-[32%]">
+              {chatInfo?.map((item, index) => (
+                <div key={index}  className="p-2 flex gap-2">
+                  <div className="flex items-center gap-3">
+                    {item.recipientPicture ? <img src={item.recipientPicture} alt="down icon" className="rounded-full w-10 h-10"/>:<div className="w-[42px] h-[42px] rounded-full text-gray-100 flex items-center justify-center text-xl bg-green-800 font-semibold">{item?.recipientName[0]}</div>}
+                    <div>
+                      <span className="text-[14px] text-nowrap font-normal">
+                        {item?.recipientName}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
-            <div className="flex items-center px-6 w-full">
-              <div className="w-full">
-                <div className="flex justify-end mb-6">
-                  <div className="text-sm">Via Lodgify</div>
-                  <img src="/icons/down.svg" alt="down icon" />
-                </div>
-                <div className="border h-[180px] rounded-xl  px-4">
-                  <input
-                    type="text"
-                    placeholder="Write your reply here ..."
-                    className="p-2 w-full rounded-full focus:outline-none bg-[#FCFDFC]"
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                  />
-                  <div className="flex justify-between mt-20">
-                    <img src="/icons/stars.svg" />
-                    <button className="rounded-md" onClick={handleSendMessage}>
-                      <img src="/icons/send.png" />
-                    </button>
-                  </div>
-                </div>
-              </div>
+            <div className="w-[30%] hidden lg:block">
+              <Header title="Chat" messages={messages} toggleSidebar={toggleSidebar}
+              />
             </div>
           </div>
-          {/* Booking Details Sidebar */}
-          <MessageBookingDetails />
+        </div>
+        <div className="flex h-[calc(100vh-71px)]">
+          <ChatMessages
+            messages={messages}
+            setMessages={setMessages}
+            handleSendMessage={handleSendMessage}
+            setInput={setInput}
+            input={input}
+            setOpenBooking={setOpenBooking}
+            openBooking={openBooking}
+            setOpenSidebarMessage={setOpenSidebarMessage}
+            openSidebarMessage={openSidebarMessage}
+            chatInfo={chatInfo}
+            messageLoader={messageLoader}
+          />
+          <MessageBookingDetails
+            setOpenBooking={setOpenBooking}
+            openBooking={openBooking}
+            chatInfo={chatInfo}
+          />
         </div>
       </div>
     </div>

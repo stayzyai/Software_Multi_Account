@@ -6,15 +6,25 @@ import { useEffect } from "react";
 import api from "../../../../api/api";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../../../store/userSlice";
+import { io } from "socket.io-client";
 
 const Home = ({ toggleSidebar, role }) => {
-  const dispatch = useDispatch();
+const dispatch = useDispatch();
 
   useEffect(() => {
+      const newSocket = io(import.meta.env.VITE_API_HOST,{transports: ['websocket']});
+      newSocket.on("connect", () => {
+        console.log("Connected to WebSocket server");
+      });
+      newSocket.on("disconnect", () => {
+        console.log("disconnected to WebSocket server");
+      });
+      newSocket.on("notify", (newMessage) => {
+        console.log("Notification received: ", newMessage);
+    });
     const getProfile = async () => {
       try {
         const response = await api.get("/user/profile");
-        console.log("response", response);
         if (response?.status === 200 && response?.data) {
           const { firstname, lastname, email, role } = response.data;
           dispatch(setUser({ firstname, lastname, email, role }));
@@ -24,6 +34,9 @@ const Home = ({ toggleSidebar, role }) => {
       }
     };
     getProfile();
+    return () => {
+      newSocket.disconnect();
+    };
   }, []);
 
   return (
@@ -32,9 +45,9 @@ const Home = ({ toggleSidebar, role }) => {
         <div className="pb-24">
           <Header title={"Dashboard"} toggleSidebar={toggleSidebar} role={role}/>
         </div>
-          <div className="md:px-12 px-2">
+          <div className="md:px-12 px-1">
             <Overview />
-            <Messages />
+            <Messages title={"Dashboard"}/>
             <ContentCard />
           </div>
       </div>
