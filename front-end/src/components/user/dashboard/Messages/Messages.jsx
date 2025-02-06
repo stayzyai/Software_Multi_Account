@@ -128,7 +128,7 @@ const Messages = ({ handleClickMessages, title }) => {
                         alt="Avatar"
                       />
                     ) : (
-                      <div className="w-[40px] h-[38px] rounded-full bg-green-800 flex items-center justify-center text-xl text-white font-semibold">
+                      <div className="w-[40px] lg:h-[38px] h-[35px] rounded-full bg-green-800 flex items-center justify-center text-xl text-white font-semibold">
                         {getInitials(item?.recipientName)}
                       </div>
                     )}

@@ -99,7 +99,7 @@ const getFirstTwoWords = (name)=>{
       <div className="flex-1 flex flex-col bg-[#FCFDFC]">
         <div className="border-b border-gray-400">
           <div className="flex mt-3 bg-white">
-            <div className="2xl:w-[66%] xl:w-[60%] w-[32%]">
+            <div className="2xl:w-[84%] xl:w-[62%] lg:w-[36%] w-[32%]">
               {chatInfo?.map((item, index) => (
                 <div key={index}  className="p-2 flex gap-2">
                   <div className="flex items-center gap-3">

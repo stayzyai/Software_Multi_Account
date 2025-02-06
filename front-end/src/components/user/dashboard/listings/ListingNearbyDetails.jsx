@@ -67,7 +67,7 @@ const ListingNearbyDetails = ({ listingId, properties })=>{
         <div className="flex flex-col">
           <div className={`lg:flex justify-end w-full font-normal text-xl pb-4 lg:pb-0 ${occupancy !== "Vacant" ? "text-[#2D8062]" : "text-red-600" }`}>Current Status : {occupancy}</div>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="flex items-center space-x-4 mb-10">
+              <div className="flex items-center space-x-4 mb-10 z-10">
                 <Label htmlFor="maps-toggle" className="text-xl lg:text-2xl font-normal">
                   Google Maps
                 </Label>
@@ -77,7 +77,7 @@ const ListingNearbyDetails = ({ listingId, properties })=>{
             <div className="space-y-5">
             <h2 className="text-xl lg:text-2xl font-normal">Info</h2>
               <div className="text-xl lg:text-2xl py-12 px-5 bg-[#F8F8F8] rounded-2xl border border-gray-300 border-solid min-h-[341px]">
-                {loading ? <div><BeatLoader size={12}/></div> : <span className="lg:text-base text-xs">{displayText}</span>}
+                {loading ? <div><BeatLoader size={12}/></div> : <span className="md:text-lg text-sm">{displayText}</span>}
               </div>
           </div>
         </div>
