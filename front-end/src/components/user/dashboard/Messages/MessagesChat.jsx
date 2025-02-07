@@ -8,7 +8,7 @@ import { useSelector } from "react-redux";
 import { toast } from "sonner";
 
 const ChatMessages = ({ messages, handleSendMessage, setInput, input, setOpenBooking,
-  openBooking, setOpenSidebarMessage, openSidebarMessage, chatInfo, setMessages, messageLoader}) => {
+  openBooking, setOpenSidebarMessage, openSidebarMessage, chatInfo, setMessage, messageLoader}) => {
 
 const [isLoading, setLoading] = useState(true)
 const messagesEndRef = useRef(null);
@@ -21,7 +21,7 @@ const listings = useSelector((state)=>state.listings.listings)
     const getAllMessages = async () => {
       setLoading(true)
       const response = await getAllconversation(chat_id)
-      setMessages(response)
+      setMessage(response)
       setLoading(false)
     };
     getAllMessages();
@@ -39,7 +39,7 @@ const listings = useSelector((state)=>state.listings.listings)
     newSocket.on("received_message", (newMessage) => {
       console.log("New message received:", newMessage);
       if(chat_id === newMessage?.id){
-        setMessages((prevMessages) => [...prevMessages, newMessage]);
+        setMessage((prevMessages) => [...prevMessages, newMessage]);
       }
     });
     return () => {

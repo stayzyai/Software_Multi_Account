@@ -7,6 +7,8 @@ import { sendMessages } from "../../../../helpers/Message"
 import { toast } from "sonner";
 import { simplifiedResult } from "../../../../helpers/Message";
 import { useSelector } from "react-redux";
+import { setMessages } from "../../../../store/messagesSlice";
+import { useDispatch } from "react-redux";
 
 const MessageDetails = ({ chatInfo, toggleSidebar, handleClickMessages, setOpenMessage }) => {
 
@@ -14,14 +16,15 @@ const MessageDetails = ({ chatInfo, toggleSidebar, handleClickMessages, setOpenM
   const  messsage = useSelector((state)=>state.messages)
   const [openBooking, setOpenBooking] = useState(false);
   const [openSidebarMessage, setOpenSidebarMessage] = useState(false);
-  const [messages, setMessages] = useState([]);
+  const [messages, setMessage] = useState([]);
   const [input, setInput] = useState("");
   const [messageLoader, setMessagesLoader] = useState(false)
   const [fromatedConversation, setFormatedConversation] = useState([])
+  const dispatch = useDispatch()
 
 useEffect(()=>{
   setFormatedConversation(simplifiedResult(conversation, messsage))
-},[])
+},[messages])
 
 const getFirstTwoWords = (name)=>{
   const words = name?.split(' ');
@@ -35,12 +38,15 @@ const getFirstTwoWords = (name)=>{
       setInput("");
       const data = await sendMessages(chat_id, payload)
       if(data?.length > 0){
-        setMessages([...messages, data[0]]);
+        setMessage([...messages, data[0]]);
+        const currentChat = messsage?.find((item)=>item?.id === chat_id)
+        const newMessages = [...(currentChat?.messages), data[0]];
+        dispatch(setMessages({id: chat_id, message: newMessages}))
         toast.success("Messages sent")
+        setMessagesLoader(false)
       }else{
         toast.error("An error occurred while sending messages. Please try again")
       }
-      setMessagesLoader(false)
     }
   };
 
@@ -122,7 +128,7 @@ const getFirstTwoWords = (name)=>{
         <div className="flex h-[calc(100vh-71px)]">
           <ChatMessages
             messages={messages}
-            setMessages={setMessages}
+            setMessage={setMessage}
             handleSendMessage={handleSendMessage}
             setInput={setInput}
             input={input}

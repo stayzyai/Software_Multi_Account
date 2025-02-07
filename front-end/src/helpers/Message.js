@@ -37,10 +37,7 @@ const getAllconversation = async (chat_id) => {
 
 const sendMessages = async (chat_id, payload) => {
   try {
-    const response = await api.post(
-      `/hostaway/post-data/conversations/${chat_id}/messages`,
-      payload
-    );
+    const response = await api.post(`/hostaway/post-data/conversations/${chat_id}/messages`, payload);
     if (response?.data?.detail?.data?.result) {
       const data = [];
       const responseData = response?.data?.detail?.data?.result;
@@ -68,14 +65,11 @@ const formatTime = (dateStr) => {
 };
 
 const simplifiedResult = (result, conversation) => {
-  return result.map(
+  return result?.map(
     ({ id, recipientName, recipientPicture, messageReceivedOn, reservationId,
       listingMapId }) => {
       const foundConversation = conversation?.find((item) => item.id === id);
-      const latestMessage = foundConversation?.messages[foundConversation?.messages.length-1]
-      // const latestMessage = foundConversation?.messages ? [...foundConversation.messages]
-      // .sort( (a, b) => new Date(b.date) - new Date(a.date))[0] : "";
-        // console.log("---------latestMessage->", latestMessage)
+      const latestMessage = foundConversation?.messages[foundConversation?.messages?.length-1]
       return { id, recipientName, recipientPicture, messageReceivedOn: latestMessage?.time, reservationId,
         listingMapId, conversationMessages: latestMessage?.body ?? "", };
     }
