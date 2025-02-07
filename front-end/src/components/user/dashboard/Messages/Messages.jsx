@@ -29,6 +29,7 @@ const Messages = ({ handleClickMessages, title }) => {
     newSocket.on("new_reservation", (reservations) => {
       const newReservation = async() =>{
         const data = await getConversations();
+        dispatch(setConversations(data));
         const conversation = data?.find((item) =>item.reservationId === reservations.reservation.id);
         const messages =  await getAllconversation(conversation.id);
         dispatch(setMessages({id: conversation.id, message: messages}))
