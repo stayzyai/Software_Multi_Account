@@ -1,16 +1,12 @@
 import Header from "../Header";
 import CommonTable from "../common/Table";
-import { useSelector } from "react-redux";
-import { formattedListing } from "../../../../helpers/ListingsHelper";
+// import { useSelector } from "react-redux";
+// import { formattedListing } from "../../../../helpers/ListingsHelper";
 import ListingShimmer from "../../../common/shimmer/ListingShimmer";
 
 const Properties = ({ toggleSidebar, setOpenListingDetails, setOpenListingName, setListingId, properties}) => {
 
   const columns = ["", "Name", "Address", "Occupancy", "Issues", "AI"];
-
-  // const listings = useSelector((state) => state.listings.listings);
-  // const reservations = useSelector((state) => state.reservations.reservations);
-  // const properties = formattedListing(listings, reservations);
 
   return (
     <>
