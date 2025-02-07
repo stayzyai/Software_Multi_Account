@@ -32,7 +32,7 @@ const listings = useSelector((state)=>state.listings.listings)
   }, [messages]);
 
   useEffect(() => {
-    const newSocket = io(import.meta.env.VITE_API_HOST,{transports: ['websocket'],});
+    const newSocket = io(import.meta.env.VITE_SOCKET_HOST,{transports: ['websocket'],});
     newSocket.on("connect", () => {
       console.log("Connected to WebSocket server");
     });
