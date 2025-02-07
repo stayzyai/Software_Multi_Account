@@ -69,7 +69,9 @@ const simplifiedResult = (result, conversation) => {
     ({ id, recipientName, recipientPicture, messageReceivedOn, reservationId,
       listingMapId }) => {
       const foundConversation = conversation?.find((item) => item.id === id);
-      const latestMessage = foundConversation?.messages[foundConversation?.messages?.length-1]
+      // const latestMessage = foundConversation?.messages[foundConversation?.messages?.length-1]
+      const latestMessage = foundConversation?.messages?.length ? foundConversation.messages[foundConversation.messages.length - 1]
+      : null;
       return { id, recipientName, recipientPicture, messageReceivedOn: latestMessage?.time, reservationId,
         listingMapId, conversationMessages: latestMessage?.body ?? "", };
     }
