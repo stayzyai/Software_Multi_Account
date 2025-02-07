@@ -127,7 +127,7 @@ return (
               className="p-2 w-full focus:outline-none bg-[#FCFDFC] resize-none"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSendMessage(messages)}
+              onKeyDown={(e) => e.key === "Enter" && handleSendMessage(chat_id)}
             />
             <div className="flex justify-between">
               <button disabled={isSuggestion} onClick={()=>handleAISuggestion(messages, chatInfo)}>
