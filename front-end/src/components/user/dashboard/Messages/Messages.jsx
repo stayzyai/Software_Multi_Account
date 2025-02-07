@@ -15,8 +15,7 @@ const Messages = ({ handleClickMessages, title }) => {
   const messages = useSelector((state) => state.messages)
 
   useEffect(()=>{
-    // const newSocket = io(import.meta.env.VITE_API_HOST,{transports: ['websocket']});
-    const newSocket = io(`https://sunay-test.centralindia.cloudapp.azure.com/api`,{transports: ['websocket']});
+    const newSocket = io(import.meta.env.VITE_API_HOST,{transports: ['websocket']});
     newSocket.on("connect", () => {
       console.log("Connected to WebSocket server");
     });
