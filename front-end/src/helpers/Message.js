@@ -85,7 +85,7 @@ const formatedMessages = (messages, listing) => {
   }));
   const lastUserMessage = formattedMessages
     ?.reverse()
-    .find((msg) => msg.role === "user")["content"];
+    .find((msg) => msg?.role === "user")?.content;
   const previousConversation = JSON.stringify(formattedMessages);
   const propertyDetails = JSON.stringify(listing);
   const systemPrompt = SYSTEM_PROMPT.replace(

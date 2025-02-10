@@ -82,7 +82,7 @@ const getFirstTwoWords = (name)=>{
             <div key={index} onClick={()=>handleClickMessages(item?.id, fromatedConversation)} className="flex items-center space-x-2 cursor-pointer mt-[14px] bg-white rounded-3xl w-full xl:px-3 px-1 h-12">
               {item?.recipientPicture ? (<img className="w-10 h-10 rounded-full" src={item.recipientPicture} alt="Avatar"/>
               ):(<div className="w-[50px] h-[42px] rounded-full bg-green-800 flex items-center justify-center text-xl text-white font-semibold">
-                  {item?.recipientName[0]}
+                  {item?.recipientName[0]?.toUpperCase()}
                 </div>
               )}
               <div className="flex justify-between w-full text-[#292D32] text-nowrap text-base">
