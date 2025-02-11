@@ -40,6 +40,12 @@ const BookingGroup = ({ dateRange, bookings }) => {
 
 const ListingBookingDetails = ({calenderDetails}) => {
 
+  const { bookings, dateRanges } = calenderDetails;
+
+  if (!bookings?.length && !dateRanges?.length) {
+    return <p className="text-center text-gray-600 flex items-center text-xl w-full h-96 justify-center">No booking details</p>;
+  }
+
   return (
     <div className="w-full mt-7">
       <main>

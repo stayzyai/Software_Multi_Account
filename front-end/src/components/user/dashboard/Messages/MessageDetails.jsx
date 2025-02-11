@@ -109,7 +109,7 @@ const getFirstTwoWords = (name)=>{
               {chatInfo?.map((item, index) => (
                 <div key={index}  className="p-2 flex gap-2">
                   <div className="flex items-center gap-3">
-                    {item.recipientPicture ? <img src={item.recipientPicture} alt="down icon" className="rounded-full w-10 h-10"/>:<div className="w-[42px] h-[42px] rounded-full text-gray-100 flex items-center justify-center text-xl bg-green-800 font-semibold">{item?.recipientName[0]}</div>}
+                    {item.recipientPicture ? <img src={item.recipientPicture} alt="down icon" className="rounded-full w-10 h-10"/>:<div className="w-[42px] h-[42px] rounded-full text-gray-100 flex items-center justify-center text-xl bg-green-800 font-semibold">{item?.recipientName[0].toUpperCase()}</div>}
                     <div>
                       <span className="text-[14px] text-nowrap font-normal">
                         {item?.recipientName}
