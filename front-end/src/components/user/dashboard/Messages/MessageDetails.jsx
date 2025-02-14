@@ -77,7 +77,7 @@ const getFirstTwoWords = (name)=>{
             />
           </svg>
         </div>
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-scroll scrollbar-hide h-[calc(100vh-71px)] pb-4">
           {fromatedConversation?.map((item, index) => (
             <div key={index} onClick={()=>handleClickMessages(item?.id, fromatedConversation)} className="flex items-center space-x-2 cursor-pointer mt-[14px] bg-white rounded-3xl w-full xl:px-3 px-1 h-12">
               {item?.recipientPicture ? (<img className="w-10 h-10 rounded-full" src={item.recipientPicture} alt="Avatar"/>

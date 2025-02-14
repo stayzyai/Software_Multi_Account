@@ -69,7 +69,7 @@ const ButtonLoader = ()=><svg xmlns="http://www.w3.org/2000/svg" fill="currentCo
 
 return (
     <div className="w-full flex flex-col mb-6">
-      <div className="flex-1 overflow-y-auto p-2">
+      <div className="flex-1 overflow-y-auto p-2 scrollbar-hide">
       {!isLoading ? (
           messages?.length > 0 ? (
             messages.map((msg, index) => (
