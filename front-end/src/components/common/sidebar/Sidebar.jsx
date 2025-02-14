@@ -8,16 +8,12 @@ const navigationConfig = {
     { id: "settings", label: "Settings", icon: Settings },
   ],
   user: [
-    { id: "home", label: "Dashboard", icon: "/icons/dashboard.png" },
-    { id: "messages", label: "Messages", icon: "/icons/message.png" },
-    { id: "listings", label: "Listings", icon: "/icons/listing.png" },
-    { id: "staff", label: "Staff", icon: "/icons/staff.png" },
-    { id: "tasks", label: "Tasks", icon: "/icons/task.png" },
-    {
-      id: "integrations",
-      label: "Integrations",
-      icon: "/icons/integration.png",
-    },
+    { id: "home", label: "Dashboard", icon: "/icons/category-2.svg" },
+    { id: "messages", label: "Messages", icon: "/icons/file-02.svg" },
+    { id: "listings", label: "Listings", icon: "/icons/Outline.svg" },
+    { id: "staff", label: "Staff", icon: "/icons/people.svg" },
+    { id: "tasks", label: "Tasks", icon: "/icons/task.svg" },
+    { id: "integrations", label: "Integrations", icon: "/icons/plug-01.svg"},
     { id: "settings", label: "Settings", icon: Settings },
   ],
 };
