@@ -13,12 +13,23 @@ const navigationConfig = {
     { id: "listings", label: "Listings", icon: "/icons/listing.png" },
     { id: "staff", label: "Staff", icon: "/icons/staff.png" },
     { id: "tasks", label: "Tasks", icon: "/icons/task.png" },
-    { id: "integrations", label: "Integrations", icon: "/icons/integration.png"},
-    { id: "setting", label: "Setting", icon: Settings},
+    {
+      id: "integrations",
+      label: "Integrations",
+      icon: "/icons/integration.png",
+    },
+    { id: "settings", label: "Settings", icon: Settings },
   ],
 };
 
-const Sidebar = ({ role = "admin", onNavigation, isOpen, toggleSidebar, iconToggle, setIconToggle }) => {
+const Sidebar = ({
+  role = "admin",
+  onNavigation,
+  isOpen,
+  toggleSidebar,
+  iconToggle,
+  setIconToggle,
+}) => {
   const [activeTab, setActiveTab] = useState("home");
   const navItems = navigationConfig[role];
 
@@ -56,57 +67,46 @@ const Sidebar = ({ role = "admin", onNavigation, isOpen, toggleSidebar, iconTogg
           <X className="h-6 w-6" />
         </button>
       </div>
-      <nav className="space-y-2">
-        <div className={`${role==="user"? "lg:mb-48 mb-40 md:mb-4":"mb-[580px] md:mb-[450px]"} md:mb-[200px]`}>
-        {navItems?.map((item) => {
-          const isImageIcon = typeof item.icon === "string";
-          const isActive = activeTab === item.id;
+        <nav className="space-y-2">
+          <div className="max-h-[calc(100vh-100px)] overflow-y-auto scrollbar-hide">
+            {navItems?.map((item) => {
+              const isImageIcon = typeof item.icon === "string";
+              const isActive = activeTab === item.id;
 
-          return (
-            <div key={item.id} className="flex justify-center">
-              <button
-                onClick={() => {
-                  onNavigation(item.id);
-                  setActiveTab(item.id);
-                  toggleSidebar();
-                }}
-                className={`
-                  flex items-center mb-3
-                  ${
-                    iconToggle
-                      ? "rounded-xl scale-110 px-4 py-3 my-1"
-                      : "w-[90%] gap-2 px-4 lg:px-6 py-3 rounded-3xl"
-                  } 
-                  ${
-                    isActive
-                      ? "bg-[#FCFDFC] text-[#0E2E23]"
-                      : "text-white hover:bg-[#2D8062]"
-                  }
-                `}
-              >
-                {isImageIcon ? (
-                  <img
-                    className={`w-5 h-5 ${isActive ? "filter invert" : ""}`}
-                    src={item.icon}
-                    alt={item.label}
-                  />
-                ) : (
-                  <item.icon
-                    className={`w-5 h-5 ${
-                      isActive ? "text-[#0E2E23]" : "text-white"
-                    } `}
-                  />
-                )}
-                {!iconToggle && <span className="lg:text-xl text-md ">{item.label}</span>}
-              </button>
-            </div>
-          );
-        })}
-        </div>
-      </nav>
-      {role == "user" && <div className={`flex items-center justify-center bg-[#E8E8E8] rounded-full w-12 h-12 absolute ${iconToggle ?"ml-1":"ml-6"}"}`}>
-          <img src="/icons/questions.svg" alt="Question Icon" />
-        </div>}
+              return (
+                <div key={item.id} className="flex justify-center mb-3">
+                  <button onClick={() => { onNavigation(item.id); setActiveTab(item.id); toggleSidebar(); }}
+                  className={`flex items-center ${ iconToggle ? "rounded-xl scale-110 px-4 py-3 my-1"   : "w-[90%] gap-2 px-4 lg:px-6 py-3 rounded-3xl" } 
+                  ${ isActive ? "bg-[#FCFDFC] text-[#0E2E23]"  : "text-white hover:bg-[#2D8062]" }`} >
+                    {isImageIcon ? (
+                      <img className={`w-5 h-5 ${isActive ? "filter invert" : ""}`}
+                        src={item.icon}
+                        alt={item.label}/>
+                    ) : (
+                      <item.icon
+                        className={`w-5 h-5 ${
+                          isActive ? "text-[#0E2E23]" : "text-white"
+                        } `}
+                      />
+                    )}
+                    {!iconToggle && (
+                      <span className="lg:text-xl text-md">{item.label}</span>
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </nav>
+        {role === "user" && (
+          <div
+            className={`flex items-center justify-center bg-[#E8E8E8] rounded-full w-12 h-12 absolute bottom-10 mt-20 ${
+              iconToggle ? "ml-1" : "ml-6"
+            }`}
+          >
+            <img src="/icons/questions.svg" alt="Question Icon" />
+          </div>
+        )}
     </aside>
   );
 };

@@ -115,12 +115,12 @@ const Messages = ({ handleClickMessages, title }) => {
               {(title === "Dashboard" ? simplifiedConversation.slice(0, 5): simplifiedConversation)?.map((item, index) => (
                 <div
                   key={index}
-                  className="grid grid-cols-[auto_1fr_auto_auto] items-center px-6 py-3 gap-4"
+                  className="items-center px-6 py-3 gap-4"
                 >
-                  <input
+                  {/* <input
                     type="checkbox"
                     className="w-5 h-5 bg-white rounded-md border-2 border-gray-300 cursor-pointer appearance-none checked:bg-blue-500 checked:border-transparent checked:relative checked:before:content-['✔'] checked:before:absolute checked:before:text-white checked:before:left-1/2 checked:before:top-1/2 checked:before:transform checked:before:-translate-x-1/2 checked:before:-translate-y-1/2 focus:outline-none"
-                  />
+                  /> */}
                   <div className="flex items-center space-x-4">
                     {item?.recipientPicture ? (
                       <img
@@ -129,7 +129,7 @@ const Messages = ({ handleClickMessages, title }) => {
                         alt="Avatar"
                       />
                     ) : (
-                      <div className="w-[40px] lg:h-[38px] h-[35px] rounded-full bg-green-800 flex items-center justify-center text-xl text-white font-semibold">
+                      <div className="md:w-[38px] w-[44px] h-[36px] rounded-full bg-green-800 flex items-center justify-center text-xl text-white font-semibold">
                         {getInitials(item?.recipientName)}
                       </div>
                     )}

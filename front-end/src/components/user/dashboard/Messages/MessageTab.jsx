@@ -6,10 +6,11 @@ import MessageDetails from "./MessageDetails";
 const MessageTab = ({ toggleSidebar }) => {
   const [openMessage, setOpenMessage] = useState(false);
   const [chatInfo, setChatInfo] = useState({});
-  const [active, setActive] = useState("All");
-  const buttonLabels = ["All", "Unanswered", "Urgent", "Assigned"];
+  // const [active, setActive] = useState("All");
+  // const buttonLabels = ["All", "Unanswered", "Urgent", "Assigned"];
 
   const handleClickMessages = (id, conversations) => {
+    if (chatInfo?.[0]?.id === id) return;
     setOpenMessage(true);
     const user = conversations?.filter((item) => item.id === id);
     setChatInfo(user);
@@ -20,8 +21,8 @@ const MessageTab = ({ toggleSidebar }) => {
       {!openMessage ? (
         <div>
           <Header title="Messages" toggleSidebar={toggleSidebar} />
-          <div className="bg-white mt-20">
-            <div className="lg:flex justify-between">
+          <div className="bg-white mt-24">
+            {/* <div className="lg:flex justify-between">
               <div className="flex mx-4 space-x-5">
                 {buttonLabels?.map((label, index) => (
                   <button onClick={()=>setActive(label)}
@@ -37,7 +38,7 @@ const MessageTab = ({ toggleSidebar }) => {
                 <button className="px-4">Filter</button>
                 <button className="px-4">Sort</button>
               </div>
-            </div>
+            </div> */}
           </div>
           <div className="md:ml-4 mx-2 md:mr-5">
             <Messages

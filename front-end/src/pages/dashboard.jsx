@@ -104,7 +104,7 @@ return (
               {activeSection === "integrations" && (
                 <Integrations toggleSidebar={toggleSidebar} setOpenModal={setOpenModal}/>
               )}
-                {activeSection === "setting" && (
+                {activeSection === "settings" && (
                 <MainSetting toggleSidebar={toggleSidebar} setOpenModal={setOpenModal}/>
               )}
             </>

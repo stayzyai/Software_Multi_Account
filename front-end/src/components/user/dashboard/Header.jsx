@@ -7,7 +7,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { clearUser } from "./../../../store/userSlice";
 
 
-const Header = ({ title, toggleSidebar, role, messages, openListingName, opneListingDetails, setOpenListingDetails }) => {
+const Header = ({ title, toggleSidebar, role, messages, openListingName, openListingDetails, setOpenListingDetails }) => {
   const [isDropDownOpen, setIsDropDownOpen] = React.useState(false);
   const dropdownRef = React.useRef(null);
   const firstname = useSelector((state) => state.user.firstname);
@@ -37,8 +37,8 @@ const Header = ({ title, toggleSidebar, role, messages, openListingName, opneLis
 
   return (
     <div style={{width:"-webkit-fill-available"}}
-      className={`fixed top-0 bg-[#FCFDFC] flex items-center justify-between pb-2 ${title === "Chat" ? "pt-3": "pt-6"} ${title === "Messages" || title === "Chat" ? "": "border-b border-gray-400"} ${
-        title === "Dashboard" || title === "Messages" || title === "Listings" || title === "Integrations" || title === "Setting"
+      className={`fixed top-0 bg-[#FCFDFC] flex items-center justify-between pb-2 ${title === "Chat" ? "pt-3": "pt-6"} ${ title === "Chat" ? "": "border-b border-gray-400"} ${
+        title === "Dashboard" || title === "Messages" || title === "Listings" || title === "Integrations" || title === "Settings"
           ? "bg-white flex items-center justify-between px-7 pb-2"
           : "flex items-center justify-between pb-2"
       } `}
@@ -51,18 +51,18 @@ const Header = ({ title, toggleSidebar, role, messages, openListingName, opneLis
         >
           <Menu className="h-5 w-5 text-gray-600" />
         </button>
-        {!opneListingDetails && title !== "Chat" && (
+        {!openListingDetails && title !== "Chat" && (
           <h1  style={{"-webkit-text-stroke-width": "0.5px", "-webkit-text-stroke-color":"#060606"}} className="xl:text-[32px] font-normal hidden md:block text-2xl">
             {title}
           </h1>
         )}
-          {opneListingDetails && (
-          <div className="flex items-center font-normal xl:text-2xl md:text-xl text-sm">
+          {openListingDetails && (
+          <div className="flex items-center font-light xl:text-2xl md:text-xl text-sm">
             <button onClick={()=>{setOpenListingDetails(false)}} >
             {title}
           </button >
           <ChevronDown className="sm:h-6 sm:w-7 h-4 -rotate-90"/>
-          <div className="xl:text-2xl md:text-lg text-sm font-normal cursor-pointer" style={{"-webkit-text-stroke-width": "0.2px", "-webkit-text-stroke-color":"#060606"}}>{openListingName}</div>
+          <div className="xl:text-2xl md:text-lg text-sm font-medium cursor-pointer" style={{"-webkit-text-stroke-width": "0.2px", "-webkit-text-stroke-color":"#060606"}}>{openListingName}</div>
         </div>)}
       </div>
       <div className={`flex items-center ${title === "Chat" ? "":"gap-4"}`}>

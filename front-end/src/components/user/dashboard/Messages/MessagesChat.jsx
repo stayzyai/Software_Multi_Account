@@ -68,13 +68,13 @@ const ButtonLoader = ()=><svg xmlns="http://www.w3.org/2000/svg" fill="currentCo
 </svg>
 
 return (
-    <div className="w-full flex flex-col mb-6">
+    <div className="w-full flex flex-col mb-6 h-full">
       <div className="flex-1 overflow-y-auto p-2 scrollbar-hide">
       {!isLoading ? (
           messages?.length > 0 ? (
             messages.map((msg, index) => (
               <div key={index} className={`w-full flex ${msg.isIncoming === 0 ? "justify-end" : "justify-start"}`}>
-                <div className={`mb-4 py-6 px-4 w-4/6 rounded-[10px] ${msg.isIncoming === 0 ? "bg-[#F1F1F1]" : "bg-[#F8F8F8]"}`}>
+                <div className={`mb-4 py-6 px-4 w-1/2 rounded-[10px] ${msg.isIncoming === 0 ? "bg-[#F1F1F1]" : "bg-[#F8F8F8]"}`}>
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 bg-green-800 text-white rounded-full flex justify-center items-center ${msg.isIncoming !== 0 ? "text-xl font-bold": "text-sm font-semibold"} `}>
                       {msg.isIncoming !== 0 ? chatInfo[0]?.recipientName[0] : "You"}
@@ -115,7 +115,7 @@ return (
         </button>
       </div>
       <div className="flex items-center px-6 w-full">
-        <div className="w-full">
+        <div className="w-full pb-5">
           <div className="flex gap-4 justify-end mb-6">
             <div className="text-sm">Via Lodgify</div>
             <img src="/icons/down.svg" alt="down icon" />

@@ -21,7 +21,7 @@ const [bookingDetails, setbookingDetails] = useState([])
   },[chatInfo])
 
   return (
-    <div className={`transition-all duration-300 ${openBooking ? "block z-50 fixed top-0 right-0 bg-white border border-gray-200 rounded pb-4" : "hidden"} xl:block border-l border-gray-300`}>
+    <div className={`transition-all duration-300  max-h-screen w-2/3 min-h-full overflow-y-auto ${openBooking ? "w-auto block z-50 fixed top-0 right-0 bg-white border border-gray-200 rounded pb-4" : "hidden"} xl:block border-l border-gray-300`}>
       <button onClick={()=>setOpenBooking(!openBooking)} className="absolute mt-96 bg-gray-100 p-1 py-2 rounded-lg xl:hidden"><FiChevronsLeft size={24}/></button>
       <div className="bg-[#FCFDFC] p-7 space-y-6 w-[365px]">
         <div className="flex gap-8 mb-10 text-lg">

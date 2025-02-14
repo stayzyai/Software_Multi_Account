@@ -9,7 +9,7 @@ import { useSelector } from "react-redux";
 import { getListing, formatReservations } from "../../../../helpers/ListingsHelper";
 
 const ListingDetails = ({ toggleSidebar, openListingName,
-opneListingDetails, setOpenListingDetails, listingId, properties }) => {
+openListingDetails, setOpenListingDetails, listingId, properties }) => {
 
   const listings = useSelector((state)=>state.listings.listings)
   const reservation = useSelector((state)=>state.reservations.reservations)
@@ -32,7 +32,7 @@ opneListingDetails, setOpenListingDetails, listingId, properties }) => {
       <Header
         title={"Listings"}
         toggleSidebar={toggleSidebar}
-        opneListingDetails={opneListingDetails}
+        openListingDetails={openListingDetails}
         openListingName={openListingName}
         setOpenListingDetails={setOpenListingDetails}
       />

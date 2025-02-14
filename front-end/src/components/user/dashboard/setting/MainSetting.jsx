@@ -4,7 +4,7 @@ import HostawayAccount from "./HostawayAccount";
 const MainSetting = ({ toggleSidebar, setOpenModal }) => {
   return (
     <>
-      <Header title={"Setting"} toggleSidebar={toggleSidebar} role={"user"} />
+      <Header title={"Settings"} toggleSidebar={toggleSidebar} role={"user"} />
       <HostawayAccount setOpenModal={setOpenModal} />
     </>
   );

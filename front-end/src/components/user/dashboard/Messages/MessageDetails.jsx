@@ -53,7 +53,7 @@ const getFirstTwoWords = (name)=>{
   return (
     <div className="flex max-h-screen bg-[#fff]">
       {/* Sidebar with Messages */}
-      <div className={`transition-all duration-300 ${ openSidebarMessage ? "z-50 sm:z-0 fixed sm:sticky top-[70px] sm:top-0 h-full sm:h-auto left-0 bg-white": "hidden md:block"} lg:w-[220px] xl:w-[257px] bg-[#FCFDFC] border-r border-gray-300`}>
+      <div className={`transition-all duration-300 ${ openSidebarMessage ? "z-50 sm:z-0 fixed sm:sticky top-[70px] sm:top-0 h-full sm:h-auto left-0 bg-white": "hidden md:block"} lg:w-[230px] xl:w-[257px] bg-[#FCFDFC] border-r border-gray-300`}>
         <div className="flex gap-2 pl-6 mt-4">
           <button onClick={() => setOpenMessage(false)}>
             <img src="/icons/left.svg" alt="down icon" width={12} height={10} />
@@ -97,7 +97,7 @@ const getFirstTwoWords = (name)=>{
             </div>
           ))}
         </div>
-        <button onClick={() => setOpenSidebarMessage(!openSidebarMessage)} className="bg-gray-100 p-1 py-2 rounded-lg sm:hidden ml-44">
+        <button onClick={() => setOpenSidebarMessage(!openSidebarMessage)} className="bg-gray-100 p-1 py-2 rounded-lg ml-52 sm:hidden block absolute top-1/2">
           <FiChevronsRight size={24} />
         </button>
       </div>
@@ -119,13 +119,13 @@ const getFirstTwoWords = (name)=>{
                 </div>
               ))}
             </div>
-            <div className="w-[30%] hidden lg:block">
+            <div className="w-[40%] hidden lg:block">
               <Header title="Chat" messages={messages} toggleSidebar={toggleSidebar}
               />
             </div>
           </div>
         </div>
-        <div className="flex h-[calc(100vh-71px)]">
+        <div className="flex min-h-[calc(100vh-71px)]">
           <ChatMessages
             messages={messages}
             setMessage={setMessage}

@@ -5,7 +5,7 @@ import { useSelector } from "react-redux";
 import { formattedListing } from "../../../../helpers/ListingsHelper"
 
 const Listings = ({ toggleSidebar }) => {
-  const [opneListingDetails, setOpenListingDetails] = useState(false);
+  const [openListingDetails, setOpenListingDetails] = useState(false);
   const [openListingName, setOpenListingName] = useState("")
   const [listingId, setListingId] = useState(null)
   const [properties, setProperties] = useState([])
@@ -19,12 +19,12 @@ const Listings = ({ toggleSidebar }) => {
 
   return (
     <>
-      {opneListingDetails ? (
+      {openListingDetails ? (
         <ListingDetails
           toggleSidebar={toggleSidebar}
           setOpenListingDetails={setOpenListingDetails}
           openListingName={openListingName}
-          opneListingDetails={opneListingDetails}
+          openListingDetails={openListingDetails}
           listingId={listingId}
           properties={properties}
         />
