@@ -35,8 +35,8 @@ const Sidebar = ({
 
   return (
     <aside style={{height:"-webkit-fill-available"}}
-      className={`min-h-fit z-50 pb-16
-      fixed inset-y-0 p-6
+      className={`min-h-fit z-50 
+      fixed inset-y-0 px-6 pt-6
       bg-gradient-to-r to-[#2D8062] from-[#0E2E23] text-white
       transform transition-transform duration-300 ease-in-out
       ${isOpen ? "translate-x-0" : "-translate-x-full"}
@@ -96,7 +96,7 @@ const Sidebar = ({
         </nav>
         {role === "user" && (
           <div
-            className={`flex items-center justify-center bg-[#E8E8E8] rounded-full w-12 h-12 absolute bottom-10 mt-20 ${
+            className={`flex items-center justify-center bg-[#E8E8E8] rounded-full w-12 h-12 absolute bottom-10 ${
               iconToggle ? "ml-1" : "ml-6"
             }`}
           >
