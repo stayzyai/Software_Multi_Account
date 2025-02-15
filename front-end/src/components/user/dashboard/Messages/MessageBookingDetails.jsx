@@ -23,9 +23,9 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
 
   return (
     <div
-      className={`transition-all duration-300 max-h-scree xl:w-11/12 2xl:w-3/5 min-h-full overflow-y-auto scrollbar-hide font-inter ${
+      className={`transition-all duration-300 max-h-screen xl:w-11/12 2xl:w-3/5 min-h-full overflow-y-auto scrollbar-hide font-inter ${
         openBooking
-          ? "z-50 fixed xl:static  top-0 right-0 bg-[#FCFDFC] border border-gray-200 rounded pb-4"
+          ? "z-50 fixed xl:static  top-0 right-0 bg-[#FCFDFC] border border-gray-200 rounded xl:rounded-none pb-4"
           : "hidden xl:block border-l border-gray-300 "
       }`}
     >
@@ -73,7 +73,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
             return (
               <div key={index} className="text-lg">
                 <p className="mb-4 text-gray-500">Check in</p>
-                <div className="flex xl:gap-[98px] 2xl:gap-24 mb-8">
+                <div className="flex gap-16 xl:gap-[98px] 2xl:gap-24 mb-8">
                   <div className="flex gap-1 items-center text-nowrap">
                     <p>{item.timeIn.date}</p>{" "}
                     <img
@@ -94,7 +94,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
                   </div>
                 </div>
                 <p className="mb-4 text-gray-500">Check out</p>
-                <div className="flex xl:gap-[98px] 2xl:gap-24">
+                <div className="flex gap-16 xl:gap-[98px] 2xl:gap-24">
                   <div className="flex gap-2 text-nowrap items-center">
                     <p>{item.timeOut.date}</p>{" "}
                     <img
