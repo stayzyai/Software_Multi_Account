@@ -14,8 +14,8 @@ const Properties = ({ toggleSidebar, setOpenListingDetails, setOpenListingName, 
         <div className="border border-b border-black">
           <Header title="Listings" toggleSidebar={toggleSidebar} />
         </div>
-        <div className="mt-[76px]">
-          {properties?.length !== 0 ? <CommonTable
+        <div className={`${properties?.length !== 0 ? "mt-[70px]" : "mt-[40px]"}`}>
+          {properties?.length == 0 ? <CommonTable
             properties={properties}
             columns={columns}
             setOpenListingDetails={setOpenListingDetails}
