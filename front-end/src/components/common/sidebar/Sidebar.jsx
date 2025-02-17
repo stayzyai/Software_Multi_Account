@@ -36,12 +36,12 @@ const Sidebar = ({
   return (
     <aside style={{height:"-webkit-fill-available"}}
       className={`min-h-fit z-50 
-      fixed inset-y-0 ${iconToggle? "px-5": "px-6"}
+      fixed inset-y-0 ${iconToggle? "px-4": "px-6"}
       bg-gradient-to-r to-[#2D8062] from-[#0E2E23] text-white
       transform transition-transform duration-300 ease-in-out
       ${isOpen ? "translate-x-0" : "-translate-x-full"}
       md:relative md:translate-x-0
-    ${iconToggle ?" 2xl:w-[120px] xl:w-[9%] lg:w-[11%] md:w-[16%] w-[35%] ":" lg:w-[260px] w-[200px] "}`}
+    ${iconToggle ?" 2xl:w-[120px] xl:w-[105px] lg:w-[110px] md:w-[120px] w-[35%] ":" lg:w-[260px] w-[200px] "}`}
     >
       <div className="flex items-center justify-between mb-8">
         <div
@@ -49,8 +49,8 @@ const Sidebar = ({
           <img src="/icons/white-transparent.svg" alt="logo" className={`${iconToggle? "pt-4": "pt-5"}`}/>
           <img
             onClick={handleToggle}
-            className={`hidden md:block rounded-full lg:p-2 p-2 h-[30px] bg-white cursor-pointer absolute border-[0.2px] border-gray-500 ${
-              iconToggle ? "mt-[42px] rotate-180 lg:ml-32 md:ml-[140px] ml-[162px] xl:ml-[130px] 2xl:ml-[120px] ":" lg:ml-[260px]  ml-52 mt-[30px]"
+            className={`hidden md:block rounded-full xl:p-1.5 p-1 xl:h-[28px] h-[26px] bg-white cursor-pointer absolute border-[0.2px] border-gray-500 ${
+              iconToggle ? "mt-[32px] rotate-180 lg:ml-[112px] md:ml-[120px] ml-[162px] xl:ml-[105px] 2xl:ml-[120px] ":" lg:ml-[260px] ml-52 mt-[30px]"
             }`}
             src="/icons/side.svg"
             alt="side logo"
