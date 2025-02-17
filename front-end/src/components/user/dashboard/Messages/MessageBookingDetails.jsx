@@ -35,7 +35,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
       >
         <FiChevronsLeft size={24} />
       </button>
-      <div className="p-6">
+      <div className="px-6 pt-6">
         <div className="pl-6">
           <div className="flex gap-8 mb-10 text-lg">
             <p

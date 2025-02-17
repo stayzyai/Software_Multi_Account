@@ -49,7 +49,7 @@ const Sidebar = ({
           <img src="/icons/white-transparent.svg" alt="logo" className={`${iconToggle? "pt-4": "pt-5"}`}/>
           <img
             onClick={handleToggle}
-            className={`hidden md:block rounded-full lg:p-2 p-2 bg-white cursor-pointer absolute border-[0.2px] border-gray-500 ${
+            className={`hidden md:block rounded-full lg:p-2 p-2 h-[30px] bg-white cursor-pointer absolute border-[0.2px] border-gray-500 ${
               iconToggle ? "mt-[42px] rotate-180 lg:ml-32 md:ml-[140px] ml-[162px] xl:ml-[130px] 2xl:ml-[120px] ":" lg:ml-[260px]  ml-52 mt-[30px]"
             }`}
             src="/icons/side.svg"
