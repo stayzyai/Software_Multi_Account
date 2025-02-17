@@ -37,7 +37,7 @@ const Header = ({ title, toggleSidebar, role, messages, openListingName, openLis
 
   return (
     <div style={{width:"-webkit-fill-available"}}
-      className={`fixed top-0 bg-[#FCFDFC] flex items-center justify-between ${title === "Chat" ? "pt-3": "pt-5"} ${ title === "Chat" ? "": "border-b border-gray-400"} ${
+      className={`z-30 fixed top-0 bg-[#FCFDFC] flex items-center justify-between ${title === "Chat" ? "pt-3": "pt-5"} ${ title === "Chat" ? "": "border-b border-gray-400"} ${
         title === "Dashboard" || title === "Messages" || title === "Listings" || title === "Integrations" || title === "Settings"
           ? "bg-white flex items-center justify-between px-7 pb-2"
           : "flex items-center justify-between"
@@ -52,7 +52,7 @@ const Header = ({ title, toggleSidebar, role, messages, openListingName, openLis
           <Menu className="h-5 w-5 text-gray-600" />
         </button>
         {!openListingDetails && title !== "Chat" && (
-          <h1  style={{"-webkit-text-stroke-width": "0.5px", "-webkit-text-stroke-color":"#060606"}} className="xl:text-[32px] font-normal hidden md:block text-2xl">
+          <h1  style={{"-webkit-text-stroke-width": "0.5px", "-webkit-text-stroke-color":"#060606"}} className={`font-normal hidden md:block text-2xl ${title === "Listings" ? "text-2xl" : "xl:text-[32px]"}`}>
             {title}
           </h1>
         )}

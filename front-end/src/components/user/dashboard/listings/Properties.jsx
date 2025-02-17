@@ -6,7 +6,7 @@ import ListingShimmer from "../../../common/shimmer/ListingShimmer";
 
 const Properties = ({ toggleSidebar, setOpenListingDetails, setOpenListingName, setListingId, properties}) => {
 
-  const columns = ["", "Name", "Address", "Occupancy", "Issues", "AI"];
+  const columns = ["Name", "Address", "Occupancy", "Issues", "AI"];
 
   return (
     <>

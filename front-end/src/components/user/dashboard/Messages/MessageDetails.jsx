@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import Header from "../Header";
 import MessageBookingDetails from "./MessageBookingDetails";
 import ChatMessages from "./MessagesChat";
-import { FiChevronsRight } from "react-icons/fi";
+import { FiChevronsLeft } from "react-icons/fi";
 import { sendMessages } from "../../../../helpers/Message"
 import { toast } from "sonner";
 import { simplifiedResult } from "../../../../helpers/Message";
@@ -98,7 +98,7 @@ const getFirstTwoWords = (name)=>{
           ))}
         </div>
         <button onClick={() => setOpenSidebarMessage(!openSidebarMessage)} className="bg-gray-100 p-1 py-2 rounded-lg ml-52 sm:hidden block absolute top-1/2">
-          <FiChevronsRight size={24} />
+          <FiChevronsLeft size={24} />
         </button>
       </div>
       {/* Chat Content Area */}

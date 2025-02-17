@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FiChevronsLeft } from "react-icons/fi";
+import { FiChevronsRight } from "react-icons/fi";
 import { useSelector } from "react-redux";
 import { getTimeDetails, getBookingdetails } from "../../../../helpers/Message";
 import { useEffect } from "react";
@@ -23,7 +23,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
 
   return (
     <div
-      className={`transition-all duration-300 max-h-screen xl:w-11/12 2xl:w-3/5 min-h-full overflow-y-auto scrollbar-hide font-inter ${
+      className={`transition-all duration-300 max-h-screen xl:w-[610px] 2xl:w-[580px] min-h-full overflow-y-auto scrollbar-hide font-inter ${
         openBooking
           ? "z-50 fixed xl:static  top-0 right-0 bg-[#FCFDFC] border border-gray-200 rounded xl:rounded-none pb-4"
           : "hidden xl:block border-l border-gray-300 "
@@ -31,11 +31,10 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
     >
       <button
         onClick={() => setOpenBooking(!openBooking)}
-        className="absolute mt-96 bg-gray-100 p-1 py-2 rounded-lg xl:hidden"
-      >
-        <FiChevronsLeft size={24} />
+        className="absolute mt-96 bg-gray-100 p-1 py-2 rounded-lg xl:hidden">
+        <FiChevronsRight size={24} />
       </button>
-      <div className="px-6 pt-6">
+      <div className="px-8 pt-6 pb-3">
         <div className="pl-6">
           <div className="flex gap-8 mb-10 text-lg">
             <p
@@ -73,7 +72,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
             return (
               <div key={index} className="text-lg">
                 <p className="mb-4 text-gray-500">Check in</p>
-                <div className="flex gap-16 xl:gap-[98px] 2xl:gap-24 mb-8">
+                <div className="flex gap-16 xl:gap-[70px] 2xl:gap-[60px] mb-8">
                   <div className="flex gap-1 items-center text-nowrap">
                     <p>{item.timeIn.date}</p>{" "}
                     <img
@@ -94,7 +93,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
                   </div>
                 </div>
                 <p className="mb-4 text-gray-500">Check out</p>
-                <div className="flex gap-16 xl:gap-[98px] 2xl:gap-24">
+                <div className="flex gap-16 xl:gap-[70px] 2xl:gap-[60px]">
                   <div className="flex gap-2 text-nowrap items-center">
                     <p>{item.timeOut.date}</p>{" "}
                     <img
@@ -118,9 +117,9 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
             );
           })}
         </div>
-        <div className="pt-14 grid grid-cols-2 text-nowrap gap-12 text-lg bg-[#FCFDFC]">
+        <div className="pt-14 grid grid-cols-2 text-nowrap gap-10 text-lg bg-[#FCFDFC]">
           {bookingDetails?.map((item, index) => (
-            <div key={index} className="ml-6">
+            <div key={index} className="ml-8">
               <p className="text-gray-500 mb-3">{item.label}</p>
               <p>{item.value}</p>
             </div>
