@@ -36,24 +36,21 @@ const Sidebar = ({
   return (
     <aside style={{height:"-webkit-fill-available"}}
       className={`min-h-fit z-50 
-      fixed inset-y-0 px-6 pt-6
+      fixed inset-y-0 ${iconToggle? "px-5": "px-6"}
       bg-gradient-to-r to-[#2D8062] from-[#0E2E23] text-white
       transform transition-transform duration-300 ease-in-out
       ${isOpen ? "translate-x-0" : "-translate-x-full"}
       md:relative md:translate-x-0
-    ${iconToggle ?" 2xl:w-[160px] xl:w-[9%] lg:w-[12%] md:w-[16%] w-[35%] ":" lg:w-[260px] w-[200px] "}`}
+    ${iconToggle ?" 2xl:w-[120px] xl:w-[9%] lg:w-[11%] md:w-[16%] w-[35%] ":" lg:w-[260px] w-[200px] "}`}
     >
       <div className="flex items-center justify-between mb-8">
         <div
-          className={`flex items-center justify-center w-full  ${
-            iconToggle && "mb-4"
-          }`}
-        >
-          <img src="/logo.svg" alt="logo" className={`${iconToggle? "w-60 h-12": "w-48 h-12"}`}/>
+          className={`flex items-center justify-center w-full ${iconToggle && "mb-4"}`}>
+          <img src="/icons/white-transparent.svg" alt="logo" className={`${iconToggle? "pt-4": "pt-5"}`}/>
           <img
             onClick={handleToggle}
             className={`hidden md:block rounded-full lg:p-2 p-2 bg-white cursor-pointer absolute border-[0.2px] border-gray-500 ${
-              iconToggle ? " rotate-180 lg:ml-32 md:ml-32 ml-[162px] xl:ml-[120px] 2xl:ml-[150px]":" lg:ml-[260px]  ml-52 "
+              iconToggle ? "mt-[42px] rotate-180 lg:ml-32 md:ml-[140px] ml-[162px] xl:ml-[130px] 2xl:ml-[120px] ":" lg:ml-[260px]  ml-52 mt-[30px]"
             }`}
             src="/icons/side.svg"
             alt="side logo"
@@ -73,7 +70,7 @@ const Sidebar = ({
                 <div key={item.id} className="flex justify-center mb-3">
                   <button onClick={() => { onNavigation(item.id); setActiveTab(item.id); toggleSidebar(); }}
                   className={`flex items-center ${ iconToggle ? "rounded-xl scale-110 px-4 py-3 my-1"   : "w-[90%] gap-2 px-4 lg:px-6 py-3 rounded-3xl" } 
-                  ${ isActive ? "bg-[#FCFDFC] text-[#0E2E23]"  : "text-white hover:bg-[#2D8062]" }`} >
+                  ${ isActive ? "bg-[#FFFFFF] text-[#060606]"  : "text-[#FFFFFF] hover:bg-[#2D8062]" }`} >
                     {isImageIcon ? (
                       <img className={`w-5 h-5 ${isActive ? "filter invert" : ""}`}
                         src={item.icon}
@@ -81,12 +78,12 @@ const Sidebar = ({
                     ) : (
                       <item.icon
                         className={`w-5 h-5 ${
-                          isActive ? "text-[#0E2E23]" : "text-white"
+                          isActive ? "text-[#060606]" : "text-white"
                         } `}
                       />
                     )}
                     {!iconToggle && (
-                      <span className="lg:text-xl text-md">{item.label}</span>
+                      <span className={`lg:text-xl text-md ${ isActive ? "text-[#060606]" : "text-[#F1F1F1]"}`}>{item.label}</span>
                     )}
                   </button>
                 </div>
@@ -96,9 +93,7 @@ const Sidebar = ({
         </nav>
         {role === "user" && (
           <div
-            className={`flex items-center justify-center bg-[#E8E8E8] rounded-full w-12 h-12 absolute bottom-10 ${
-              iconToggle ? "ml-1" : "ml-6"
-            }`}
+            className={`flex items-center justify-center bg-[#E8E8E8] rounded-full w-12 h-12 absolute bottom-10 ml-6`}
           >
             <img src="/icons/questions.svg" alt="Question Icon" />
           </div>
