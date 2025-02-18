@@ -10,7 +10,7 @@ import { useSelector } from "react-redux";
 import { setMessages } from "../../../../store/messagesSlice";
 import { useDispatch } from "react-redux";
 
-const MessageDetails = ({ chatInfo, toggleSidebar, handleClickMessages, setOpenMessage }) => {
+const MessageDetails = ({ chatInfo, toggleSidebar, handleClickMessages, setOpenMessage, setChatInfo }) => {
 
   const conversation = useSelector((state)=>state.conversation.conversations)
   const  messsage = useSelector((state)=>state.messages)
@@ -49,13 +49,17 @@ const getFirstTwoWords = (name)=>{
       }
     }
   };
+  const handleCloseMessage = () => {
+    setOpenMessage(false);
+    setChatInfo({});
+  }
 
   return (
     <div className="flex max-h-screen bg-[#fff]">
       {/* Sidebar with Messages */}
       <div className={`transition-all duration-300 ${ openSidebarMessage ? "z-50 sm:z-0 fixed sm:sticky top-[70px] sm:top-0 h-full sm:h-auto left-0 bg-white": "hidden md:block"} lg:w-[230px] xl:w-[257px] bg-[#FCFDFC] border-r border-gray-300`}>
         <div className="flex gap-2 pl-6 mt-4">
-          <button onClick={() => setOpenMessage(false)}>
+          <button onClick={handleCloseMessage}>
             <img src="/icons/left.svg" alt="down icon" width={12} height={10} />
           </button>
           <span style={{ "-webkit-text-stroke-width": "0.5px" }} className="text-2xl font-medium"> Messages </span>

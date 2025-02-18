@@ -51,6 +51,7 @@ const MessageTab = ({ toggleSidebar }) => {
       ) : (
         <MessageDetails
           chatInfo={chatInfo}
+          setChatInfo={setChatInfo}
           toggleSidebar={toggleSidebar}
           handleClickMessages={handleClickMessages}
           setOpenMessage={setOpenMessage}
