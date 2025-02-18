@@ -128,6 +128,7 @@ const DropdownMenu = ({ role }) => {
     dispatch(clearUser)
     logout();
     toast.success("Logged out successfully");
+    window.location.reload();
     navigate(`/user/login`);
   };
 
