@@ -2,7 +2,7 @@ const ListingInfo = ({aboutListing}) => {
 
 
   return (
-    <div className="px-10 py-20 text-[#000000] text-xl w-full">
+    <div className="md:px-10 px-2 py-20 text-[#000000] md:text-xl text-md w-full">
       <div className="space-y-6">
         {aboutListing?.map((section, index) => (
           <div key={section.title}>

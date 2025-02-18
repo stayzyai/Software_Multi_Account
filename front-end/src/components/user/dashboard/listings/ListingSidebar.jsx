@@ -8,8 +8,8 @@ const PropertyListingSidebar = ({ setActiveListingSection, activeListingSection 
   ]
 
   return (
-    <aside className="bg-[#FCFDFC] border-r border-gray-300 md:w-[181px] h-screen overflow-y-auto fixed mt-[29px] xl:mt-[29px] lg:mt-[35px]">
-      <nav className="pt-20 px-8 md:px-14">
+    <aside className="bg-[#FCFDFC] border-r border-gray-300 md:w-[181px] w-32 h-screen overflow-y-auto fixed mt-[25px] lg:mt-[25px]">
+      <nav className="pt-16 px-8 md:px-14">
         <div className="space-y-6">
           {sections.map((section) => (
             <button

@@ -63,9 +63,9 @@ const ListingNearbyDetails = ({ listingId, properties })=>{
   );
 
     return(
-        <div className="w-full pl-11 pr-5 pt-16">
+        <div className="w-full md:pl-11 pr-5 pt-16">
         <div className="flex flex-col">
-          <div className={`lg:flex justify-end w-full font-normal text-xl pb-4 lg:pb-0 ${occupancy !== "Vacant" ? "text-[#2D8062]" : "text-red-600" }`}>Current Status : {occupancy}</div>
+          <div className={`lg:flex justify-end w-full font-normal md:text-xl text-md pb-4 lg:pb-0 ${occupancy !== "Vacant" ? "text-[#2D8062]" : "text-red-600" }`}>Current Status : {occupancy}</div>
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex items-center space-x-4 mb-10 z-10">
                 <Label htmlFor="maps-toggle" className="text-xl lg:text-2xl font-normal">

@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 const BookingGroup = ({ dateRange, bookings }) => {
   return (
     <div className="space-y-2 text-[#000000]">
-      <div className="text-[22px] font-semibold border-b border-gray-300 py-1 font-inter">{dateRange}</div>
+      <div className="md:text-[22px] font-semibold border-b border-gray-300 py-1 font-inter">{dateRange}</div>
       {!bookings ? (
         <p className="font-light text-[18px]">No Bookings</p>
       ) : (
@@ -15,7 +15,7 @@ const BookingGroup = ({ dateRange, bookings }) => {
                   <div className="h-8 w-8 bg-[#D9D9D9] rounded-full">
                   </div>
                   <div className="space-y-1">
-                    <p className="font-medium text-xl">{booking.guestName}</p>
+                    <p className="font-medium md:text-xl text-sm">{booking.guestName}</p>
                     <div className="text-[15px]">
                       <p>
                         {booking.nights}{" "}
@@ -50,7 +50,7 @@ const ListingBookingDetails = ({calenderDetails}) => {
     <div className="w-full mt-7">
       <main>
         <div>
-          <div className="p-6 space-y-8">
+          <div className="md:p-6 p-2 space-y-8">
             {calenderDetails.dateRanges?.map((range, index) => (
               <BookingGroup
                 key={range}

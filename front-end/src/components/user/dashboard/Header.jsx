@@ -62,7 +62,7 @@ const Header = ({ title, toggleSidebar, role, messages, openListingName, openLis
             {title}
           </button >
           <ChevronDown className="sm:h-6 sm:w-7 h-4 -rotate-90"/>
-          <div className="xl:text-2xl md:text-lg text-sm font-medium cursor-pointer" style={{"-webkit-text-stroke-width": "0.2px", "-webkit-text-stroke-color":"#060606"}}>{openListingName}</div>
+          <div className="xl:text-2xl md:text-lg text-xs font-medium cursor-pointer" style={{"-webkit-text-stroke-width": "0.2px", "-webkit-text-stroke-color":"#060606"}}>{openListingName}</div>
         </div>)}
       </div>
       <div className={`flex items-center ${title === "Chat" ? "":"gap-4"}`}>

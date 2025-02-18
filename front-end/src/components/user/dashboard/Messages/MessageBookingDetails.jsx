@@ -31,7 +31,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
     >
       <button
         onClick={() => setOpenBooking(!openBooking)}
-        className="absolute mt-96 bg-gray-100 p-1 py-2 rounded-lg xl:hidden">
+        className="absolute top-1/2 bg-gray-100 p-1 py-2 rounded-lg xl:hidden">
         <FiChevronsRight size={24} />
       </button>
       <div className="px-8 pt-6 pb-3">
