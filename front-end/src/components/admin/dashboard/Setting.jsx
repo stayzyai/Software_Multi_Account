@@ -14,7 +14,7 @@ import { SettingSkeleton } from "../../common/shimmer/setting";
 import { toast } from "sonner";
 import api from "@/api/api";
 
-export default function Settings({ toggleSidebar }) {
+export default function Settings({ setOpenModal }) {
   const [profile, setProfile] = useState(null);
   const [initialProfile, setInitialProfile] = useState(null);
   const [passwords, setPasswords] = useState({
@@ -117,7 +117,7 @@ export default function Settings({ toggleSidebar }) {
   return (
     <div className="p-8 overflow-auto">
       <div>
-        <Header title="Settings" toggleSidebar={toggleSidebar} />
+        <Header title="Settings" setOpenModal={setOpenModal} />
 
         <div className="space-y-6">
           <Card>

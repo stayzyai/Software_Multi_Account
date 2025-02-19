@@ -26,7 +26,7 @@ import Shimmer from "../../common/shimmer/userShimmer";
 import Pagination from "@/components/ui/pagination";
 import { toast } from "sonner";
 
-export default function Users({ toggleSidebar }) {
+export default function Users({ setOpenModal }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [editedUser, setEditedUser] = useState({
@@ -118,7 +118,7 @@ export default function Users({ toggleSidebar }) {
   return (
     <div className="p-8 overflow-auto">
       <div>
-        <Header title="Users" toggleSidebar={toggleSidebar} />
+        <Header title="Users" setOpenModal={setOpenModal} />
         {loading && <Shimmer />}
         {error && <div>Error: {error}</div>}
         {!loading && !error && userData && (

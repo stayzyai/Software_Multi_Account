@@ -4,7 +4,7 @@ import CommonTable from "../common/Table";
 // import { formattedListing } from "../../../../helpers/ListingsHelper";
 import ListingShimmer from "../../../common/shimmer/ListingShimmer";
 
-const Properties = ({ toggleSidebar, setOpenListingDetails, setOpenListingName, setListingId, properties}) => {
+const Properties = ({ setOpenListingDetails, setOpenListingName, setListingId, properties}) => {
 
   const columns = ["Name", "Address", "Occupancy", "Issues", "AI"];
 
@@ -12,7 +12,7 @@ const Properties = ({ toggleSidebar, setOpenListingDetails, setOpenListingName, 
     <>
       <div className="flex flex-col bg-[#FCFDFC]">
         <div className="border border-b border-black">
-          <Header title="Listings" toggleSidebar={toggleSidebar} />
+          <Header title="Listings" />
         </div>
         <div className={`${properties?.length !== 0 ? "mt-[70px]" : "mt-[40px]"}`}>
           {properties?.length !== 0 ? <CommonTable

@@ -8,7 +8,7 @@ import ListingNearbyDetails from "./ListingNearbyDetails";
 import { useSelector } from "react-redux";
 import { getListing, formatReservations } from "../../../../helpers/ListingsHelper";
 
-const ListingDetails = ({ toggleSidebar, openListingName,
+const ListingDetails = ({ openListingName,
 openListingDetails, setOpenListingDetails, listingId, properties }) => {
 
   const listings = useSelector((state)=>state.listings.listings)
@@ -31,7 +31,6 @@ openListingDetails, setOpenListingDetails, listingId, properties }) => {
     <>
       <Header
         title={"Listings"}
-        toggleSidebar={toggleSidebar}
         openListingDetails={openListingDetails}
         openListingName={openListingName}
         setOpenListingDetails={setOpenListingDetails}

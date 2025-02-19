@@ -15,7 +15,7 @@ import Pagination from "../../ui/pagination";
 import Shimmer from "../../common/shimmer/userShimmer";
 import api from "@/api/api";
 
-const Home = ({ toggleSidebar }) => {
+const Home = ({ setOpenModal }) => {
   const [userData, setUserData] = useState(null);
   const [userError, setUserError] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
@@ -63,7 +63,7 @@ const Home = ({ toggleSidebar }) => {
   return (
     <div className="p-8 overflow-auto">
       <div className="mx-auto">
-        <Header title={"Dashboard"} toggleSidebar={toggleSidebar} />
+        <Header title={"Dashboard"} setOpenModal={setOpenModal} />
         {isLoading ? (
           <Shimmer />
         ) : (

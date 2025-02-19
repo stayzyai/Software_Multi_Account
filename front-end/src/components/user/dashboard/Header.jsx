@@ -5,9 +5,9 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useSelector, useDispatch } from "react-redux";
 import { clearUser } from "./../../../store/userSlice";
+import {setOpenModal} from "./../../../store/sidebarSlice";
 
-
-const Header = ({ title, toggleSidebar, role, messages, openListingName, openListingDetails, setOpenListingDetails }) => {
+const Header = ({ title, role, messages, openListingName, openListingDetails, setOpenListingDetails }) => {
   const [isDropDownOpen, setIsDropDownOpen] = React.useState(false);
   const dropdownRef = React.useRef(null);
   const firstname = useSelector((state) => state.user.firstname);
@@ -16,7 +16,7 @@ const Header = ({ title, toggleSidebar, role, messages, openListingName, openLis
   const toggleDropDown = () => {
     setIsDropDownOpen(!isDropDownOpen);
   };
-
+  const dispatch = useDispatch();
   React.useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -37,7 +37,7 @@ const Header = ({ title, toggleSidebar, role, messages, openListingName, openLis
 
   return (
     <div style={{width:"-webkit-fill-available"}}
-      className={`z-30 fixed top-0 bg-[#FCFDFC] flex items-center justify-between ${title === "Chat" ? "pt-3": "pt-5"} ${ title === "Chat" ? "": "border-b border-gray-400"} ${
+      className={`z-30 fixed top-0 bg-[#FCFDFC] flex items-center justify-between ${title === "Chat" ? "pt-1": "pt-5"} ${ title === "Chat" ? "": "border-b border-gray-400"} ${
         title === "Dashboard" || title === "Messages" || title === "Listings" || title === "Integrations" || title === "Settings"
           ? "bg-white flex items-center justify-between px-7 pb-2"
           : "flex items-center justify-between"
@@ -46,7 +46,7 @@ const Header = ({ title, toggleSidebar, role, messages, openListingName, openLis
       <div
        className="flex items-center gap-4">
         <button
-          onClick={toggleSidebar}
+          onClick={() => dispatch(setOpenModal(true))}
           className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 md:hidden focus:outline-none"
         >
           <Menu className="h-5 w-5 text-gray-600" />
@@ -71,7 +71,7 @@ const Header = ({ title, toggleSidebar, role, messages, openListingName, openLis
           <input
             type="text"
             placeholder="Search"
-            className={`pl-12 pr-4 bg-[#E8E8E8] rounded-full focus:outline-none hidden lg:block ${title !== "Chat"?"w-[300px] xl:w-[450px] py-2":"w-[244px] py-3"}`}
+            className={`pl-12 pr-4 bg-[#E8E8E8] rounded-full focus:outline-none hidden lg:block ${title !== "Chat"?"w-[300px] xl:w-[450px] py-2":"w-[244px] h-[46px] py-3"}`}
           />
         </div>
 

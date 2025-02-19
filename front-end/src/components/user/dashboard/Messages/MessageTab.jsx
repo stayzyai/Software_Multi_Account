@@ -3,7 +3,7 @@ import Header from "../Header";
 import Messages from "./Messages";
 import MessageDetails from "./MessageDetails";
 
-const MessageTab = ({ toggleSidebar }) => {
+const MessageTab = () => {
   const [openMessage, setOpenMessage] = useState(false);
   const [chatInfo, setChatInfo] = useState({});
   // const [active, setActive] = useState("All");
@@ -20,7 +20,7 @@ const MessageTab = ({ toggleSidebar }) => {
     <>
       {!openMessage ? (
         <div>
-          <Header title="Messages" toggleSidebar={toggleSidebar} />
+          <Header title="Messages" />
           <div className="bg-white mt-24">
             {/* <div className="lg:flex justify-between">
               <div className="flex mx-4 space-x-5">
@@ -42,7 +42,6 @@ const MessageTab = ({ toggleSidebar }) => {
           </div>
           <div className="md:ml-4 mx-2 md:mr-5">
             <Messages
-              toggleSidebar={toggleSidebar}
               handleClickMessages={handleClickMessages}
               title={"Messages"}
             />
@@ -52,7 +51,6 @@ const MessageTab = ({ toggleSidebar }) => {
         <MessageDetails
           chatInfo={chatInfo}
           setChatInfo={setChatInfo}
-          toggleSidebar={toggleSidebar}
           handleClickMessages={handleClickMessages}
           setOpenMessage={setOpenMessage}
         />

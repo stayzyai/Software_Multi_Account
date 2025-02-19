@@ -3,10 +3,12 @@ import { CircleUserRound, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
 
-const Header = ({ title, toggleSidebar }) => {
+const Header = ({ title, setOpenModal }) => {
   const [isDropDownOpen, setIsDropDownOpen] = React.useState(false);
   const dropdownRef = React.useRef(null);
+  const dispatch = useDispatch();
 
   const toggleDropDown = () => {
     setIsDropDownOpen(!isDropDownOpen);
@@ -37,7 +39,7 @@ const Header = ({ title, toggleSidebar }) => {
     <div className="flex justify-between items-center mb-8">
       <div className="flex items-center">
         <button
-          onClick={toggleSidebar}
+          onClick={()=>dispatch(setOpenModal(true))}
           className="mr-4 md:hidden focus:outline-none"
         >
           <Menu className="h-6 w-6" />
