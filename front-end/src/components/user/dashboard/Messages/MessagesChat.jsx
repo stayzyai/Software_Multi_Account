@@ -116,10 +116,10 @@ return (
       </div>
       <div className="flex items-center px-6 w-full">
         <div className="w-full pb-5">
-          <div className="flex gap-4 justify-end mb-6">
+          {/* <div className="flex gap-4 justify-end mb-6">
             <div className="text-sm">Via Lodgify</div>
             <img src="/icons/down.svg" alt="down icon" />
-          </div>
+          </div> */}
           <div className="border border-gray-400 h-[180px] rounded-xl  px-4">
             <textarea rows={5}
               type="text"

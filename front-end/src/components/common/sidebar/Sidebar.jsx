@@ -32,12 +32,14 @@ const Sidebar = ({ role = "admin" }) => {
   const handleToggle = () => {
     dispatch(setIconToggle(!iconToggle));
   };
+  const unreadNotifications = useSelector((state) => state.notifications.unreadChats);
 
   const handleNavigation = (item) => {
     // setActiveTab(item.id);
     dispatch(setOpenModal(false));
     navigate(item.route);
   }
+  const hasUnreadMessages = unreadNotifications && Object.values(unreadNotifications).some((value) => value === true);
 
   return (
     <aside style={{height:"-webkit-fill-available"}}
@@ -91,6 +93,9 @@ const Sidebar = ({ role = "admin" }) => {
                     {!iconToggle && (
                       <span className={`lg:text-xl text-md ${ isActive ? "text-[#060606]" : "text-[#F1F1F1]"}`}>{item.label}</span>
                     )}
+                    {item.id === "messages" && hasUnreadMessages && ( <span className={`${ iconToggle  ? "w-2 h-2 bg-red-500 rounded-full fixed left-10 top-2" : "w-3 h-3 bg-red-500 rounded-full fixed top-44 left-[152px] sm:left-40 md:left-[150px] lg:left-48" }`}
+                    />
+                  )}
                   </button>
                 </div>
               );

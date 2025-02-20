@@ -1,24 +1,56 @@
 import { useState } from "react";
 import { FiChevronsRight } from "react-icons/fi";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { getTimeDetails, getBookingdetails } from "../../../../helpers/Message";
 import { useEffect } from "react";
+import { setReservations } from "../../../../store/reservationSlice";
+import api from "@/api/api";
 
 const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
   const [activeSession, setActiveSession] = useState("booking");
   const reservation = useSelector((state) => state.reservations.reservations);
   const [timeDetails, setTimeDetails] = useState([]);
   const [bookingDetails, setbookingDetails] = useState([]);
+  const dispatch = useDispatch()
+
+  const getReservations = async () => {
+      try {
+        const response = await api.get("/hostaway/get-all/reservations");
+        if (response?.data?.detail?.data?.result) {
+          const data = response?.data?.detail?.data?.result;
+          dispatch(setReservations(data));
+          return data;
+        }
+      } catch (error) {
+        console.log("Error at get reservastion: ", error);
+        return []
+      }
+    };
 
   useEffect(() => {
-    const reservationId = chatInfo[0]["reservationId"];
-    const reservationData = reservation.find(
-      (item) => item.id === reservationId
-    );
-    const timeData = getTimeDetails(reservationData);
-    const bookingdata = getBookingdetails(reservationData);
-    setbookingDetails(bookingdata);
-    setTimeDetails(timeData);
+    if(reservation?.length !== 0){
+      const reservationId = chatInfo[0]["reservationId"];
+      const reservationData = reservation?.find(
+        (item) => item.id === reservationId
+      );
+      const timeData = getTimeDetails(reservationData);
+      const bookingdata = getBookingdetails(reservationData);
+      setbookingDetails(bookingdata);
+      setTimeDetails(timeData);
+      return
+    }
+    const fetchReservations = async() =>{
+      const reservationId = chatInfo[0]["reservationId"];
+      const NewReservation = await getReservations()
+      const reservationData = NewReservation?.find(
+        (item) => item.id === reservationId
+      );
+      const timeData = getTimeDetails(reservationData);
+      const bookingdata = getBookingdetails(reservationData);
+      setbookingDetails(bookingdata);
+      setTimeDetails(timeData);
+    }
+    fetchReservations()
   }, [chatInfo]);
 
   return (

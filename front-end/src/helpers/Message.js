@@ -37,7 +37,10 @@ const getAllconversation = async (chat_id) => {
 
 const sendMessages = async (chat_id, payload) => {
   try {
-    const response = await api.post(`/hostaway/post-data/conversations/${chat_id}/messages`, payload);
+    const response = await api.post(
+      `/hostaway/post-data/conversations/${chat_id}/messages`,
+      payload
+    );
     if (response?.data?.detail?.data?.result) {
       const data = [];
       const responseData = response?.data?.detail?.data?.result;
@@ -66,16 +69,32 @@ const formatTime = (dateStr) => {
 
 const simplifiedResult = (result, conversation) => {
   return result?.map(
-    ({ id, recipientName, recipientPicture, messageReceivedOn, reservationId,
-      listingMapId }) => {
+    ({
+      id,
+      recipientName,
+      recipientPicture,
+      messageReceivedOn,
+      messageSentOn,
+      reservationId,
+      listingMapId,
+    }) => {
       const foundConversation = conversation?.find((item) => item.id === id);
       // const latestMessage = foundConversation?.messages[foundConversation?.messages?.length-1]
-      const latestMessage = foundConversation?.messages?.length ? foundConversation.messages[foundConversation.messages.length - 1]
-      : null;
-      return { id, recipientName, recipientPicture, messageReceivedOn: latestMessage?.time, reservationId,
-        listingMapId, conversationMessages: latestMessage?.body ?? "", };
+      const latestMessage = foundConversation?.messages?.length
+        ? foundConversation.messages[foundConversation.messages.length - 1]
+        : null;
+      return {
+        id,
+        recipientName,
+        recipientPicture,
+        messageReceivedOn: latestMessage?.time,
+        reservationId,
+        listingMapId,
+        conversationMessages: latestMessage?.body ?? "",
+        messagesDate: messageReceivedOn ? messageReceivedOn : messageSentOn,
+      };
     }
-  )
+  );
 };
 
 const formatedMessages = (messages, listing) => {
@@ -112,12 +131,14 @@ const openAISuggestion = async (payload) => {
 };
 
 const getTimeDetails = (currentReservation) => {
+  if (!currentReservation) return;
   const formatTime = (hour) => {
     const period = hour >= 12 ? "PM" : "AM";
     const formattedHour = hour % 12 === 0 ? 12 : hour % 12;
     return `${formattedHour}:00 ${period}`;
   };
   const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
     const [year, month, day] = dateString?.split("-");
     return `${month}/${day}/${year}`;
   };
@@ -125,7 +146,7 @@ const getTimeDetails = (currentReservation) => {
     {
       timeIn: {
         date: formatDate(currentReservation?.arrivalDate),
-        time: formatTime(currentReservation.checkInTime),
+        time: formatTime(currentReservation?.checkInTime),
       },
       timeOut: {
         date: formatDate(currentReservation?.departureDate),
@@ -155,13 +176,15 @@ const getBookingdetails = (currentReservation) => {
 };
 
 const updateConversation = (messages, newMessage) => {
-  const conversation = messages.find((item) => item.id === newMessage.conversationId);
+  const conversation = messages.find(
+    (item) => item.id === newMessage.conversationId
+  );
   if (conversation) {
     const structuredMessage = {
-      "body": newMessage.body,
-      "date": newMessage.date,
-      "imagesUrls": newMessage.imagesUrls,
-      "isIncoming": newMessage.isIncoming
+      body: newMessage.body,
+      date: newMessage.date,
+      imagesUrls: newMessage.imagesUrls,
+      isIncoming: newMessage.isIncoming,
     };
     const updatedMessages = [...conversation.messages, structuredMessage];
     return updatedMessages;
@@ -170,17 +193,17 @@ const updateConversation = (messages, newMessage) => {
 };
 
 const updateMessages = (simplifiedConversation, newMessage) => {
-  const data =  simplifiedConversation.map((item) => {
+  const data = simplifiedConversation.map((item) => {
     if (item.id === newMessage.conversationId) {
       return {
         ...item,
         conversationMessages: newMessage.body,
-        messageReceivedOn: newMessage.date
+        messageReceivedOn: newMessage.date,
       };
     }
     return item;
   });
-  return data
+  return data;
 };
 
 const getConversations = async () => {
@@ -197,6 +220,118 @@ const getConversations = async () => {
   }
 };
 
+const getAllListings = async () => {
+  try {
+    const response = await api.get("/hostaway/get-all/listings");
+    if (response?.data?.detail?.data?.result) {
+      const data = response?.data?.detail?.data?.result;
+      return data;
+    }
+    return [];
+  } catch (error) {
+    console.log("Error at get  listings", error);
+    return [];
+  }
+};
+
+const filterMessages = (messages, filters) => {
+  const { Date: filterType, Listing: selectedListing } = filters;
+
+  if (filterType === "Date" && !selectedListing) {
+    return messages;
+  }
+
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const last7Days = new Date(today);
+  last7Days.setDate(last7Days.getDate() - 7);
+
+  function isSameDay(date1, date2) {
+    return (
+      date1.getFullYear() === date2.getFullYear() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getDate() === date2.getDate()
+    );
+  }
+  return messages?.filter((message) => {
+    if (!message.messagesDate) return false;
+    const messageDate = new Date(message.messagesDate);
+
+    let dateMatch = true;
+    if (filterType && filterType !== "Date") {
+      if (filterType === "Today") {
+        dateMatch = isSameDay(messageDate, today);
+      } else if (filterType === "Yesterday") {
+        dateMatch = isSameDay(messageDate, yesterday);
+      } else if (filterType === "Last 7 Days") {
+        dateMatch = messageDate >= last7Days;
+      }
+    }
+
+    let listingMatch = true;
+    if (selectedListing && selectedListing !== "") {
+      listingMatch = message.listingMapId === selectedListing;
+    }
+
+    return dateMatch && listingMatch;
+  });
+};
+
+const getListingsName = (listings) => {
+  return [
+    { id: "", name: "Listings" },
+    ...listings?.map((item) => ({
+      id: item.id,
+      name: item.name,
+    })),
+  ];
+};
+
+const filterReservations = (reservations, filters)=> {
+  const today = new Date().toISOString().split("T")[0];
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const next7Days = new Date();
+  next7Days.setDate(next7Days.getDate() + 7);
+
+  return reservations.filter((reservation) => {
+    const { quickFilter, selectedListing } = filters;
+    const arrivalDate = reservation.arrivalDate;
+    const departureDate = reservation.departureDate;
+
+    let matchesQuickFilter = true;
+    let matchesListingFilter = true;
+
+    if (quickFilter) {
+      switch (quickFilter) {
+        case "staying_guests":
+          matchesQuickFilter = today >= arrivalDate && today < departureDate;
+          break;
+        case "today_checkins":
+          matchesQuickFilter = arrivalDate === today;
+          break;
+        case "tomorrow_checkins":
+          matchesQuickFilter =
+            arrivalDate === tomorrow.toISOString().split("T")[0];
+          break;
+        case "next_7_days":
+          matchesQuickFilter =
+            arrivalDate > today &&
+            arrivalDate <= next7Days.toISOString().split("T")[0];
+          break;
+        default:
+          matchesQuickFilter = true;
+      }
+    }
+    if (selectedListing) {
+      matchesListingFilter = reservation.listingMapId == selectedListing;
+    }
+
+    return matchesQuickFilter && matchesListingFilter;
+  });
+}
+
 export {
   getAllconversation,
   sendMessages,
@@ -208,4 +343,8 @@ export {
   updateConversation,
   updateMessages,
   getConversations,
+  filterMessages,
+  getAllListings,
+  getListingsName,
+  filterReservations,
 };

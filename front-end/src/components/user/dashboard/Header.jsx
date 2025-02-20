@@ -6,13 +6,20 @@ import { toast } from "sonner";
 import { useSelector, useDispatch } from "react-redux";
 import { clearUser } from "./../../../store/userSlice";
 import {setOpenModal} from "./../../../store/sidebarSlice";
+import { useState } from "react";
 
 const Header = ({ title, role, messages, openListingName, openListingDetails, setOpenListingDetails }) => {
   const [isDropDownOpen, setIsDropDownOpen] = React.useState(false);
   const dropdownRef = React.useRef(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+
   const firstname = useSelector((state) => state.user.firstname);
   const lastname = useSelector((state) => state.user.lastname);
   const userRole = useSelector((state) => state.user.role);
+  const listings = useSelector((state) => state.listings.listings);
+  const conversations = useSelector((state) => state.conversation.conversations);
+
   const toggleDropDown = () => {
     setIsDropDownOpen(!isDropDownOpen);
   };
@@ -34,6 +41,30 @@ const Header = ({ title, role, messages, openListingName, openListingDetails, se
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isDropDownOpen]);
+
+  const handleSearch = (event) => {
+    const query = event.target.value;
+    setSearchQuery(query);
+    if (query.trim() === "") {
+      setSearchResults([]);
+      return;
+    }
+    const filteredListings = listings.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
+    const filteredConversations = conversations.filter(
+      (conv) => conv.recipientName?.toLowerCase().includes(searchQuery)
+    );
+    console.log('This is results',[...filteredListings, ...filteredConversations] );
+    const normalizedConversations = filteredConversations.map((conv) => ({
+      ...conv,
+      name: conv.recipientName,
+    }));
+    setSearchResults([...filteredListings, ...normalizedConversations]);
+  };
+
+  const handleSelectResult = (result) => {
+    setSearchQuery(result.name || result.content);
+    setSearchResults([]);
+  };
 
   return (
     <div style={{width:"-webkit-fill-available"}}
@@ -71,8 +102,23 @@ const Header = ({ title, role, messages, openListingName, openListingDetails, se
           <input
             type="text"
             placeholder="Search"
+            value={searchQuery}
+            onChange={handleSearch}
             className={`pl-12 pr-4 bg-[#E8E8E8] rounded-full focus:outline-none hidden lg:block ${title !== "Chat"?"w-[300px] xl:w-[450px] py-2":"w-[244px] h-[46px] py-3"}`}
           />
+          {searchResults.length > 0 && (
+            <ul className="absolute top-full left-0 mt-2 w-full max-h-60 overflow-y-auto bg-white shadow-lg rounded-md overflow-hidden z-10">
+              {searchResults.map((result, index) => (
+                <li
+                  key={index}
+                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleSelectResult(result)}
+                >
+                  {result.name || result.content}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <button
