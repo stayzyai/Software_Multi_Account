@@ -203,7 +203,7 @@ const Messages = ({ handleClickMessages, title }) => {
                         <p className="font-medium text-gray-800">
                           {item?.recipientName}
                         </p>
-                        <p className="text-sm text-[#7F7F7F] hidden md:block">
+                        <p className={`text-sm text-[#7F7F7F] hidden md:block ${ unreadChats[item.id] && 'font-semibold text-gray-700'}`}>
                           {item?.conversationMessages}
                         </p>
                       </div>
