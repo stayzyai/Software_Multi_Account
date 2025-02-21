@@ -72,8 +72,9 @@ const Sidebar = ({ role = "admin" }) => {
           <div className="max-h-[calc(100vh-100px)] overflow-y-auto scrollbar-hide">
             {navItems?.map((item) => {
               const isImageIcon = typeof item.icon === "string";
-              const isActive = location.pathname === item.route;
-
+              // const isActive = location.pathname === item.route;
+              // const isActive = location.pathname === item.route || (item.id === "messages" && (location.pathname.startsWith("/user/messages") || location.pathname.startsWith("/user/chat/")));
+              const isActive = location.pathname === item.route || (item.id === "messages" && (location.pathname.startsWith("/user/messages") || location.pathname.startsWith("/user/chat/"))) || (item.id === "listings" && (location.pathname.startsWith("/user/listings") || location.pathname.startsWith("/user/listing/")));
               return (
                 <div key={item.id} className="flex justify-center mb-3">
                   <button onClick={() => {handleNavigation(item)}}

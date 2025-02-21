@@ -7,12 +7,14 @@ import { useSelector, useDispatch } from "react-redux";
 import { clearUser } from "./../../../store/userSlice";
 import {setOpenModal} from "./../../../store/sidebarSlice";
 import { useState } from "react";
+import SearchResultsList from "./SearchResultsList";
 
 const Header = ({ title, role, messages, openListingName, openListingDetails, setOpenListingDetails }) => {
   const [isDropDownOpen, setIsDropDownOpen] = React.useState(false);
   const dropdownRef = React.useRef(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const navigate = useNavigate()
 
   const firstname = useSelector((state) => state.user.firstname);
   const lastname = useSelector((state) => state.user.lastname);
@@ -53,7 +55,7 @@ const Header = ({ title, role, messages, openListingName, openListingDetails, se
     const filteredConversations = conversations.filter(
       (conv) => conv.recipientName?.toLowerCase().includes(searchQuery)
     );
-    console.log('This is results',[...filteredListings, ...filteredConversations] );
+
     const normalizedConversations = filteredConversations.map((conv) => ({
       ...conv,
       name: conv.recipientName,
@@ -62,6 +64,11 @@ const Header = ({ title, role, messages, openListingName, openListingDetails, se
   };
 
   const handleSelectResult = (result) => {
+    if ("recipientName" in result) {
+      navigate(`/user/chat/${result.id}`)
+    } else {
+      navigate(`/user/listing/${result.id}`)
+    }
     setSearchQuery(result.name || result.content);
     setSearchResults([]);
   };
@@ -89,7 +96,7 @@ const Header = ({ title, role, messages, openListingName, openListingDetails, se
         )}
           {openListingDetails && (
           <div className="flex items-center font-light xl:text-2xl md:text-xl text-sm">
-            <button onClick={()=>{setOpenListingDetails(false)}} >
+            <button onClick={()=>{setOpenListingDetails(false); navigate("/user/listings")}} >
             {title}
           </button >
           <ChevronDown className="sm:h-6 sm:w-7 h-4 -rotate-90"/>
@@ -106,19 +113,7 @@ const Header = ({ title, role, messages, openListingName, openListingDetails, se
             onChange={handleSearch}
             className={`pl-12 pr-4 bg-[#E8E8E8] rounded-full focus:outline-none hidden lg:block ${title !== "Chat"?"w-[300px] xl:w-[450px] py-2":"w-[244px] h-[46px] py-3"}`}
           />
-          {searchResults.length > 0 && (
-            <ul className="absolute top-full left-0 mt-2 w-full max-h-60 overflow-y-auto bg-white shadow-lg rounded-md overflow-hidden z-10">
-              {searchResults.map((result, index) => (
-                <li
-                  key={index}
-                  className="px-4 py-2 cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleSelectResult(result)}
-                >
-                  {result.name || result.content}
-                </li>
-              ))}
-            </ul>
-          )}
+          <SearchResultsList searchResults={searchResults} handleSelectResult={handleSelectResult} />
         </div>
 
         <button
@@ -126,12 +121,6 @@ const Header = ({ title, role, messages, openListingName, openListingDetails, se
             messages || title =="Dashboard" || title =="Messages"  ? "invisible" : "p-2 rounded-full"
           }`}
         >
-          {/* <img
-            src="/message-text.png"
-            alt="User avatar"
-            width={30}
-            height={30}
-          /> */}
         </button>
 
         <div

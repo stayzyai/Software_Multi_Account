@@ -5,12 +5,14 @@ import { getTimeDetails, getBookingdetails } from "../../../../helpers/Message";
 import { useEffect } from "react";
 import { setReservations } from "../../../../store/reservationSlice";
 import api from "@/api/api";
+import MessageRightSidebar from "../../../common/shimmer/MessageRightSidebr"
 
 const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
   const [activeSession, setActiveSession] = useState("booking");
   const reservation = useSelector((state) => state.reservations.reservations);
   const [timeDetails, setTimeDetails] = useState([]);
   const [bookingDetails, setbookingDetails] = useState([]);
+  const [loading, setLoading] = useState(true)
   const dispatch = useDispatch()
 
   const getReservations = async () => {
@@ -19,9 +21,11 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
         if (response?.data?.detail?.data?.result) {
           const data = response?.data?.detail?.data?.result;
           dispatch(setReservations(data));
+          setLoading(false)
           return data;
         }
       } catch (error) {
+        setLoading(false)
         console.log("Error at get reservastion: ", error);
         return []
       }
@@ -37,6 +41,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
       const bookingdata = getBookingdetails(reservationData);
       setbookingDetails(bookingdata);
       setTimeDetails(timeData);
+      setLoading(false)
       return
     }
     const fetchReservations = async() =>{
@@ -49,9 +54,12 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
       const bookingdata = getBookingdetails(reservationData);
       setbookingDetails(bookingdata);
       setTimeDetails(timeData);
+      setLoading(false)
     }
     fetchReservations()
   }, [chatInfo]);
+
+  if(loading) return <div className="xl:w-[440px] 2xl:w-[440px] w-[340px]"> <MessageRightSidebar/> </div>
 
   return (
     <div

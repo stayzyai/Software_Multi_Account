@@ -17,6 +17,7 @@ const filteredResult = (result) =>
         time,
         imagesUrls: item.imagesUrls,
         isIncoming: item.isIncoming,
+        date: item.date,
       };
     })
     .reverse();
@@ -67,34 +68,36 @@ const formatTime = (dateStr) => {
   return `${hours}:${minutesStr} ${ampm}`;
 };
 
-const simplifiedResult = (result, conversation) => {
-  return result?.map(
-    ({
-      id,
-      recipientName,
-      recipientPicture,
-      messageReceivedOn,
-      messageSentOn,
-      reservationId,
-      listingMapId,
-    }) => {
-      const foundConversation = conversation?.find((item) => item.id === id);
-      // const latestMessage = foundConversation?.messages[foundConversation?.messages?.length-1]
-      const latestMessage = foundConversation?.messages?.length
-        ? foundConversation.messages[foundConversation.messages.length - 1]
-        : null;
+const simplifiedResult = (results, conversation) => {
+  return results
+    .map((result) => {
+      const conv = conversation.find((c) => c.id === result.id);
+      let latestConversationMessage = null;
+      if (conv && conv.messages.length > 0) {
+        latestConversationMessage = conv.messages.reduce((latest, msg) =>
+          new Date(msg.date) > new Date(latest.date) ? msg : latest
+        );
+      }
+
       return {
-        id,
-        recipientName,
-        recipientPicture,
-        messageReceivedOn: latestMessage?.time,
-        reservationId,
-        listingMapId,
-        conversationMessages: latestMessage?.body ?? "",
-        messagesDate: messageReceivedOn ? messageReceivedOn : messageSentOn,
+        id: result.id,
+        recipientName: result.recipientName,
+        recipientPicture: result.recipientPicture,
+        messageReceivedOn: result.messageReceivedOn,
+        messageSentOn: result.messageSentOn,
+        reservationId: result.reservationId,
+        listingMapId: result.listingMapId,
+        latestMessageTime: latestConversationMessage?.time,
+        conversationMessages: latestConversationMessage
+          ? latestConversationMessage?.body
+          : "",
       };
-    }
-  );
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.messageReceivedOn || a.messageSentOn);
+      const dateB = new Date(b.messageReceivedOn || b.messageSentOn);
+      return dateB - dateA;
+    });
 };
 
 const formatedMessages = (messages, listing) => {
@@ -288,7 +291,22 @@ const getListingsName = (listings) => {
   ];
 };
 
-const filterReservations = (reservations, filters)=> {
+const  getIdsWithLatestIncomingMessages = (data)=> {
+  const result = data
+  .filter(item => Array.isArray(item.messages) && item.messages.length > 0)
+  .map(item => ({ 
+      id: item.id, 
+      latestMessage: item.messages.reduce((latest, msg) => 
+          new Date(msg.date) > new Date(latest.date) ? msg : latest
+      )
+  }))
+  .filter(item => item.latestMessage.isIncoming === 1)
+  .map(item => item.id);
+
+    return result
+}
+
+const filterReservations = (reservations, filters) => {
   const today = new Date().toISOString().split("T")[0];
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -325,12 +343,12 @@ const filterReservations = (reservations, filters)=> {
       }
     }
     if (selectedListing) {
-      matchesListingFilter = reservation.listingMapId == selectedListing;
+      matchesListingFilter = reservation.listingMapId.toString() == selectedListing.toString();
     }
 
     return matchesQuickFilter && matchesListingFilter;
   });
-}
+};
 
 export {
   getAllconversation,
@@ -347,4 +365,5 @@ export {
   getAllListings,
   getListingsName,
   filterReservations,
+  getIdsWithLatestIncomingMessages
 };

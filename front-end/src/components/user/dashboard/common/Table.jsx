@@ -1,15 +1,17 @@
+import { useNavigate } from "react-router-dom";
 
 const CommonTable = ({
   properties,
   columns,
   setOpenListingDetails,
   setOpenListingName,
-  setListingId,
 }) => {
+
+  const navigate = useNavigate()
   const handleClick = (name, id) => {
     setOpenListingName(getFirstTwoWords(name))
-    setListingId(id);
-    setOpenListingDetails(true);
+    setOpenListingDetails(true)
+    navigate(`/user/listing/${id}`)
   };
 
   const getFirstTwoWords = (name)=>{
@@ -53,7 +55,7 @@ const CommonTable = ({
             {properties?.map((property, index) => (
               <tr
                 key={index}
-                className="md:py-5 p-1 border-b-[1px] border-[#D1D1D1] cursor-pointer"
+                className="md:py-5 p-1 border-b-[1px] border-[#D1D1D1] cursor-pointer hover:bg-gray-50 active:bg-gray-100"
               >
                 {/* <td className="md:py-4 lg:pl-3 xl:pl-0 p-1 pl-4 text-right">
                   <input

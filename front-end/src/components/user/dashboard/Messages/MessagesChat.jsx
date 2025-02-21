@@ -6,6 +6,8 @@ import { ScaleLoader } from 'react-spinners';
 import { openAISuggestion, formatedMessages } from "../../../../helpers/Message";
 import { useSelector } from "react-redux";
 import { toast } from "sonner";
+import { useDispatch } from "react-redux";
+import { setUnreadChat } from "../../../../store/notificationSlice"
 
 const ChatMessages = ({ messages, handleSendMessage, setInput, input, setOpenBooking,
   openBooking, setOpenSidebarMessage, openSidebarMessage, chatInfo, setMessage, messageLoader}) => {
@@ -14,6 +16,7 @@ const [isLoading, setLoading] = useState(true)
 const messagesEndRef = useRef(null);
 const [isSuggestion, setSuggestion] = useState(null)
 const chat_id = chatInfo?.length > 0 && chatInfo[0]["id"]
+const dispatch = useDispatch()
 
 const listings = useSelector((state)=>state.listings.listings)
 
@@ -38,7 +41,8 @@ const listings = useSelector((state)=>state.listings.listings)
     });
     newSocket.on("received_message", (newMessage) => {
       console.log("New message received:", newMessage);
-      if(chat_id === newMessage?.id){
+      dispatch(setUnreadChat({chatId: newMessage?.conversationId}))
+      if(chat_id == newMessage?.conversationId){
         setMessage((prevMessages) => [...prevMessages, newMessage]);
       }
     });
@@ -69,12 +73,12 @@ const ButtonLoader = ()=><svg xmlns="http://www.w3.org/2000/svg" fill="currentCo
 
 return (
     <div className="w-full flex flex-col mb-6 h-full">
-      <div className="flex-1 overflow-y-auto p-2 scrollbar-hide">
+      <div className="flex-1 overflow-y-auto p-6 scrollbar-hide ">
       {!isLoading ? (
           messages?.length > 0 ? (
             messages.map((msg, index) => (
               <div key={index} className={`w-full flex ${msg.isIncoming === 0 ? "justify-end" : "justify-start"}`}>
-                <div className={`mb-4 py-6 px-4 lg:w-1/2 w-3/4 rounded-[10px] ${msg.isIncoming === 0 ? "bg-[#F1F1F1]" : "bg-[#F8F8F8]"}`}>
+                <div className={`mb-4 p-4 2xl:w-[305px] lg:w-[255px] w-[200px] rounded-[10px] ${msg.isIncoming === 0 ? "bg-[#F1F1F1]" : "bg-[#F8F8F8]"}`}>
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 bg-green-800 text-white rounded-full flex justify-center items-center ${msg.isIncoming !== 0 ? "text-xl font-bold": "text-sm font-semibold"} `}>
                       {msg.isIncoming !== 0 ? chatInfo[0]?.recipientName[0] : "You"}
@@ -116,10 +120,6 @@ return (
       </div>
       <div className="flex items-center px-6 w-full">
         <div className="w-full pb-5">
-          {/* <div className="flex gap-4 justify-end mb-6">
-            <div className="text-sm">Via Lodgify</div>
-            <img src="/icons/down.svg" alt="down icon" />
-          </div> */}
           <div className="border border-gray-400 h-[180px] rounded-xl  px-4">
             <textarea rows={5}
               type="text"

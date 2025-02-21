@@ -9,8 +9,8 @@ import { io } from "socket.io-client";
 import { updateConversation, updateMessages, filterMessages, getAllListings, getListingsName } from "../../../../helpers/Message";
 import Dropdown from "./DropDown";
 import { setListings } from "../../../../store/listingSlice";
-import { setUnreadChat,markChatAsRead } from "../../../../store/notificationSlice";
-
+import { setUnreadChat, markChatAsRead } from "../../../../store/notificationSlice";
+import { useNavigate } from "react-router-dom";
 
 const Messages = ({ handleClickMessages, title }) => {
   const [simplifiedConversation, setSimplifiedConversation] = useState([]);
@@ -27,9 +27,29 @@ const Messages = ({ handleClickMessages, title }) => {
   const dispatch = useDispatch();
   const conversation = useSelector((state) => state.conversation.conversations);
   const unreadChats = useSelector((state) => state.notifications.unreadChats);
+  const  navigate =  useNavigate()
 
   const messages = useSelector((state) => state.messages);
   const listings = useSelector((state) => state.listings);
+
+    const getConversationData = async () => {
+      const data = await getConversations();
+      dispatch(setConversations(data));
+      const conversationIds = data?.map((conv) => conv.id);
+
+      const conversationPromises = conversationIds.map(async (id) => {
+        const messages = await getAllconversation(id);
+        dispatch(setMessages({ id: id, message: messages }));
+        return { id, messages };
+      });
+      const simplifiedDataArray = await Promise.all(conversationPromises);
+      const simplifiedData = simplifiedResult(data, simplifiedDataArray);
+      const listingData = await getAllListings();
+      dispatch(setListings(listingData));
+      setAllListings(getListingsName(listingData));
+      setSimplifiedConversation(simplifiedData);
+      setLoading(false);
+    };
 
   useEffect(() => {
     const newSocket = io(import.meta.env.VITE_SOCKET_HOST, {
@@ -39,7 +59,7 @@ const Messages = ({ handleClickMessages, title }) => {
       console.log("Connected to WebSocket server");
     });
     newSocket.on("received_message", (newMessage) => {
-      dispatch(setUnreadChat({chatId: newMessage.conversationId}))
+      getConversationData()
       console.log("New message received: ", newMessage);
       const updatedMessages = updateMessages(
         simplifiedConversation,
@@ -50,6 +70,7 @@ const Messages = ({ handleClickMessages, title }) => {
       dispatch(
         setMessages({ id: newMessage.conversationId, message: updatedData })
       );
+      dispatch(setUnreadChat({chatId: newMessage.conversationId}))
     });
     newSocket.on("new_reservation", (reservations) => {
       const newReservation = async () => {
@@ -82,24 +103,6 @@ const Messages = ({ handleClickMessages, title }) => {
       setLoading(false);
       return;
     }
-    const getConversationData = async () => {
-      const data = await getConversations();
-      dispatch(setConversations(data));
-      const conversationIds = data?.map((conv) => conv.id);
-
-      const conversationPromises = conversationIds.map(async (id) => {
-        const messages = await getAllconversation(id);
-        dispatch(setMessages({ id: id, message: messages }));
-        return { id, messages };
-      });
-      const simplifiedDataArray = await Promise.all(conversationPromises);
-      const simplifiedData = simplifiedResult(data, simplifiedDataArray);
-      const listingData = await getAllListings();
-      dispatch(setListings(listingData));
-      setAllListings(getListingsName(listingData));
-      setSimplifiedConversation(simplifiedData);
-      setLoading(false);
-    };
     getConversationData();
   }, []);
 
@@ -177,7 +180,7 @@ const Messages = ({ handleClickMessages, title }) => {
                 )?.map((item, index) => (
                   <div
                     key={index}
-                    className={`rounded-lg items-center px-6 py-3 gap-4 hover:bg-gray-50 ${ unreadChats[item.id] && 'bg-green-100 hover:bg-green-100'}`}
+                    className={`items-center px-6 py-3 gap-4 hover:bg-gray-50 active:bg-gray-100 ${ unreadChats[item.id] && 'bg-green-100 hover:bg-green-100'}`}
                   >
                     <div className="flex items-center space-x-4">
                       {item?.recipientPicture ? (
@@ -193,8 +196,7 @@ const Messages = ({ handleClickMessages, title }) => {
                       )}
                       <div
                         onClick={() =>{
-                          title !== "Dashboard" &&
-                          handleClickMessages(item.id, simplifiedConversation); }
+                          title !== "Dashboard" ? handleClickMessages(item.id, simplifiedConversation) : navigate(`/user/chat/${item.id}`); dispatch(markChatAsRead({chatId: item.id}))}
                         }
                         className="cursor-pointer w-full"
                       >

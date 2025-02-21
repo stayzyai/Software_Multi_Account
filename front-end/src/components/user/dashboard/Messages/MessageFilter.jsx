@@ -14,7 +14,7 @@ const FilterModal = ({ setOpenFilter, listings, filters, setFilters, handleApply
 
   return (
     <div className="bg-black bg-opacity-0 flex justify-center items-center absolute top-16">
-      <div className="bg-white p-4 rounded-lg shadow-lg w-72">
+      <div className="bg-white p-4 rounded-lg shadow-lg w-64 border">
         <div className="flex justify-between">
           <h2 className="text-lg font-semibold mb-4">Filter conversations</h2>
           <div
@@ -31,6 +31,7 @@ const FilterModal = ({ setOpenFilter, listings, filters, setFilters, handleApply
             onChange={(e) => handleFilterChange("quickFilter", e.target.value)}
           >
             <option value="">Quick filters</option>
+            <option value="last_message">Guest last message</option>
             <option value="staying_guests">Staying guests</option>
             <option value="today_checkins">Today's check-ins</option>
             <option value="tomorrow_checkins">Tomorrow's check-ins</option>

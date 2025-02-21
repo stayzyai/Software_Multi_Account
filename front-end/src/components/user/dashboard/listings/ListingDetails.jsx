@@ -5,27 +5,81 @@ import ListingInfo from "./ListingAbout";
 import ListingAIInfo from "./ListingAIInfo";
 import ListingBookingDetails from "./ListingBooking";
 import ListingNearbyDetails from "./ListingNearbyDetails";
-import { useSelector } from "react-redux";
-import { getListing, formatReservations } from "../../../../helpers/ListingsHelper";
+import { useSelector, useDispatch } from "react-redux";
+import { getListing, formatReservations} from "../../../../helpers/ListingsHelper";
+import { setListings } from "../../../../store/listingSlice";
+import { setReservations } from "../../../../store/reservationSlice";
+import api from "@/api/api";
+import { useParams } from "react-router-dom";
 
-const ListingDetails = ({ openListingName,
-openListingDetails, setOpenListingDetails, listingId, properties }) => {
-
-  const listings = useSelector((state)=>state.listings.listings)
-  const reservation = useSelector((state)=>state.reservations.reservations)
+const ListingDetails = ({
+  openListingName,
+  openListingDetails,
+  properties,
+  setOpenListingDetails,
+}) => {
+  const listings = useSelector((state) => state.listings.listings);
+  const reservation = useSelector((state) => state.reservations.reservations);
   const [activeListingSection, setActiveListingSection] = useState("about");
-  const [aboutListing, setAboutListing] = useState([])
-  const [calenderDetails, setCalenderDetails] = useState({})
+  const [aboutListing, setAboutListing] = useState([]);
+  const [calenderDetails, setCalenderDetails] = useState({});
+  const { listingId } = useParams();
+  const dispatch = useDispatch();
 
-  useEffect(()=>{
-      const listing = listings?.find((item)=>item.id === listingId)
-      const data = getListing(listing)
-      const { bookings, dateRanges } = formatReservations(reservation, listingId)
+  const getReservations = async () => {
+    try {
+      const response = await api.get("/hostaway/get-all/reservations");
+      if (response?.data?.detail?.data?.result) {
+        const data = response?.data?.detail?.data?.result;
+        dispatch(setReservations(data));
+        return data;
+      }
+    } catch (error) {
+      console.log("Error at get conversation: ", error);
+    }
+  };
+
+  const getListings = async () => {
+    const reservations = await getReservations();
+    try {
+      const response = await api.get("/hostaway/get-all/listings");
+      if (response?.data?.detail?.data?.result) {
+        const data = response?.data?.detail?.data?.result;
+        dispatch(setListings(data));
+        const listing = data?.find((item) => item.id == listingId);
+        const ListingData = getListing(listing);
+        const { bookings, dateRanges } = formatReservations(
+          reservations,
+          listingId
+        );
+        setCalenderDetails({
+          bookings: bookings,
+          dateRanges: dateRanges,
+        });
+        setAboutListing(ListingData);
+      }
+    } catch (error) {
+      console.log("Error at get listings: ", error);
+    }
+  };
+
+  useEffect(() => {
+    if (listings?.length !== 0 && reservation?.length !== 0) {
+      const listing = listings?.find((item) => item.id == listingId);
+      const data = getListing(listing);
+      const { bookings, dateRanges } = formatReservations(
+        reservation,
+        listingId
+      );
       setCalenderDetails({
-        bookings: bookings, dateRanges: dateRanges
-      })
-      setAboutListing(data)
-  },[])
+        bookings: bookings,
+        dateRanges: dateRanges,
+      });
+      setAboutListing(data);
+      return;
+    }
+    getListings();
+  }, [listingId]);
 
   return (
     <>
@@ -33,6 +87,7 @@ openListingDetails, setOpenListingDetails, listingId, properties }) => {
         title={"Listings"}
         openListingDetails={openListingDetails}
         openListingName={openListingName}
+        // setOpenListingDetails={setOpenListingDetails}
         setOpenListingDetails={setOpenListingDetails}
       />
       <div className="flex pt-[54px]">
@@ -43,10 +98,21 @@ openListingDetails, setOpenListingDetails, listingId, properties }) => {
           />
         </div>
         <div className="lg:ml-48 sm:ml-44 ml-36 w-full mb-6">
-          {activeListingSection === "about" && <ListingInfo aboutListing={aboutListing} />}
-          {activeListingSection === "ai-info" && <ListingAIInfo listingId={listingId} />}
-          {activeListingSection === "booking" && <ListingBookingDetails calenderDetails={calenderDetails} />}
-          {activeListingSection === "nearby" && <ListingNearbyDetails  listingId={listingId} properties={properties}/>}
+          {activeListingSection === "about" && (
+            <ListingInfo aboutListing={aboutListing} />
+          )}
+          {activeListingSection === "ai-info" && (
+            <ListingAIInfo listingId={listingId} listings={listings} />
+          )}
+          {activeListingSection === "booking" && (
+            <ListingBookingDetails calenderDetails={calenderDetails} />
+          )}
+          {activeListingSection === "nearby" && (
+            <ListingNearbyDetails
+              listingId={listingId}
+              properties={properties}
+            />
+          )}
         </div>
       </div>
     </>

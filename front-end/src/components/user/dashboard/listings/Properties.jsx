@@ -4,7 +4,7 @@ import CommonTable from "../common/Table";
 // import { formattedListing } from "../../../../helpers/ListingsHelper";
 import ListingShimmer from "../../../common/shimmer/ListingShimmer";
 
-const Properties = ({ setOpenListingDetails, setOpenListingName, setListingId, properties}) => {
+const Properties = ({ setOpenListingName, properties, setOpenListingDetails}) => {
 
   const columns = ["Name", "Address", "Occupancy", "Issues", "AI"];
 
@@ -20,7 +20,7 @@ const Properties = ({ setOpenListingDetails, setOpenListingName, setListingId, p
             columns={columns}
             setOpenListingDetails={setOpenListingDetails}
             setOpenListingName={setOpenListingName}
-            setListingId={setListingId}
+            // setListingId={setListingId}
           />:<ListingShimmer/>}
         </div>
       </div>

@@ -23,7 +23,7 @@ const ListingNearbyDetails = ({ listingId, properties })=>{
   useEffect(()=>{
         const getNearLoc = async () => {
           setLoading(true)
-          const listing = listings?.find((item)=>item.id === listingId)
+          const listing = listings?.find((item)=>item.id == listingId)
           if(listing?.lat === null && listing?.lat == null){
             toast.error("Owner has not provided the nearby spots")
             setLoading(false)
@@ -38,7 +38,7 @@ const ListingNearbyDetails = ({ listingId, properties })=>{
           }
           setLoading(false)
         }
-        const property = properties?.find((item)=>item.id === listingId)
+        const property = properties?.find((item)=>item.id == listingId)
         setOccupancy(property?.occupancy)
         if(isGoogleMapsEnabled){
           getNearLoc()

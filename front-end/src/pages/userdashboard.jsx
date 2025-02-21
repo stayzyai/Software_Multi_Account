@@ -13,6 +13,8 @@ import { setItem } from "../helpers/localstorage";
 import HostawayConnectModal from "../components/user/hostaway/hostawayconnect";
 import MainSetting from "../components/user/dashboard/setting/MainSetting";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
+import MessageDetailsWrapper from "../components/user/dashboard/Messages/MessageDetailsWrapper";
+import ListingsWraper from "../components/user/dashboard/listings/ListingsWrapper"
 
 export function UserDashboardComponent({ role = "user" }) {
   const [isOpen, setOpenModal] = useState(false);
@@ -52,6 +54,8 @@ export function UserDashboardComponent({ role = "user" }) {
             <Route path="tasks" element={<Tasks  />} />
             <Route path="integrations" element={<Integrations />}/>
             <Route path="settings" element={<MainSetting />} />
+            <Route path="chat/:messageId" element={ <MessageDetailsWrapper/>} />
+            <Route path="listing/:listingId" element={ <ListingsWraper/>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

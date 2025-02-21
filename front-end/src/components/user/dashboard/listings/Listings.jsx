@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import Properties from "./Properties";
-import ListingDetails from "./ListingDetails";
 import { useSelector } from "react-redux";
 import { formattedListing } from "../../../../helpers/ListingsHelper";
 import { setReservations } from "../../../../store/reservationSlice";
@@ -11,12 +10,11 @@ import api from "@/api/api";
 const Listings = () => {
   const [openListingDetails, setOpenListingDetails] = useState(false);
   const [openListingName, setOpenListingName] = useState("");
-  const [listingId, setListingId] = useState(null);
   const [properties, setProperties] = useState([]);
   const dispatch = useDispatch();
 
   const listings = useSelector((state) => state.listings.listings);
-  const reservations = useSelector((state) => state.reservations.reservations);
+  // const reservations = useSelector((state) => state.reservations.reservations);
   const reservation = useSelector((state) => state.reservations.reservations);
   const listing = useSelector((state) => state.listings.listings);
 
@@ -55,27 +53,17 @@ const Listings = () => {
   }, []);
 
   useEffect(() => {
-    setProperties(formattedListing(listings, reservations));
-  }, [reservations, listings]);
+    setProperties(formattedListing(listings, reservation));
+  }, [reservation, listings]);
 
   return (
     <>
-      {openListingDetails ? (
-        <ListingDetails
-          setOpenListingDetails={setOpenListingDetails}
-          openListingName={openListingName}
-          openListingDetails={openListingDetails}
-          listingId={listingId}
-          properties={properties}
-        />
-      ) : (
         <Properties
           setOpenListingDetails={setOpenListingDetails}
           setOpenListingName={setOpenListingName}
-          setListingId={setListingId}
+          // setListingId={setListingId}
           properties={properties}
         />
-      )}
     </>
   );
 };
