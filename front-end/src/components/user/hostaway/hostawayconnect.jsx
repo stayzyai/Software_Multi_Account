@@ -8,22 +8,29 @@ import api from "@/api/api";
 import { IoMdClose } from "react-icons/io";
 import { setItem, getItem } from "../../../helpers/localstorage";
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import { setHostawayModal } from "../../../store/sidebarSlice";
+import { useSelector, useDispatch } from "react-redux";
 
-const HostawayConnectModal = ({ setOpenModal, isOpen, activeSection }) => {
+const HostawayConnectModal = () => {
   const [formFields, setFormFields] = useState({
     account_id: "",
     secret_id: "",
   });
+  const ishostawayAccount = useSelector((state) => state.sidebar.isHostawayModel);
   const [isLoading, setIsLoading] = useState(false);
+  // const [isOpen, SethostawayModal] = useState(true);
+  const location = useLocation();
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const checkHostawayAccount = () => {
       const account = getItem("isHostwayAccount");
       const msg = getItem("hostawayMessage");
       if (account) {
-        setOpenModal(false);
+        dispatch(setHostawayModal(false));
       } else {
-        setOpenModal(true);
+        dispatch(setHostawayModal(true))
         const errorMessage =
           msg === "hostaway token expired"
             ? "Hostaway token expired. Please reauthenticate your Hostaway account."
@@ -33,8 +40,8 @@ const HostawayConnectModal = ({ setOpenModal, isOpen, activeSection }) => {
     };
     setTimeout(() => {
       checkHostawayAccount();
-    }, 500);
-  }, [activeSection]);
+    }, 1000);
+  }, [location.pathname]);
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -49,7 +56,7 @@ const HostawayConnectModal = ({ setOpenModal, isOpen, activeSection }) => {
       if (response.status === 200) {
         toast.success("Hostaway account connected successfully!");
         setItem("isHostwayAccount", true);
-        setOpenModal(false);
+        dispatch(setHostawayModal(false))
       }
       setIsLoading(false);
     } catch (error) {
@@ -63,17 +70,16 @@ const HostawayConnectModal = ({ setOpenModal, isOpen, activeSection }) => {
     }
   };
 
-  if (!isOpen) {
+  if (!ishostawayAccount) {
     return null;
   }
-
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-lg w-[500px] p-6 md:ml-52 mx-2 md:mx-0">
         <div className="flex justify-end">
           <span
             className="cursor-pointer font-bold active:bg-gray-50 hover:bg-opacity-50 p-1.5 rounded hover:bg-gray-50"
-            onClick={() => setOpenModal(false)}
+            onClick={() => dispatch(setHostawayModal(false))}
           >
             <IoMdClose size={18} />
           </span>

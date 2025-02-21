@@ -1,11 +1,11 @@
 import Header from "../Header";
 import HostawayAccount from "./HostawayAccount";
 
-const MainSetting = ({ toggleSidebar, setOpenModal }) => {
+const MainSetting = () => {
   return (
     <>
-      <Header title={"Settings"} toggleSidebar={toggleSidebar} role={"user"} />
-      <HostawayAccount setOpenModal={setOpenModal} />
+      <Header title={"Settings"} role={"user"} />
+      <HostawayAccount />
     </>
   );
 };

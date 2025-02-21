@@ -92,7 +92,7 @@ const formatReservations = (reservations, listingMapId) => {
 
   if (!reservations || reservations.length === 0) return { bookings: [], dateRanges: [] };
   const filteredReservations = reservations?.filter(
-    (res) => res?.listingMapId === listingMapId
+    (res) => res?.listingMapId == listingMapId
   );
 
   const sortedReservations = [...filteredReservations].sort(

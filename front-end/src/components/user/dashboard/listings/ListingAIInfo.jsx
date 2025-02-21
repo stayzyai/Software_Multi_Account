@@ -1,22 +1,19 @@
 
 import { useState } from "react"
 import { ChevronDown } from "lucide-react"
-import { useSelector } from "react-redux"
 import { useEffect } from "react"
 import { formatedFAQ } from "../../../../helpers/ListingsHelper"
 
- const ListingAIInfo = ({ listingId}) =>{
+ const ListingAIInfo = ({ listingId, listings }) =>{
   const [openSection, setOpenSection] = useState(null)
   const [InfoData, setInfoData] = useState([])
-
-  const listings = useSelector((state)=>state.listings.listings)
 
   const toggleSection = (id) => {
     setOpenSection(openSection === id ? null : id)
   }
 
   useEffect(()=>{
-    const listing = listings?.find((item)=>item.id === listingId)
+    const listing = listings?.find((item)=>item.id == listingId)
     const response = formatedFAQ(listing)
     setInfoData(response)
   },[listings])

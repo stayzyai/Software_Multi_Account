@@ -1,6 +1,6 @@
 const MessageShimmer = () => {
   return (
-    <div className="rounded-lg border bg-white p-4">
+    <div className="rounded-xl border bg-white p-4">
       <div className="mb-6 flex items-center justify-between">
         <div className="h-6 w-52 animate-pulse rounded bg-gray-200"></div>
         <div className="flex gap-4 mt-8">
@@ -10,7 +10,7 @@ const MessageShimmer = () => {
         </div>
       </div>
       <div className="space-y-8 pb-6">
-        {Array.from({ length: 5 }).map((_, index) => (
+        {Array.from({ length: 8 }).map((_, index) => (
           <div key={index} className="flex items-center gap-4">
             {/* <div className="h-5 w-5 animate-pulse rounded border border-gray-200"></div> */}
             <div className="h-10 w-10 animate-pulse rounded-full bg-gray-200"></div>

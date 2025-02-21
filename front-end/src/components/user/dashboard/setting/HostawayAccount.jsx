@@ -6,6 +6,8 @@ import Header from "../Header";
 import { AlertCircle, Trash2, Plus } from "lucide-react";
 import { removeItem } from "../../../../helpers/localstorage";
 import SettingShimmer from "../../../common/shimmer/settingShimmer";
+import { setHostawayModal } from "../../../../store/sidebarSlice";
+import { useDispatch } from "react-redux";
 
 const HostawayAccount = ({ setOpenModal }) => {
   const [hostawayAccount, setHostawayAccount] = useState({
@@ -14,6 +16,7 @@ const HostawayAccount = ({ setOpenModal }) => {
   });
   const [openPopup, setOpenPopup] = useState(false);
   const [loading, setLoading] = useState(true)
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const getAccount = async () => {
@@ -96,7 +99,7 @@ const HostawayAccount = ({ setOpenModal }) => {
                   </p>
                 </div>
                 <button
-                  onClick={() => setOpenModal(true)}
+                  onClick={() => dispatch(setHostawayModal(true))}
                   className="w-full sm:w-auto mt-4 px-4 py-1.5 bg-green-800 border-green-600 hover:bg-green-700 text-white font-semibold rounded-md transition duration-300 ease-in-out flex items-center justify-center"
                 >
                   <Plus className="mr-2 h-4 w-4" />

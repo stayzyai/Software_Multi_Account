@@ -8,7 +8,7 @@ import { useDispatch } from "react-redux";
 import { setUser } from "../../../../store/userSlice";
 import { io } from "socket.io-client";
 
-const Home = ({ toggleSidebar, role }) => {
+const Home = ({ role }) => {
 const dispatch = useDispatch();
 
   useEffect(() => {
@@ -43,7 +43,7 @@ const dispatch = useDispatch();
     <div>
       <div className="bg-[#FCFDFC] overflow-y-auto min-h-fit">
         <div className="pb-24">
-          <Header title={"Dashboard"} toggleSidebar={toggleSidebar} role={role}/>
+          <Header title={"Dashboard"} role={role}/>
         </div>
           <div className="md:px-12 px-1">
             <Overview />

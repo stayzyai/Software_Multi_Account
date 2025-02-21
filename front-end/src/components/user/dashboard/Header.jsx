@@ -5,18 +5,27 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useSelector, useDispatch } from "react-redux";
 import { clearUser } from "./../../../store/userSlice";
+import {setOpenModal} from "./../../../store/sidebarSlice";
+import { useState } from "react";
+import SearchResultsList from "./SearchResultsList";
 
-
-const Header = ({ title, toggleSidebar, role, messages, openListingName, openListingDetails, setOpenListingDetails }) => {
+const Header = ({ title, role, messages, openListingName, openListingDetails, setOpenListingDetails }) => {
   const [isDropDownOpen, setIsDropDownOpen] = React.useState(false);
   const dropdownRef = React.useRef(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const navigate = useNavigate()
+
   const firstname = useSelector((state) => state.user.firstname);
   const lastname = useSelector((state) => state.user.lastname);
   const userRole = useSelector((state) => state.user.role);
+  const listings = useSelector((state) => state.listings.listings);
+  const conversations = useSelector((state) => state.conversation.conversations);
+
   const toggleDropDown = () => {
     setIsDropDownOpen(!isDropDownOpen);
   };
-
+  const dispatch = useDispatch();
   React.useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -35,9 +44,38 @@ const Header = ({ title, toggleSidebar, role, messages, openListingName, openLis
     };
   }, [isDropDownOpen]);
 
+  const handleSearch = (event) => {
+    const query = event.target.value;
+    setSearchQuery(query);
+    if (query.trim() === "") {
+      setSearchResults([]);
+      return;
+    }
+    const filteredListings = listings.filter((item) => item.name.toLowerCase().includes(query.toLowerCase()));
+    const filteredConversations = conversations.filter(
+      (conv) => conv.recipientName?.toLowerCase().includes(searchQuery)
+    );
+
+    const normalizedConversations = filteredConversations.map((conv) => ({
+      ...conv,
+      name: conv.recipientName,
+    }));
+    setSearchResults([...filteredListings, ...normalizedConversations]);
+  };
+
+  const handleSelectResult = (result) => {
+    if ("recipientName" in result) {
+      navigate(`/user/chat/${result.id}`)
+    } else {
+      navigate(`/user/listing/${result.id}`)
+    }
+    setSearchQuery(result.name || result.content);
+    setSearchResults([]);
+  };
+
   return (
     <div style={{width:"-webkit-fill-available"}}
-      className={`z-30 fixed top-0 bg-[#FCFDFC] flex items-center justify-between ${title === "Chat" ? "pt-3": "pt-5"} ${ title === "Chat" ? "": "border-b border-gray-400"} ${
+      className={`z-30 fixed top-0 bg-[#FCFDFC] flex items-center justify-between ${title === "Chat" ? "pt-1": "pt-5"} ${ title === "Chat" ? "": "border-b border-gray-400"} ${
         title === "Dashboard" || title === "Messages" || title === "Listings" || title === "Integrations" || title === "Settings"
           ? "bg-white flex items-center justify-between px-7 pb-2"
           : "flex items-center justify-between"
@@ -46,7 +84,7 @@ const Header = ({ title, toggleSidebar, role, messages, openListingName, openLis
       <div
        className="flex items-center gap-4">
         <button
-          onClick={toggleSidebar}
+          onClick={() => dispatch(setOpenModal(true))}
           className="p-2 rounded-full bg-gray-100 hover:bg-gray-200 md:hidden focus:outline-none"
         >
           <Menu className="h-5 w-5 text-gray-600" />
@@ -58,7 +96,7 @@ const Header = ({ title, toggleSidebar, role, messages, openListingName, openLis
         )}
           {openListingDetails && (
           <div className="flex items-center font-light xl:text-2xl md:text-xl text-sm">
-            <button onClick={()=>{setOpenListingDetails(false)}} >
+            <button onClick={()=>{setOpenListingDetails(false); navigate("/user/listings")}} >
             {title}
           </button >
           <ChevronDown className="sm:h-6 sm:w-7 h-4 -rotate-90"/>
@@ -71,8 +109,11 @@ const Header = ({ title, toggleSidebar, role, messages, openListingName, openLis
           <input
             type="text"
             placeholder="Search"
-            className={`pl-12 pr-4 bg-[#E8E8E8] rounded-full focus:outline-none hidden lg:block ${title !== "Chat"?"w-[300px] xl:w-[450px] py-2":"w-[244px] py-3"}`}
+            value={searchQuery}
+            onChange={handleSearch}
+            className={`pl-12 pr-4 bg-[#E8E8E8] rounded-full focus:outline-none hidden lg:block ${title !== "Chat"?"w-[300px] xl:w-[450px] py-2":"w-[244px] h-[46px] py-3"}`}
           />
+          <SearchResultsList searchResults={searchResults} handleSelectResult={handleSelectResult} />
         </div>
 
         <button
@@ -80,12 +121,6 @@ const Header = ({ title, toggleSidebar, role, messages, openListingName, openLis
             messages || title =="Dashboard" || title =="Messages"  ? "invisible" : "p-2 rounded-full"
           }`}
         >
-          {/* <img
-            src="/message-text.png"
-            alt="User avatar"
-            width={30}
-            height={30}
-          /> */}
         </button>
 
         <div
