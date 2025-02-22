@@ -258,23 +258,25 @@ const filterMessages = (messages, filters) => {
     );
   }
   return messages?.filter((message) => {
-    if (!message.messagesDate) return false;
-    const messageDate = new Date(message.messagesDate);
+    const messageDate = message.messageReceivedOn || message.messageSentOn;
+    if (!messageDate) return false;
+
+    const parsedDate = new Date(messageDate);
 
     let dateMatch = true;
     if (filterType && filterType !== "Date") {
       if (filterType === "Today") {
-        dateMatch = isSameDay(messageDate, today);
+        dateMatch = isSameDay(parsedDate, today);
       } else if (filterType === "Yesterday") {
-        dateMatch = isSameDay(messageDate, yesterday);
+        dateMatch = isSameDay(parsedDate, yesterday);
       } else if (filterType === "Last 7 Days") {
-        dateMatch = messageDate >= last7Days;
+        dateMatch = parsedDate >= last7Days;
       }
     }
 
     let listingMatch = true;
     if (selectedListing && selectedListing !== "") {
-      listingMatch = message.listingMapId === selectedListing;
+      listingMatch = message.listingMapId == selectedListing;
     }
 
     return dateMatch && listingMatch;
