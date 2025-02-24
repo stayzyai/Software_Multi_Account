@@ -13,6 +13,7 @@ const ChatSidebar = ({ handleClickMessages, filters, filteredConversations, from
     const firstTwoWords = words?.slice(0, 2).join(" ");
     return firstTwoWords;
   };
+  const noMessages = filters?.quickFilter || filters?.selectedListing ? !filteredConversations?.length : !fromatedConversation?.length;
 
   return (
     <>
@@ -63,10 +64,7 @@ const ChatSidebar = ({ handleClickMessages, filters, filteredConversations, from
             </div>
           </div>
         ))}
-        {filteredConversations?.length == 0 && (
-          <div className="text-center text-gray-500 mt-10">
-            No messages found
-          </div>
+        {noMessages && (<div className="text-center text-gray-500 mt-10"> No messages found </div>
         )}
       </div>
     </>

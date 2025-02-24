@@ -18,13 +18,14 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
       const data = await getHostawayReservation()
       dispatch(setReservations(data));
       setLoading(false)
+      return data
       };
 
   useEffect(() => {
     if(reservation?.length !== 0){
       const reservationId = chatInfo[0]["reservationId"];
       const reservationData = reservation?.find(
-        (item) => item.id === reservationId
+        (item) => item.id == reservationId
       );
       const timeData = getTimeDetails(reservationData);
       const bookingdata = getBookingdetails(reservationData);
@@ -37,7 +38,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
       const reservationId = chatInfo[0]["reservationId"];
       const NewReservation = await getReservations()
       const reservationData = NewReservation?.find(
-        (item) => item.id === reservationId
+        (item) => item.id == reservationId
       );
       const timeData = getTimeDetails(reservationData);
       const bookingdata = getBookingdetails(reservationData);
