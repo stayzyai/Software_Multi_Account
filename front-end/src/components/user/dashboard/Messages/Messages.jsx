@@ -1,34 +1,25 @@
 import { useEffect, useState } from "react";
 import MessageShimmer from "../../../common/shimmer/MessageShimmer";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setConversations } from "../../../../store/conversationSlice";
-import { simplifiedResult, getAllconversation, getConversations} from "../../../../helpers/Message";
-import { useSelector } from "react-redux";
 import { setMessages } from "../../../../store/messagesSlice";
 import { io } from "socket.io-client";
-import { updateConversation, updateMessages, filterMessages, getAllListings, getListingsName } from "../../../../helpers/Message";
+import { updateConversation, updateMessages, filterMessages, getAllListings, getListingsName,  simplifiedResult, getAllconversation, getConversations } from "../../../../helpers/Message";
 import Dropdown from "./DropDown";
 import { setListings } from "../../../../store/listingSlice";
-import { setUnreadChat, markChatAsRead } from "../../../../store/notificationSlice";
-import { useNavigate } from "react-router-dom";
+import { setUnreadChat } from "../../../../store/notificationSlice";
+import MessageList from "./MessageList";
 
 const Messages = ({ handleClickMessages, title }) => {
   const [simplifiedConversation, setSimplifiedConversation] = useState([]);
   const [filteredConversations, setFilteredConversations] = useState([])
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [selectedFilters, setSelectedFilters] = useState({
-    Date: "Date",
-    Listing: "",
-    Task: "",
-  });
+  const [selectedFilters, setSelectedFilters] = useState({ Date: "Date", Listing: "", Task: "",});
   const [allListings, setAllListings] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const dispatch = useDispatch();
   const conversation = useSelector((state) => state.conversation.conversations);
-  const unreadChats = useSelector((state) => state.notifications.unreadChats);
-  const  navigate =  useNavigate()
-
   const messages = useSelector((state) => state.messages);
   const listings = useSelector((state) => state.listings);
 
@@ -111,14 +102,6 @@ const Messages = ({ handleClickMessages, title }) => {
     setFilteredConversations(data);
   }, [selectedFilters]);
 
-  const getInitials = (name) => {
-    let words = name?.trim().split(" ").slice(0, 1);
-    return words
-      ?.map((word) => word.charAt(0))
-      .join("")
-      .toUpperCase();
-  };
-
   const handleDropdownClick = (label) => {
     setOpenDropdown(openDropdown === label ? null : label);
   };
@@ -126,7 +109,6 @@ const Messages = ({ handleClickMessages, title }) => {
   const handleSelect = (label, value) => {
     setSelectedFilters((prev) => ({ ...prev, [label]: value }));
   };
-  const isFilteringActive = selectedFilters.Date !== "Date" || selectedFilters.Listing !== "";
 
   return (
     <div className="px-2 sm:px-0">
@@ -168,50 +150,7 @@ const Messages = ({ handleClickMessages, title }) => {
                 </div>
               </div>
             </div>
-            {simplifiedConversation.length === 0 ? (
-              <div className="px-6 py-3 text-gray-500 flex items-center justify-center text-center border-t min-h-64 text-xl">
-                No messages found
-              </div>
-            ) : (
-              <div className="divide-y mb-6 border-y border-gray-200 mx-4 min-h-60">
-                {(title === "Dashboard"
-                  ? (isFilteringActive ? filteredConversations : simplifiedConversation).slice(0, 5)
-                  : isFilteringActive ? filteredConversations : simplifiedConversation
-                )?.map((item, index) => (
-                  <div
-                    key={index}
-                    className={`items-center px-6 py-3 gap-4 hover:bg-gray-50 active:bg-gray-100 ${ unreadChats[item.id] && 'bg-green-100 hover:bg-green-100'}`}
-                  >
-                    <div className="flex items-center space-x-4">
-                      {item?.recipientPicture ? (
-                        <img
-                          className="w-10 h-10 rounded-full"
-                          src={item?.recipientPicture}
-                          alt="Avatar"
-                        />
-                      ) : (
-                        <div className="md:w-[38px] w-[44px] h-[36px] rounded-full bg-green-800 flex items-center justify-center text-xl text-white font-semibold">
-                          {getInitials(item?.recipientName)}
-                        </div>
-                      )}
-                      <div
-                        onClick={() =>{
-                          title !== "Dashboard" ? handleClickMessages(item.id, simplifiedConversation) : navigate(`/user/chat/${item.id}`); dispatch(markChatAsRead({chatId: item.id}))}
-                        }
-                        className="cursor-pointer w-full"
-                      >
-                        <p className="font-medium text-gray-800">
-                          {item?.recipientName}
-                        </p>
-                        <p className={`text-sm text-[#7F7F7F] hidden md:block ${ unreadChats[item.id] && 'font-semibold text-gray-700'}`}>
-                          {item?.conversationMessages}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+          <MessageList title={title} selectedFilters={selectedFilters} simplifiedConversation={simplifiedConversation} filteredConversations={filteredConversations} handleClickMessages={handleClickMessages}/>
           </div>
         </div>
       ) : (

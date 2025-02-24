@@ -1,10 +1,9 @@
 import { useState } from "react";
 import { FiChevronsRight } from "react-icons/fi";
 import { useSelector, useDispatch } from "react-redux";
-import { getTimeDetails, getBookingdetails } from "../../../../helpers/Message";
+import { getTimeDetails, getBookingdetails, getHostawayReservation } from "../../../../helpers/Message";
 import { useEffect } from "react";
 import { setReservations } from "../../../../store/reservationSlice";
-import api from "@/api/api";
 import MessageRightSidebar from "../../../common/shimmer/MessageRightSidebr"
 
 const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
@@ -15,21 +14,11 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
   const [loading, setLoading] = useState(true)
   const dispatch = useDispatch()
 
-  const getReservations = async () => {
-      try {
-        const response = await api.get("/hostaway/get-all/reservations");
-        if (response?.data?.detail?.data?.result) {
-          const data = response?.data?.detail?.data?.result;
-          dispatch(setReservations(data));
-          setLoading(false)
-          return data;
-        }
-      } catch (error) {
-        setLoading(false)
-        console.log("Error at get reservastion: ", error);
-        return []
-      }
-    };
+    const getReservations = async () => {
+      const data = await getHostawayReservation()
+      dispatch(setReservations(data));
+      setLoading(false)
+      };
 
   useEffect(() => {
     if(reservation?.length !== 0){

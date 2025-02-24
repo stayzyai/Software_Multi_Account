@@ -56,16 +56,58 @@ const sendMessages = async (chat_id, payload) => {
   }
 };
 
-const formatTime = (dateStr) => {
-  if (!dateStr) return null;
-  const dateObj = new Date(dateStr.replace(" ", "T"));
-  let hours = dateObj.getHours();
-  const minutes = dateObj.getMinutes();
-  const ampm = hours >= 12 ? "PM" : "AM";
-  hours = hours % 12;
-  hours = hours === 0 ? 12 : hours;
-  const minutesStr = minutes < 10 ? "0" + minutes : minutes;
-  return `${hours}:${minutesStr} ${ampm}`;
+const getHostawayReservation = async () => {
+  try {
+    const response = await api.get("/hostaway/get-all/reservations");
+    if (response?.data?.detail?.data?.result) {
+      const data = response?.data?.detail?.data?.result;
+      return data;
+    }
+  } catch (error) {
+    console.log("Error at get conversation: ", error);
+    return [];
+  }
+};
+
+const getConversations = async () => {
+  try {
+    const response = await api.get("/hostaway/get-all/conversations");
+    if (response?.data?.detail?.data?.result) {
+      const data = response?.data?.detail?.data?.result;
+      return data;
+    }
+    return [];
+  } catch (error) {
+    console.log("Error at get conversations: ", error);
+    return [];
+  }
+};
+
+const getAllListings = async () => {
+  try {
+    const response = await api.get("/hostaway/get-all/listings");
+    if (response?.data?.detail?.data?.result) {
+      const data = response?.data?.detail?.data?.result;
+      return data;
+    }
+    return [];
+  } catch (error) {
+    console.log("Error at get  listings", error);
+    return [];
+  }
+};
+
+const openAISuggestion = async (payload) => {
+  try {
+    const response = await api.post(`/user/ai-suggestion`, payload);
+    if (response?.data?.answer) {
+      return response?.data?.answer;
+    }
+    return null;
+  } catch (Error) {
+    console.log("Error at get all messages: ", Error);
+    return null;
+  }
 };
 
 const simplifiedResult = (results, conversation) => {
@@ -118,19 +160,6 @@ const formatedMessages = (messages, listing) => {
     .replace("{property_details}", propertyDetails);
 
   return { systemPrompt, lastUserMessage };
-};
-
-const openAISuggestion = async (payload) => {
-  try {
-    const response = await api.post(`/user/ai-suggestion`, payload);
-    if (response?.data?.answer) {
-      return response?.data?.answer;
-    }
-    return null;
-  } catch (Error) {
-    console.log("Error at get all messages: ", Error);
-    return null;
-  }
 };
 
 const getTimeDetails = (currentReservation) => {
@@ -209,34 +238,6 @@ const updateMessages = (simplifiedConversation, newMessage) => {
   return data;
 };
 
-const getConversations = async () => {
-  try {
-    const response = await api.get("/hostaway/get-all/conversations");
-    if (response?.data?.detail?.data?.result) {
-      const data = response?.data?.detail?.data?.result;
-      return data;
-    }
-    return [];
-  } catch (error) {
-    console.log("Error at get conversations: ", error);
-    return [];
-  }
-};
-
-const getAllListings = async () => {
-  try {
-    const response = await api.get("/hostaway/get-all/listings");
-    if (response?.data?.detail?.data?.result) {
-      const data = response?.data?.detail?.data?.result;
-      return data;
-    }
-    return [];
-  } catch (error) {
-    console.log("Error at get  listings", error);
-    return [];
-  }
-};
-
 const filterMessages = (messages, filters) => {
   const { Date: filterType, Listing: selectedListing } = filters;
 
@@ -293,20 +294,20 @@ const getListingsName = (listings) => {
   ];
 };
 
-const  getIdsWithLatestIncomingMessages = (data)=> {
+const getIdsWithLatestIncomingMessages = (data) => {
   const result = data
-  .filter(item => Array.isArray(item.messages) && item.messages.length > 0)
-  .map(item => ({ 
-      id: item.id, 
-      latestMessage: item.messages.reduce((latest, msg) => 
-          new Date(msg.date) > new Date(latest.date) ? msg : latest
-      )
-  }))
-  .filter(item => item.latestMessage.isIncoming === 1)
-  .map(item => item.id);
+    .filter((item) => Array.isArray(item.messages) && item.messages.length > 0)
+    .map((item) => ({
+      id: item.id,
+      latestMessage: item.messages.reduce((latest, msg) =>
+        new Date(msg.date) > new Date(latest.date) ? msg : latest
+      ),
+    }))
+    .filter((item) => item.latestMessage.isIncoming === 1)
+    .map((item) => item.id);
 
-    return result
-}
+  return result;
+};
 
 const filterReservations = (reservations, filters) => {
   const today = new Date().toISOString().split("T")[0];
@@ -345,7 +346,8 @@ const filterReservations = (reservations, filters) => {
       }
     }
     if (selectedListing) {
-      matchesListingFilter = reservation.listingMapId.toString() == selectedListing.toString();
+      matchesListingFilter =
+        reservation.listingMapId.toString() == selectedListing.toString();
     }
 
     return matchesQuickFilter && matchesListingFilter;
@@ -367,5 +369,6 @@ export {
   getAllListings,
   getListingsName,
   filterReservations,
-  getIdsWithLatestIncomingMessages
+  getIdsWithLatestIncomingMessages,
+  getHostawayReservation,
 };
