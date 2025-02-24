@@ -132,6 +132,9 @@ const getFirstTwoWords = (name)=>{
     setFilteredConversations(simplifiedResult(matchingConversations, messsage));
     setOpenFilter(false);
 };
+  const noMessages = filters?.quickFilter || filters?.selectedListing
+    ? !filteredConversations?.length
+    : !fromatedConversation?.length;
 
   return (
     <div className="flex max-h-screen bg-[#fff]">
@@ -181,7 +184,7 @@ const getFirstTwoWords = (name)=>{
               </div>
             </div>
           ))}
-        {filteredConversations.length == 0 && ( <div className="text-center text-gray-500 mt-10">No messages found</div>)}
+        {noMessages && ( <div className="text-center text-gray-500 mt-10">No messages found</div>)}
         </div>
         <button onClick={() => setOpenSidebarMessage(!openSidebarMessage)} className="bg-gray-100 p-1 py-2 rounded-lg ml-52 sm:hidden block absolute top-1/2">
           <FiChevronsLeft size={24} />
