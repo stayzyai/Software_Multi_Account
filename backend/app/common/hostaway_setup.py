@@ -9,13 +9,13 @@ import json
 load_dotenv()
 url = os.getenv('HOSTAWAY_URL')
 
-def hostaway_get_request(token, endpoint, id=None):
+def hostaway_get_request(token, endpoint, id=None, limit=None, offset=None):
     try:
         hostaway_url = os.getenv('HOSTAWAY_API_URL')
         api_url = f"{hostaway_url}/{endpoint}"
         if id:
             api_url = f"{api_url}/{id}"
-        querystring = None
+        querystring = {"limit": limit, "offset": offset} if limit and offset else None
         headers = {
             'Authorization': f"Bearer {token}",
             'Cache-control': "no-cache",
@@ -107,7 +107,6 @@ def hostaway_put_request(token, endpoint, data, id=None):
         api_url = f"/v1{endpoint}"
         if id:
             api_url = f"{api_url}/{id}"
-        api_url = api_url+"&provider=stayzy"
 
         headers = {
                 'authorization': f'Bearer {token}',
