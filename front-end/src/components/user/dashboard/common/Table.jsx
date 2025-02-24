@@ -3,14 +3,10 @@ import { useNavigate } from "react-router-dom";
 const CommonTable = ({
   properties,
   columns,
-  setOpenListingDetails,
-  setOpenListingName,
 }) => {
 
   const navigate = useNavigate()
   const handleClick = (name, id) => {
-    setOpenListingName(getFirstTwoWords(name))
-    setOpenListingDetails(true)
     navigate(`/user/listing/${id}`)
   };
 

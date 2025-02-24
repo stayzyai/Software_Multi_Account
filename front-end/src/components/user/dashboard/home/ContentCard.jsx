@@ -4,15 +4,19 @@ import api from "@/api/api";
 import { useDispatch, useSelector } from "react-redux";
 import { setListings } from "../../../../store/listingSlice";
 import ListingShimmer from "../../../common/shimmer/ContentTable";
-import { formattedListing } from "../../../../helpers/ListingsHelper"
-import { setReservations } from "../../../../store/reservationSlice"
+import { formattedListing } from "../../../../helpers/ListingsHelper";
+import { setReservations } from "../../../../store/reservationSlice";
+import {
+  getHostawayReservation,
+  getAllListings,
+} from "../../../../helpers/Message";
 
 const ContentCard = () => {
   const [listings, setListingData] = useState([]);
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
-  const reservation = useSelector((state)=>state.reservations.reservations)
-  const listing = useSelector((state)=>state.listings.listings)
+  const reservation = useSelector((state) => state.reservations.reservations);
+  const listing = useSelector((state) => state.listings.listings);
 
   const tasksData = {
     title: "Recent Tasks",
@@ -53,41 +57,27 @@ const ContentCard = () => {
       { key: "address", label: "Address", width: "w-[50%]" },
       { key: "occupancy", label: "Occupancy", width: "w-[25%]" },
     ],
-    data: listings?.slice(0,5),
+    data: listings?.slice(0, 5),
   };
-    const getReservations = async () => {
-      try{
-        const response = await api.get("/hostaway/get-all/reservations");
-        if(response?.data?.detail?.data?.result){
-          const data = response?.data?.detail?.data?.result;
-          dispatch(setReservations(data));
-          return data
-        }
-      }catch(error){
-        console.log("Error at get conversation: ", error)
-      }
-    }
+
+  const getReservations = async () => {
+    const data = await getHostawayReservation();
+    dispatch(setReservations(data));
+    return data;
+  };
 
   useEffect(() => {
-    if(listing?.length !== 0 && reservation?.length !== 0){
+    if (listing?.length !== 0 && reservation?.length !== 0) {
       setListingData(formattedListing(listing, reservation));
-      setLoading(false)
-      return
+      setLoading(false);
+      return;
     }
     const getListings = async () => {
-      const reservations = await getReservations()
-      try {
-        const response = await api.get("/hostaway/get-all/listings");
-        if (response?.data?.detail?.data?.result) {
-          const data = response?.data?.detail?.data?.result;
-          setListingData(formattedListing(data, reservations));
-          dispatch(setListings(data));
-        }
-        setLoading(false);
-      } catch (error) {
-        console.log("Error at get listings: ", error);
-        setLoading(false);
-      }
+      const reservations = await getReservations();
+      const data = await getAllListings();
+      setListingData(formattedListing(data, reservations));
+      dispatch(setListings(data));
+      setLoading(false);
     };
     getListings();
   }, []);

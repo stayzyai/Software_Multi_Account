@@ -5,30 +5,20 @@ import { formattedListing } from "../../../../helpers/ListingsHelper";
 import { setReservations } from "../../../../store/reservationSlice";
 import { setListings } from "../../../../store/listingSlice";
 import { useDispatch } from "react-redux";
-import api from "@/api/api";
+import { getHostawayReservation, getAllListings } from "../../../../helpers/Message";
 
 const Listings = () => {
-  const [openListingDetails, setOpenListingDetails] = useState(false);
-  const [openListingName, setOpenListingName] = useState("");
   const [properties, setProperties] = useState([]);
   const dispatch = useDispatch();
 
   const listings = useSelector((state) => state.listings.listings);
-  // const reservations = useSelector((state) => state.reservations.reservations);
   const reservation = useSelector((state) => state.reservations.reservations);
   const listing = useSelector((state) => state.listings.listings);
 
   const getReservations = async () => {
-    try {
-      const response = await api.get("/hostaway/get-all/reservations");
-      if (response?.data?.detail?.data?.result) {
-        const data = response?.data?.detail?.data?.result;
-        dispatch(setReservations(data));
-        return data;
-      }
-    } catch (error) {
-      console.log("Error at get conversation: ", error);
-    }
+    const data =  await getHostawayReservation()
+    dispatch(setReservations(data));
+    return data
   };
 
   useEffect(() => {
@@ -38,16 +28,9 @@ const Listings = () => {
     }
     const getListings = async () => {
       const reservations = await getReservations();
-      try {
-        const response = await api.get("/hostaway/get-all/listings");
-        if (response?.data?.detail?.data?.result) {
-          const data = response?.data?.detail?.data?.result;
-          setProperties(formattedListing(data, reservations));
-          dispatch(setListings(data));
-        }
-      } catch (error) {
-        console.log("Error at get listings: ", error);
-      }
+      const data = await getAllListings()
+      setProperties(formattedListing(data, reservations));
+      dispatch(setListings(data));
     };
     getListings();
   }, []);
@@ -59,9 +42,6 @@ const Listings = () => {
   return (
     <>
         <Properties
-          setOpenListingDetails={setOpenListingDetails}
-          setOpenListingName={setOpenListingName}
-          // setListingId={setListingId}
           properties={properties}
         />
     </>

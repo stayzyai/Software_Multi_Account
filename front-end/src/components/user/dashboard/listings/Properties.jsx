@@ -1,10 +1,8 @@
 import Header from "../Header";
 import CommonTable from "../common/Table";
-// import { useSelector } from "react-redux";
-// import { formattedListing } from "../../../../helpers/ListingsHelper";
 import ListingShimmer from "../../../common/shimmer/ListingShimmer";
 
-const Properties = ({ setOpenListingName, properties, setOpenListingDetails}) => {
+const Properties = ({ properties}) => {
 
   const columns = ["Name", "Address", "Occupancy", "Issues", "AI"];
 
@@ -18,9 +16,6 @@ const Properties = ({ setOpenListingName, properties, setOpenListingDetails}) =>
           {properties?.length !== 0 ? <CommonTable
             properties={properties}
             columns={columns}
-            setOpenListingDetails={setOpenListingDetails}
-            setOpenListingName={setOpenListingName}
-            // setListingId={setListingId}
           />:<ListingShimmer/>}
         </div>
       </div>
