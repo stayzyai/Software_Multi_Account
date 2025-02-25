@@ -61,7 +61,7 @@ const Messages = ({ handleClickMessages, title }) => {
       dispatch(
         setMessages({ id: newMessage.conversationId, message: updatedData })
       );
-      dispatch(setUnreadChat({chatId: newMessage.conversationId}))
+      dispatch(setUnreadChat({ chatId: newMessage.conversationId }));
     });
     newSocket.on("new_reservation", (reservations) => {
       const newReservation = async () => {
@@ -150,7 +150,13 @@ const Messages = ({ handleClickMessages, title }) => {
                 </div>
               </div>
             </div>
-          <MessageList title={title} selectedFilters={selectedFilters} simplifiedConversation={simplifiedConversation} filteredConversations={filteredConversations} handleClickMessages={handleClickMessages}/>
+            <MessageList
+              title={title}
+              selectedFilters={selectedFilters}
+              simplifiedConversation={simplifiedConversation}
+              filteredConversations={filteredConversations}
+              handleClickMessages={handleClickMessages}
+            />
           </div>
         </div>
       ) : (

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
 import logging
 import json
-from app.common.hostaway_setup import hostaway_get_request, hostaway_post_request
+from app.common.hostaway_setup import hostaway_get_request, hostaway_post_request, hostaway_put_request
 from sqlalchemy.orm import Session
 from app.common.auth import get_hostaway_key
 from app.database.db import get_db
@@ -121,3 +121,21 @@ async def webhook_reservation(request: Request):
         return {"detail": {"message": "new reservation received", "received": body}}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error at reservation webhook: {str(e)}")
+
+@router.post("/update-reservation")
+async def update_checkin_checkout(request: Request, token: str = Depends(get_token), db: Session = Depends(get_db)):
+    try:
+        body = await request.json()
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
+        if not account:
+            raise HTTPException(status_code = 404, detail="Hostaway account not found")
+        reservationId = body['id']
+        response = hostaway_put_request(account.hostaway_token, f"/reservations/{reservationId}", body)
+        data = json.loads(response)
+        return  {"detail": {"message": "reservation updated", "received": data}}
+
+    except Exception as e:
+        logging.error(f"Error updating check-in/check-out times: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")

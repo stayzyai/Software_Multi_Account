@@ -5,6 +5,7 @@ import { getTimeDetails, getBookingdetails, getHostawayReservation } from "../..
 import { useEffect } from "react";
 import { setReservations } from "../../../../store/reservationSlice";
 import MessageRightSidebar from "../../../common/shimmer/MessageRightSidebr"
+import CheckInOutDropdown from "./CheckInOutDropdown";
 
 const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
   const [activeSession, setActiveSession] = useState("booking");
@@ -112,15 +113,16 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
                       height={14}
                     />
                   </div>
-                  <div className="flex gap-2 items-center text-nowrap">
-                    <p>{item.timeIn.time}</p>{" "}
-                    <img
-                      src="/icons/down.svg"
-                      alt="down icon"
-                      width={14}
-                      height={14}
-                    />
-                  </div>
+                  <CheckInOutDropdown
+                    chatInfo={chatInfo}
+                    type={"checkIn"}
+                    selectedTime={item.timeIn.time}
+                    onSelect={(time) => setTimeDetails((prev) => {
+                      const updated = [...prev];
+                      updated[index].timeIn.time = time;
+                      return updated;
+                    })}
+                  />
                 </div>
                 <p className="mb-4 text-gray-500">Check out</p>
                 <div className="flex gap-16 xl:gap-[30px] 2xl:gap-[40px]">
@@ -133,15 +135,16 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
                       height={14}
                     />
                   </div>
-                  <div className="flex gap-2 text-nowrap items-center">
-                    <p>{item.timeOut.time}</p>{" "}
-                    <img
-                      src="/icons/down.svg"
-                      alt="down icon"
-                      width={14}
-                      height={14}
-                    />
-                  </div>
+                  <CheckInOutDropdown
+                    chatInfo={chatInfo}
+                    type={"checkOut"}
+                    selectedTime={item.timeOut.time}
+                    onSelect={(time) => setTimeDetails((prev) => {
+                      const updated = [...prev];
+                      updated[index].timeOut.time = time;
+                      return updated;
+                    })}
+                  />
                 </div>
               </div>
             );
