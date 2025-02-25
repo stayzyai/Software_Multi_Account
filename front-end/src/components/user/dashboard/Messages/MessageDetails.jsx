@@ -176,7 +176,7 @@ const getFirstTwoWords = (name)=>{
               <div className="flex justify-between w-full text-[#292D32] text-nowrap text-base">
                 <div>
                   <p>{getFirstTwoWords(item?.recipientName)}</p>
-                  <div className={`w-[124px] text-[#292D3270] text-xs overflow-hidden truncate whitespace-nowrap  ${ unreadChats[item.id] && 'font-bold text-gray-700'}`}>
+                  <div className={`w-[124px] text-[#292D3270] text-xs overflow-hidden truncate whitespace-nowrap  ${ unreadChats[item.id] || item?.isIncoming === 1 && 'font-bold text-gray-700'}`}>
                     {item?.conversationMessages !== "" ? item?.conversationMessages : "Click here to reply"}
                   </div>
                 </div>
