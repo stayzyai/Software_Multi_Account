@@ -133,6 +133,7 @@ const simplifiedResult = (results, conversation) => {
         conversationMessages: latestConversationMessage
           ? latestConversationMessage?.body
           : "",
+          isIncoming: latestConversationMessage? latestConversationMessage?.isIncoming : null
       };
     })
     .sort((a, b) => {
