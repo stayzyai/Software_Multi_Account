@@ -6,6 +6,8 @@ import reservationReducer from "./reservationSlice";
 import messagesReducer from "./messagesSlice";
 import sidebarReducer from "./sidebarSlice";
 import notificationReducer from "./notificationSlice"
+import reservationsReducer from "./taskSlice"
+import hostawayUserReducer from "./hostawayUserSlice"
 import storage from "redux-persist/lib/storage";
 import { persistReducer, persistStore } from "redux-persist";
 
@@ -29,7 +31,9 @@ export const store = configureStore({
     reservations: reservationReducer,
     messages: messagesReducer,
     sidebar: sidebarReducer,
-    notifications: persistedNotificationReducer
+    notifications: persistedNotificationReducer,
+    tasks: reservationsReducer, 
+    hostawayUser: hostawayUserReducer
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

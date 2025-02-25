@@ -52,7 +52,7 @@ const ChatSidebar = ({ handleClickMessages, filters, filteredConversations, from
                 <p>{getFirstTwoWords(item?.recipientName)}</p>
                 <div
                   className={`w-[124px] text-[#292D3270] text-xs overflow-hidden truncate whitespace-nowrap  ${
-                    unreadChats[item.id] && "font-bold text-gray-700"
+                    unreadChats[item.id] || item?.isIncoming && "font-bold text-gray-700"
                   }`}
                 >
                   {item?.conversationMessages !== ""

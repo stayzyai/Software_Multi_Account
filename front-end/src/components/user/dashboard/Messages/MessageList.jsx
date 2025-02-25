@@ -70,7 +70,7 @@ const MessageList = ({title,
                   </p>
                   <p
                     className={`text-sm text-[#7F7F7F] hidden md:block ${
-                      unreadChats[item.id] && "font-semibold text-gray-700"
+                      unreadChats[item.id] || item?.isIncoming && "font-semibold text-gray-700"
                     }`}
                   >
                     {item?.conversationMessages}

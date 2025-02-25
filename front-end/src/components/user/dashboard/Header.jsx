@@ -76,7 +76,7 @@ const Header = ({ title, role, messages, openListingName, openListingDetails, se
   return (
     <div style={{width:"-webkit-fill-available"}}
       className={`z-30 fixed top-0 bg-[#FCFDFC] flex items-center justify-between ${title === "Chat" ? "pt-1": "pt-5"} ${ title === "Chat" ? "": "border-b border-gray-400"} ${
-        title === "Dashboard" || title === "Messages" || title === "Listings" || title === "Integrations" || title === "Settings"
+        title === "Dashboard" || title === "Messages" || title === "Listings" || title === "Integrations" || title === "Settings" || title === "Staff" || title === "Tasks"
           ? "bg-white flex items-center justify-between px-7 pb-2"
           : "flex items-center justify-between"
       } `}
