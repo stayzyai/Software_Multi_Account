@@ -42,10 +42,9 @@ const getListing  = (data)=>{
       title: "Amenities",
       content: [
         {
-          // label: "Amenities",
           value: data.listingAmenities.length !== 0 
-            ? data.listingAmenities.map((amenity) => amenity.amenityName).join(", ") 
-            : "Not specified",        
+            ? data.listingAmenities.map((amenity) => amenity.amenityName)
+            : "Not specified",
         },
       ],
     },

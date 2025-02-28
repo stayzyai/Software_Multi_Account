@@ -56,6 +56,19 @@ const sendMessages = async (chat_id, payload) => {
   }
 };
 
+const getAmenity = async () => {
+  try {
+    const response = await api.get("/hostaway/get-all/bedTypes")
+    if (response?.data?.detail?.data?.result) {
+      const responseData = response?.data?.detail?.data?.result;
+      return responseData;
+    }
+  } catch (error) {
+    console.log("Error get all amenity", error)
+    return []
+  }
+};
+
 const formatTime = (dateStr) => {
   if (!dateStr) return null;
   const dateObj = new Date(dateStr.replace(" ", "T"));
@@ -91,7 +104,9 @@ const simplifiedResult = (results, conversation) => {
         conversationMessages: latestConversationMessage
           ? latestConversationMessage?.body
           : "",
-          isIncoming: latestConversationMessage? latestConversationMessage?.isIncoming : null
+        isIncoming: latestConversationMessage
+          ? latestConversationMessage?.isIncoming
+          : null,
       };
     })
     .sort((a, b) => {
@@ -101,7 +116,7 @@ const simplifiedResult = (results, conversation) => {
     });
 };
 
-const formatedMessages = (messages, listing) => {
+const formatedMessages = (messages, listing, amenity) => {
   const formattedMessages = messages?.map((msg) => ({
     role: msg.isIncoming == 0 ? "assistant" : "user",
     content: msg.body,
@@ -111,15 +126,14 @@ const formatedMessages = (messages, listing) => {
     .find((msg) => msg?.role === "user")?.content;
   const previousConversation = JSON.stringify(formattedMessages);
   const propertyDetails = JSON.stringify(listing);
-  const systemPrompt = SYSTEM_PROMPT.replace(
-    "{previous_conversation}",
-    previousConversation
-  )
-    .replace("{latest_message}", lastUserMessage)
-    .replace("{property_details}", propertyDetails);
-
+  const amenityDetails = JSON.stringify(amenity)
+  const systemPrompt = SYSTEM_PROMPT.replace(/{previous_conversation}/g, previousConversation)
+    .replace(/{latest_message}/g, lastUserMessage)
+    .replace(/{property_details}/g, propertyDetails)
+    .replace(/{amenities_detail}/g, amenityDetails);
   return { systemPrompt, lastUserMessage };
 };
+
 
 const openAISuggestion = async (payload) => {
   try {
@@ -286,7 +300,7 @@ const filterMessages = (messages, filters) => {
 
 const getListingsName = (listings) => {
   return [
-    { id: "", name: "Listings" },
+    { id: "", name: "" },
     ...listings?.map((item) => ({
       id: item.id,
       name: item.name,
@@ -294,20 +308,20 @@ const getListingsName = (listings) => {
   ];
 };
 
-const  getIdsWithLatestIncomingMessages = (data)=> {
+const getIdsWithLatestIncomingMessages = (data) => {
   const result = data
-  .filter(item => Array.isArray(item.messages) && item.messages.length > 0)
-  .map(item => ({ 
-      id: item.id, 
-      latestMessage: item.messages.reduce((latest, msg) => 
-          new Date(msg.date) > new Date(latest.date) ? msg : latest
-      )
-  }))
-  .filter(item => item.latestMessage.isIncoming === 1)
-  .map(item => item.id);
+    .filter((item) => Array.isArray(item.messages) && item.messages.length > 0)
+    .map((item) => ({
+      id: item.id,
+      latestMessage: item.messages.reduce((latest, msg) =>
+        new Date(msg.date) > new Date(latest.date) ? msg : latest
+      ),
+    }))
+    .filter((item) => item.latestMessage.isIncoming === 1)
+    .map((item) => item.id);
 
-    return result
-}
+  return result;
+};
 
 const filterReservations = (reservations, filters) => {
   const today = new Date().toISOString().split("T")[0];
@@ -345,8 +359,8 @@ const filterReservations = (reservations, filters) => {
           matchesQuickFilter = true;
       }
     }
-    if (selectedListing) {
-      matchesListingFilter = reservation.listingMapId.toString() == selectedListing.toString();
+    if (Array.isArray(selectedListing) && selectedListing.length > 0) {
+      matchesListingFilter = selectedListing.includes(reservation.listingMapId);
     }
 
     return matchesQuickFilter && matchesListingFilter;
@@ -368,5 +382,6 @@ export {
   getAllListings,
   getListingsName,
   filterReservations,
-  getIdsWithLatestIncomingMessages
+  getIdsWithLatestIncomingMessages,
+  getAmenity
 };

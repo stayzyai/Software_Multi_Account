@@ -28,7 +28,7 @@ const Dropdown = ({ label, options, isOpen, onClick, onSelect, selectedValue }) 
           {options.map((option) => (
             <div
               key={label === "Listing" ? option.id : option}
-              className="p-2 hover:bg-gray-50 cursor-pointer"
+              className="p-2 hover:bg-gray-50 cursor-pointer min-h-8"
               onClick={() => {
                 const value = label === "Listing" ? option.id : option;
                 onSelect(label, value);

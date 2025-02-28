@@ -28,7 +28,8 @@ const MessageDetails = ({ chatInfo, handleClickMessages }) => {
   const [openBooking, setOpenBooking] = useState(false);
   const [openSidebarMessage, setOpenSidebarMessage] = useState(false);
   const [messages, setMessage] = useState([]);
-  const [input, setInput] = useState("");
+  // const [input, setInput] = useState("");
+  const [input, setInput] = useState({});
   const [messageLoader, setMessagesLoader] = useState(false)
   const [fromatedConversation, setFormatedConversation] = useState([])
   const [openFilter, setOpenFilter] = useState(null)
@@ -100,20 +101,27 @@ const getFirstTwoWords = (name)=>{
   const firstTwoWords = words?.slice(0, 2).join(' ');
   return firstTwoWords
 }
-  const handleSendMessage = async(chat_id) => {
-    if (input.trim()) {
-      setMessagesLoader(true)
-      const payload = { "body": input, "communicationType": "channel"}
-      setInput("");
-      const data = await sendMessages(chat_id, payload)
-      if(data?.length > 0){
-        setMessage([...messages, data[0]]);
-        const currentChat = messsage?.find((item)=>item?.id === chat_id)
-        const newMessages = [...(currentChat?.messages), data[0]];
-        dispatch(setMessages({id: chat_id, message: newMessages}))
-        setMessagesLoader(false)
-      }else{
-        toast.error("An error occurred while sending messages. Please try again")
+  const handleSendMessage = async (chat_id) => {
+    const messageBody = input[chat_id]?.trim();
+    if (messageBody) {
+      setMessagesLoader(true);
+      const payload = { body: messageBody, communicationType: "channel" };
+      try {
+        const data = await sendMessages(chat_id, payload);
+        if (data?.length > 0) {
+          setMessage([...messages, data[0]]);
+          const currentChat = messages.find((item) => item?.id === chat_id);
+          const newMessages = [...(currentChat?.messages || []), data[0]];
+          dispatch(setMessages({ id: chat_id, message: newMessages }));
+        } else {
+          toast.error("An error occurred while sending messages. Please try again.");
+        }
+      } catch (error) {
+        console.error("Error sending message:", error);
+        toast.error("An unexpected error occurred. Please try again later.");
+      } finally {
+        setMessagesLoader(false);
+        setInput((prev) => ({ ...prev, [chat_id]: "" }));
       }
     }
   };
@@ -123,7 +131,7 @@ const getFirstTwoWords = (name)=>{
 
   const handleApplyFilter = () => {
     const data = filterReservations(reservation, filters);
-    const listingMapIds = data.map(item => item.listingMapId);
+    const listingMapIds = data?.map(item => item.listingMapId);
     let matchingConversations = conversation.filter(convo => listingMapIds.includes(convo.listingMapId));
     if (filters.quickFilter == "last_message") {
         const latestIncomingIds = getIdsWithLatestIncomingMessages(messsage);
@@ -176,7 +184,7 @@ const getFirstTwoWords = (name)=>{
               <div className="flex justify-between w-full text-[#292D32] text-nowrap text-base">
                 <div>
                   <p>{getFirstTwoWords(item?.recipientName)}</p>
-                  <div className={`w-[124px] text-[#292D3270] text-xs overflow-hidden truncate whitespace-nowrap  ${ unreadChats[item.id] || item?.isIncoming === 1 && 'font-bold text-gray-700'}`}>
+                  <div className={`w-[124px] text-[#292D3270] text-xs overflow-hidden truncate whitespace-nowrap  ${ unreadChats[item.id] && 'font-bold text-gray-700'}`}>
                     {item?.conversationMessages !== "" ? item?.conversationMessages : "Click here to reply"}
                   </div>
                 </div>

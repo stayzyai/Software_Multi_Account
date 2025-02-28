@@ -17,7 +17,7 @@ const Messages = ({ handleClickMessages, title }) => {
   const [filteredConversations, setFilteredConversations] = useState([])
   const [openDropdown, setOpenDropdown] = useState(null);
   const [selectedFilters, setSelectedFilters] = useState({
-    Date: "Date",
+    Date: "",
     Listing: "",
     Task: "",
   });
@@ -32,7 +32,7 @@ const Messages = ({ handleClickMessages, title }) => {
   const messages = useSelector((state) => state.messages);
   const listings = useSelector((state) => state.listings);
 
-    const getConversationData = async () => {
+    const getConversationData = async (newMessage) => {
       const data = await getConversations();
       dispatch(setConversations(data));
       const conversationIds = data?.map((conv) => conv.id);
@@ -49,6 +49,7 @@ const Messages = ({ handleClickMessages, title }) => {
       setAllListings(getListingsName(listingData));
       setSimplifiedConversation(simplifiedData);
       setLoading(false);
+      dispatch(setUnreadChat({chatId: newMessage.conversationId}))
     };
 
   useEffect(() => {
@@ -56,10 +57,10 @@ const Messages = ({ handleClickMessages, title }) => {
       transports: ["websocket"],
     });
     newSocket.on("connect", () => {
-      console.log("Connected to WebSocket server");
+      // console.log("Connected to WebSocket server");
     });
     newSocket.on("received_message", (newMessage) => {
-      getConversationData()
+      getConversationData(newMessage)
       console.log("New message received: ", newMessage);
       const updatedMessages = updateMessages(
         simplifiedConversation,
@@ -70,7 +71,7 @@ const Messages = ({ handleClickMessages, title }) => {
       dispatch(
         setMessages({ id: newMessage.conversationId, message: updatedData })
       );
-      dispatch(setUnreadChat({chatId: newMessage.conversationId}))
+      // dispatch(setUnreadChat({chatId: newMessage.conversationId}))
     });
     newSocket.on("new_reservation", (reservations) => {
       const newReservation = async () => {
@@ -126,7 +127,7 @@ const Messages = ({ handleClickMessages, title }) => {
   const handleSelect = (label, value) => {
     setSelectedFilters((prev) => ({ ...prev, [label]: value }));
   };
-  const isFilteringActive = selectedFilters.Date !== "Date" || selectedFilters.Listing !== "";
+  const isFilteringActive = selectedFilters.Date !== "" || selectedFilters.Listing !== "";
 
   return (
     <div className="px-2 sm:px-0">
@@ -139,7 +140,7 @@ const Messages = ({ handleClickMessages, title }) => {
                 <div className="flex gap-2 text-[14px] cursor-pointer">
                   <Dropdown
                     label="Date"
-                    options={["Date", "Today", "Yesterday", "Last 7 Days"]}
+                    options={["", "Today", "Yesterday", "Last 7 Days"]}
                     isOpen={openDropdown === "Date"}
                     onClick={() => handleDropdownClick("Date")}
                     onSelect={handleSelect}
@@ -203,7 +204,7 @@ const Messages = ({ handleClickMessages, title }) => {
                         <p className="font-medium text-gray-800">
                           {item?.recipientName}
                         </p>
-                        <p className={`text-sm text-[#7F7F7F] hidden md:block ${ unreadChats[item.id] || item?.isIncoming === 1 && 'font-semibold text-gray-700'}`}>
+                        <p className={`text-sm text-[#7F7F7F] hidden md:block ${ unreadChats[item.id] && 'font-semibold text-gray-700'}`}>
                           {item?.conversationMessages}
                         </p>
                       </div>
