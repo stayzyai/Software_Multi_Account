@@ -40,8 +40,8 @@ const FilterModal = ({
             <option value="">Quick filters</option>
             <option value="last_message">Guest last message</option>
             <option value="staying_guests">Staying guests</option>
-            <option value="today_checkins">Today's check-ins</option>
-            <option value="tomorrow_checkins">Tomorrow's check-ins</option>
+            <option value="today_checkins">Today&apos;s check-ins</option>
+            <option value="tomorrow_checkins">Tomorrow&apos;s check-ins</option>
             <option value="next_7_days">Next 7 days check-ins</option>
           </select>
 
@@ -61,7 +61,10 @@ const FilterModal = ({
 
           <button
             className="px-2 py-1 text-sm bg-green-800 text-white rounded hover:bg-green-700"
-            onClick={handleApplyFilter}
+            onClick={() => {
+              handleApplyFilter();
+              setOpenFilter(false);
+            }}
           >
             Apply filters
           </button>

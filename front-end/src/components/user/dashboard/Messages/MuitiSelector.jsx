@@ -5,13 +5,21 @@ import FormControl from "@mui/material/FormControl";
 import ListItemText from "@mui/material/ListItemText";
 import Select from "@mui/material/Select";
 import Checkbox from "@mui/material/Checkbox";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const MultipleSelectCheckmarks = ({ listings, onChange }) => {
-  const [selectedIds, setSelectedIds] = useState([]);
+const MultipleSelectCheckmarks = ({ listings, onChange, value }) => {
+  const [selectedIds, setSelectedIds] = useState(value || []);
+
+  useEffect(() => {
+    if (value) {
+      setSelectedIds(value);
+    }
+  }, [value]);
 
   const handleChange = (event) => {
-    const { target: { value } } = event;
+    const {
+      target: { value },
+    } = event;
     const newValue = typeof value === "string" ? value.split(",") : value;
     setSelectedIds(newValue);
     onChange(newValue);
@@ -37,10 +45,9 @@ const MultipleSelectCheckmarks = ({ listings, onChange }) => {
           displayEmpty
           value={selectedIds}
           onChange={handleChange}
-          input={<OutlinedInput  sx={{ height: 100, width: 100 }} />}
+          input={<OutlinedInput sx={{ height: 100, width: 100 }} />}
           sx={{ height: 36 }}
-          // renderValue={getSelectedNames}
-          renderValue={(selected) => getSelectedNames(selected)}
+          renderValue={getSelectedNames}
         >
           {listings?.map((item) => (
             <MenuItem key={item.id} value={item.id}>
