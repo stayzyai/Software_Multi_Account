@@ -37,7 +37,7 @@ const MultipleSelectCheckmarks = ({ listings, onChange, value }) => {
   };
 
   return (
-    <div className="text-sm">
+    <div>
       <FormControl sx={{ width: 222 }}>
         <Select
           id="demo-multiple-checkbox"
@@ -46,11 +46,11 @@ const MultipleSelectCheckmarks = ({ listings, onChange, value }) => {
           value={selectedIds}
           onChange={handleChange}
           input={<OutlinedInput sx={{ height: 100, width: 100 }} />}
-          sx={{ height: 36 }}
+          sx={{ height: 36, fontSize: "15px",  fontFamily: "DM Sans", fontWeight: 500 }}
           renderValue={getSelectedNames}
         >
           {listings?.map((item) => (
-            <MenuItem key={item.id} value={item.id}>
+            <MenuItem key={item.id} value={item.id} >
               <Checkbox checked={selectedIds.includes(item.id)} sx={{ padding: 1.5 }} className="w-1 h-8" />
               <ListItemText primary={item.name} />
             </MenuItem>

@@ -33,7 +33,7 @@ const FilterModal = ({
         </div>
         <div className="space-y-3">
           <select
-            className="w-full p-2 border border-gray-400 h-9 text-md rounded bg-white"
+            className="w-full p-2 border border-gray-400 h-[38px] text-[16px] rounded bg-white font-sans text-gray-800"
             value={filters.quickFilter}
             onChange={(e) => handleFilterChange("quickFilter", e.target.value)}
           >
