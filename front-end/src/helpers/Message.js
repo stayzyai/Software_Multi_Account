@@ -300,7 +300,6 @@ const filterMessages = (messages, filters) => {
 
 const getListingsName = (listings) => {
   return [
-    { id: "", name: "" },
     ...listings?.map((item) => ({
       id: item.id,
       name: item.name,

@@ -140,7 +140,7 @@ const Messages = ({ handleClickMessages, title }) => {
                 <div className="flex gap-2 text-[14px] cursor-pointer">
                   <Dropdown
                     label="Date"
-                    options={["", "Today", "Yesterday", "Last 7 Days"]}
+                    options={["Today", "Yesterday", "Last 7 Days"]}
                     isOpen={openDropdown === "Date"}
                     onClick={() => handleDropdownClick("Date")}
                     onSelect={handleSelect}
