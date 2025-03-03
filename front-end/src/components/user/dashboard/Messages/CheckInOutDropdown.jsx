@@ -85,7 +85,7 @@ const CheckInOutDropdown = ({ selectedTime, onSelect, chatInfo, type }) => {
         onClick={() => setIsOpen(!isOpen)}
       >
         <p>{selectedTime}</p>
-        <img src="/icons/down.svg" alt="down icon" width={14} height={14} />
+        {/* <img src="/icons/down.svg" alt="down icon" width={14} height={14} /> */}
       </div>
       {isOpen && (
         <div className="absolute bg-white border rounded-lg shadow-lg mt-2 max-h-48 overflow-y-auto w-[92px] text-sm scrollbar-hide z-50">

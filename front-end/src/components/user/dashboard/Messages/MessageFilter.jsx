@@ -1,16 +1,23 @@
 import { IoMdClose } from "react-icons/io";
+import MultipleSelectCheckmarks from "./MuitiSelector";
 
-const FilterModal = ({ setOpenFilter, listings, filters, setFilters, handleApplyFilter, setFilteredConversations }) => {
-
+const FilterModal = ({
+  setOpenFilter,
+  listings,
+  filters,
+  setFilters,
+  handleApplyFilter,
+  setFilteredConversations,
+}) => {
   const handleFilterChange = (field, value) => {
     setFilters((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleClearFilter = ()=>{
-    setOpenFilter(false)
-    setFilters({ quickFilter: "", selectedListing: "" })
-    setFilteredConversations([])
-  }
+  const handleClearFilter = () => {
+    setOpenFilter(false);
+    setFilters({ quickFilter: "", selectedListing: "" });
+    setFilteredConversations([]);
+  };
 
   return (
     <div className="bg-black bg-opacity-0 flex justify-center items-center absolute top-16">
@@ -26,30 +33,23 @@ const FilterModal = ({ setOpenFilter, listings, filters, setFilters, handleApply
         </div>
         <div className="space-y-3">
           <select
-            className="w-full p-2 border rounded"
+            className="w-full p-2 border border-gray-400 h-[38px] text-[16px] rounded bg-white font-sans text-gray-800"
             value={filters.quickFilter}
             onChange={(e) => handleFilterChange("quickFilter", e.target.value)}
           >
             <option value="">Quick filters</option>
             <option value="last_message">Guest last message</option>
             <option value="staying_guests">Staying guests</option>
-            <option value="today_checkins">Today's check-ins</option>
-            <option value="tomorrow_checkins">Tomorrow's check-ins</option>
+            <option value="today_checkins">Today&apos;s check-ins</option>
+            <option value="tomorrow_checkins">Tomorrow&apos;s check-ins</option>
             <option value="next_7_days">Next 7 days check-ins</option>
           </select>
 
-          <select
-            className="w-full p-2 border rounded"
+          <MultipleSelectCheckmarks
             value={filters.selectedListing}
-            onChange={(e) => handleFilterChange("selectedListing", e.target.value)}
-          >
-            <option value="">Listings</option>
-            {listings.map((listing) => (
-              <option key={listing.id} value={listing.id}>
-                {listing.name}
-              </option>
-            ))}
-          </select>
+            onChange={(value) => handleFilterChange("selectedListing", value)}
+            listings={listings}
+          />
         </div>
         <div className="flex justify-between mt-4">
           <button
@@ -58,10 +58,13 @@ const FilterModal = ({ setOpenFilter, listings, filters, setFilters, handleApply
           >
             Clear filters
           </button>
-          
+
           <button
             className="px-2 py-1 text-sm bg-green-800 text-white rounded hover:bg-green-700"
-            onClick={handleApplyFilter}
+            onClick={() => {
+              handleApplyFilter();
+              setOpenFilter(false);
+            }}
           >
             Apply filters
           </button>

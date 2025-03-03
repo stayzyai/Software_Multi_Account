@@ -97,17 +97,29 @@ const getAllListings = async () => {
   }
 };
 
-const openAISuggestion = async (payload) => {
+const getAmenity = async () => {
   try {
-    const response = await api.post(`/user/ai-suggestion`, payload);
-    if (response?.data?.answer) {
-      return response?.data?.answer;
+    const response = await api.get("/hostaway/get-all/bedTypes")
+    if (response?.data?.detail?.data?.result) {
+      const responseData = response?.data?.detail?.data?.result;
+      return responseData;
     }
-    return null;
-  } catch (Error) {
-    console.log("Error at get all messages: ", Error);
-    return null;
+  } catch (error) {
+    console.log("Error get all amenity", error)
+    return []
   }
+};
+
+const formatTime = (dateStr) => {
+  if (!dateStr) return null;
+  const dateObj = new Date(dateStr.replace(" ", "T"));
+  let hours = dateObj.getHours();
+  const minutes = dateObj.getMinutes();
+  const ampm = hours >= 12 ? "PM" : "AM";
+  hours = hours % 12;
+  hours = hours === 0 ? 12 : hours;
+  const minutesStr = minutes < 10 ? "0" + minutes : minutes;
+  return `${hours}:${minutesStr} ${ampm}`;
 };
 
 const simplifiedResult = (results, conversation) => {
@@ -133,7 +145,9 @@ const simplifiedResult = (results, conversation) => {
         conversationMessages: latestConversationMessage
           ? latestConversationMessage?.body
           : "",
-          isIncoming: latestConversationMessage? latestConversationMessage?.isIncoming : null
+        isIncoming: latestConversationMessage
+          ? latestConversationMessage?.isIncoming
+          : null,
       };
     })
     .sort((a, b) => {
@@ -143,7 +157,7 @@ const simplifiedResult = (results, conversation) => {
     });
 };
 
-const formatedMessages = (messages, listing) => {
+const formatedMessages = (messages, listing, amenity) => {
   const formattedMessages = messages?.map((msg) => ({
     role: msg.isIncoming == 0 ? "assistant" : "user",
     content: msg.body,
@@ -153,14 +167,26 @@ const formatedMessages = (messages, listing) => {
     .find((msg) => msg?.role === "user")?.content;
   const previousConversation = JSON.stringify(formattedMessages);
   const propertyDetails = JSON.stringify(listing);
-  const systemPrompt = SYSTEM_PROMPT.replace(
-    "{previous_conversation}",
-    previousConversation
-  )
-    .replace("{latest_message}", lastUserMessage)
-    .replace("{property_details}", propertyDetails);
-
+  const amenityDetails = JSON.stringify(amenity)
+  const systemPrompt = SYSTEM_PROMPT.replace(/{previous_conversation}/g, previousConversation)
+    .replace(/{latest_message}/g, lastUserMessage)
+    .replace(/{property_details}/g, propertyDetails)
+    .replace(/{amenities_detail}/g, amenityDetails);
   return { systemPrompt, lastUserMessage };
+};
+
+
+const openAISuggestion = async (payload) => {
+  try {
+    const response = await api.post(`/user/ai-suggestion`, payload);
+    if (response?.data?.answer) {
+      return response?.data?.answer;
+    }
+    return null;
+  } catch (Error) {
+    console.log("Error at get all messages: ", Error);
+    return null;
+  }
 };
 
 const getTimeDetails = (currentReservation) => {
@@ -287,7 +313,6 @@ const filterMessages = (messages, filters) => {
 
 const getListingsName = (listings) => {
   return [
-    { id: "", name: "Listings" },
     ...listings?.map((item) => ({
       id: item.id,
       name: item.name,
@@ -346,9 +371,8 @@ const filterReservations = (reservations, filters) => {
           matchesQuickFilter = true;
       }
     }
-    if (selectedListing) {
-      matchesListingFilter =
-        reservation.listingMapId.toString() == selectedListing.toString();
+    if (Array.isArray(selectedListing) && selectedListing.length > 0) {
+      matchesListingFilter = selectedListing.includes(reservation.listingMapId);
     }
 
     return matchesQuickFilter && matchesListingFilter;
@@ -372,4 +396,5 @@ export {
   filterReservations,
   getIdsWithLatestIncomingMessages,
   getHostawayReservation,
+  getAmenity
 };

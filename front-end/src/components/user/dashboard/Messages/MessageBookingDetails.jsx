@@ -52,6 +52,13 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
 
   if(loading) return <div className="xl:w-[440px] 2xl:w-[440px] w-[340px]"> <MessageRightSidebar/> </div>
 
+  const Switch = () => (
+    <label className="inline-flex items-center cursor-pointer">
+      <input type="checkbox" className="sr-only peer"/>
+      <div className="relative w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-0 peer-focus:ring-[#34C759] dark:peer-focus:ring-[#34C759] rounded-full peer dark:bg-white peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[#34C759] after:content-[''] after:absolute after:top-[1px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-[18px] after:w-[18px] after:transition-all dark:border-[#34C759] peer-checked:bg-[#34C759]"></div>
+    </label>
+  );
+
   return (
     <div
       className={`transition-all duration-300 max-h-screen xl:w-[440px] 2xl:w-[440px] w-[340px] min-h-full overflow-y-auto scrollbar-hide font-inter ${
@@ -103,15 +110,15 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
             return (
               <div key={index} className="text-lg">
                 <p className="mb-4 text-gray-500">Check in</p>
-                <div className="flex gap-16 xl:gap-[30px] 2xl:gap-[40px] mb-8">
+                <div className="flex gap-16 xl:gap-[60px] 2xl:gap-[70px] mb-8">
                   <div className="flex gap-1 items-center text-nowrap">
                     <p>{item.timeIn.date}</p>{" "}
-                    <img
+                    {/* <img
                       src="/icons/down.svg"
                       alt="down icon"
                       width={14}
                       height={14}
-                    />
+                    /> */}
                   </div>
                   <CheckInOutDropdown
                     chatInfo={chatInfo}
@@ -125,15 +132,15 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
                   />
                 </div>
                 <p className="mb-4 text-gray-500">Check out</p>
-                <div className="flex gap-16 xl:gap-[30px] 2xl:gap-[40px]">
+                <div className="flex gap-16 xl:gap-[60px] 2xl:gap-[70px]">
                   <div className="flex gap-2 text-nowrap items-center">
                     <p>{item.timeOut.date}</p>{" "}
-                    <img
+                    {/* <img
                       src="/icons/down.svg"
                       alt="down icon"
                       width={14}
                       height={14}
-                    />
+                    /> */}
                   </div>
                   <CheckInOutDropdown
                     chatInfo={chatInfo}
@@ -151,12 +158,16 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
           })}
         </div>
         <div className="pt-10 grid grid-cols-2 text-nowrap xl:gap-6 gap-12 text-lg bg-[#FCFDFC]">
-          {bookingDetails?.map((item, index) => (
-            <div key={index} className="ml-6">
-              <p className="text-gray-500 mb-3">{item.label}</p>
-              <p>{item.value}</p>
-            </div>
-          ))}
+        {bookingDetails?.map((item, index) => (
+        <div key={index} className="ml-6">
+          <p className="text-gray-500 mb-3">{item.label}</p>
+          {item.label === 'AI' ? (
+            <Switch checked={item.value === 'Enabled'} />
+          ) : (
+            <p>{item.value}</p>
+          )}
+        </div>
+      ))}
         </div>
       </div>
     </div>

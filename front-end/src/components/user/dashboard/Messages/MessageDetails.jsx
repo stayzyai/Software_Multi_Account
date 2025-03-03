@@ -15,21 +15,24 @@ import ChatSidebar from "./MessageSidebar";
 
 const MessageDetails = ({ chatInfo, handleClickMessages }) => {
 
-    const conversation = useSelector((state)=>state.conversation.conversations)
-    const reservation = useSelector((state)=>state.reservations.reservations)
-    const listings = useSelector((state)=>state.listings.listings)
-    const  messsage = useSelector((state)=>state.messages)
-    const [openBooking, setOpenBooking] = useState(false);
-    const [openSidebarMessage, setOpenSidebarMessage] = useState(false);
-    const [messages, setMessage] = useState([]);
-    const [input, setInput] = useState("");
-    const [messageLoader, setMessagesLoader] = useState(false)
-    const [fromatedConversation, setFormatedConversation] = useState([])
-    const [openFilter, setOpenFilter] = useState(null)
-    const [filters, setFilters] = useState({quickFilter: "", selectedListing: ""});
-    const [filteredConversations, setFilteredConversations] = useState([])
-    const dispatch = useDispatch()
-    const navigate = useNavigate();
+  const conversation = useSelector((state)=>state.conversation.conversations)
+  const reservation = useSelector((state)=>state.reservations.reservations)
+  const listings = useSelector((state)=>state.listings.listings)
+  const  messsage = useSelector((state)=>state.messages)
+  const [openBooking, setOpenBooking] = useState(false);
+  const [openSidebarMessage, setOpenSidebarMessage] = useState(false);
+  const [messages, setMessage] = useState([]);
+  // const [input, setInput] = useState("");
+  const [input, setInput] = useState({});
+  const [messageLoader, setMessagesLoader] = useState(false)
+  const [fromatedConversation, setFormatedConversation] = useState([])
+  const [openFilter, setOpenFilter] = useState(null)
+  const [filters, setFilters] = useState({quickFilter: "", selectedListing: ""});
+  const [filteredConversations, setFilteredConversations] = useState([])
+  const unreadChats = useSelector((state) => state.notifications.unreadChats);
+  const dispatch = useDispatch()
+  const navigate = useNavigate();
+  const { messageId }  = useParams()
 
     const getReservations = async () => {
         const data  = await getHostawayReservation()
@@ -72,27 +75,42 @@ const MessageDetails = ({ chatInfo, handleClickMessages }) => {
         }
       },[messages])
 
-      const handleSendMessage = async(chat_id) => {
-        if (input.trim()) {
-          setMessagesLoader(true)
-          const payload = { "body": input, "communicationType": "channel"}
-          setInput("");
-          const data = await sendMessages(chat_id, payload)
-          if(data?.length > 0){
-            setMessage([...messages, data[0]]);
-            const currentChat = messsage?.find((item)=>item?.id === chat_id)
-            const newMessages = [...(currentChat?.messages), data[0]];
-            dispatch(setMessages({id: chat_id, message: newMessages}))
-            setMessagesLoader(false)
-          }else{
-            toast.error("An error occurred while sending messages. Please try again")
-          }
+const getFirstTwoWords = (name)=>{
+  const words = name?.split(' ');
+  const firstTwoWords = words?.slice(0, 2).join(' ');
+  return firstTwoWords
+}
+  const handleSendMessage = async (chat_id) => {
+    const messageBody = input[chat_id]?.trim();
+    if (messageBody) {
+      setMessagesLoader(true);
+      const payload = { body: messageBody, communicationType: "channel" };
+      try {
+        const data = await sendMessages(chat_id, payload);
+        if (data?.length > 0) {
+          setMessage([...messages, data[0]]);
+          const currentChat = messages.find((item) => item?.id === chat_id);
+          const newMessages = [...(currentChat?.messages || []), data[0]];
+          dispatch(setMessages({ id: chat_id, message: newMessages }));
+        } else {
+          toast.error("An error occurred while sending messages. Please try again.");
         }
-      };
+      } catch (error) {
+        console.error("Error sending message:", error);
+        toast.error("An unexpected error occurred. Please try again later.");
+      } finally {
+        setMessagesLoader(false);
+        setInput((prev) => ({ ...prev, [chat_id]: "" }));
+      }
+    }
+  };
+  const handleCloseMessage = () => {
+    navigate("/user/messages")
+  }
 
   const handleApplyFilter = () => {
     const data = filterReservations(reservation, filters);
-    const listingMapIds = data.map(item => item.listingMapId);
+    const listingMapIds = data?.map(item => item.listingMapId);
     let matchingConversations = conversation.filter(convo => listingMapIds.includes(convo.listingMapId));
     if (filters.quickFilter == "last_message") {
         const latestIncomingIds = getIdsWithLatestIncomingMessages(messsage);

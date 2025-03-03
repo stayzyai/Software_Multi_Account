@@ -19,7 +19,7 @@ const MessageList = ({title,
       .toUpperCase();
   };
 
-  const isFilteringActive = selectedFilters.Date !== "Date" || selectedFilters.Listing !== "";
+  const isFilteringActive = selectedFilters.Date !== "" || selectedFilters.Listing !== "";
 
   return (
     <>

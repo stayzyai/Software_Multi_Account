@@ -28,7 +28,7 @@ const CommonTable = ({
     <div className="overflow-x-auto px-4 pt-16 md:pl-10 md:pr-4 w-full">
       <div className="sm:min-w-full border-[0.5px] border-[#D1D1D1] rounded-xl min-h-[380px] min-w-fit mb-16">
         <table
-          className="lg:text-sm text-xs"
+          className="lg:text-sm text-xs mb-10"
           style={{ width: "-webkit-fill-available" }}
         >
           <thead>

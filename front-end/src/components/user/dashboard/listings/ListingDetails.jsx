@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import PropertyListingSidebar from "./ListingSidebar";
 import Header from "../Header";
 import ListingInfo from "./ListingAbout";
-import ListingAIInfo from "./ListingAIInfo";
+import ListingAdditionalInfo from "./ListingAdditionInfo";
 import ListingBookingDetails from "./ListingBooking";
 import ListingNearbyDetails from "./ListingNearbyDetails";
 import { useSelector, useDispatch } from "react-redux";
@@ -23,6 +23,7 @@ const ListingDetails = ({
   const [activeListingSection, setActiveListingSection] = useState("about");
   const [aboutListing, setAboutListing] = useState([]);
   const [calenderDetails, setCalenderDetails] = useState({});
+  const [listingCustomValue, setListingsCustomValue] = useState([])
   const { listingId } = useParams();
   const dispatch = useDispatch();
 
@@ -102,7 +103,7 @@ const ListingDetails = ({
             <ListingInfo aboutListing={aboutListing} />
           )}
           {activeListingSection === "ai-info" && (
-            <ListingAIInfo listingId={listingId} listings={listings} />
+            <ListingAdditionalInfo listings={listings} listingId={listingId} />
           )}
           {activeListingSection === "booking" && (
             <ListingBookingDetails calenderDetails={calenderDetails} />

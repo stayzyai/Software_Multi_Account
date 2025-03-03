@@ -14,7 +14,11 @@ const Messages = ({ handleClickMessages, title }) => {
   const [simplifiedConversation, setSimplifiedConversation] = useState([]);
   const [filteredConversations, setFilteredConversations] = useState([])
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [selectedFilters, setSelectedFilters] = useState({ Date: "Date", Listing: "", Task: "",});
+  const [selectedFilters, setSelectedFilters] = useState({
+    Date: "",
+    Listing: "",
+    Task: "",
+  });
   const [allListings, setAllListings] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -23,7 +27,7 @@ const Messages = ({ handleClickMessages, title }) => {
   const messages = useSelector((state) => state.messages);
   const listings = useSelector((state) => state.listings);
 
-    const getConversationData = async () => {
+    const getConversationData = async (newMessage = null) => {
       const data = await getConversations();
       dispatch(setConversations(data));
       const conversationIds = data?.map((conv) => conv.id);
@@ -40,6 +44,7 @@ const Messages = ({ handleClickMessages, title }) => {
       setAllListings(getListingsName(listingData));
       setSimplifiedConversation(simplifiedData);
       setLoading(false);
+      newMessage && dispatch(setUnreadChat({chatId: newMessage?.conversationId}))
     };
 
   useEffect(() => {
@@ -47,10 +52,10 @@ const Messages = ({ handleClickMessages, title }) => {
       transports: ["websocket"],
     });
     newSocket.on("connect", () => {
-      console.log("Connected to WebSocket server");
+      // console.log("Connected to WebSocket server");
     });
     newSocket.on("received_message", (newMessage) => {
-      getConversationData()
+      getConversationData(newMessage)
       console.log("New message received: ", newMessage);
       const updatedMessages = updateMessages(
         simplifiedConversation,
@@ -61,7 +66,7 @@ const Messages = ({ handleClickMessages, title }) => {
       dispatch(
         setMessages({ id: newMessage.conversationId, message: updatedData })
       );
-      dispatch(setUnreadChat({ chatId: newMessage.conversationId }));
+      // dispatch(setUnreadChat({chatId: newMessage.conversationId}))
     });
     newSocket.on("new_reservation", (reservations) => {
       const newReservation = async () => {
@@ -121,7 +126,7 @@ const Messages = ({ handleClickMessages, title }) => {
                 <div className="flex gap-2 text-[14px] cursor-pointer">
                   <Dropdown
                     label="Date"
-                    options={["Date", "Today", "Yesterday", "Last 7 Days"]}
+                    options={["Today", "Yesterday", "Last 7 Days"]}
                     isOpen={openDropdown === "Date"}
                     onClick={() => handleDropdownClick("Date")}
                     onSelect={handleSelect}
