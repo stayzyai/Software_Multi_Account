@@ -1,12 +1,15 @@
 import { useState, useEffect } from "react";
 import { Pencil } from "lucide-react";
-import { formatedFAQ, updateListings } from "../../../../helpers/ListingsHelper";
+import { formatedFAQ, updateListings} from "../../../../helpers/ListingsHelper";
 import { useDispatch } from "react-redux";
 import { setListings } from "../../../../store/listingSlice";
 
 const ListingAdditionalInfo = ({ listings, listingId }) => {
-
-  const dispatch =  useDispatch()
+  const dispatch = useDispatch();
+  const [loading, setLoading] = useState({
+    faq: false,
+    nearby: false,
+  });
 
   const [FAQ, setFAQ] = useState({
     faq: "",
@@ -45,7 +48,19 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
     }));
   };
 
-  const handleSave = async(type) => {
+  const handleSave = async (type) => {
+    setLoading((prev) => ({ ...prev, [type]: true }));
+    const data = await updateListings(
+      listings,
+      listingId,
+      type,
+      tempValues[type]
+    );
+    dispatch(setListings(data));
+    setLoading((prev) => ({
+      ...prev,
+      [type]: false,
+    }));
     setFAQ((prev) => ({
       ...prev,
       [type]: tempValues[type],
@@ -54,8 +69,6 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
       ...prev,
       [type]: false,
     }));
-    const data = await updateListings(listings, listingId, type, tempValues[type])
-    dispatch(setListings(data))
   };
 
   const handleCancel = (type) => {
@@ -73,7 +86,7 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
     <div className="w-full max-w-4xl mx-auto p-4 mt-8">
       <div className="mb-10">
         <div className="flex justify-between items-center mb-5">
-          <h1 className="font-medium text-xl">FAQ Section</h1>
+          <h1 className="font-medium text-xl">FAQ</h1>
         </div>
 
         {editMode.faq ? (
@@ -85,15 +98,15 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
               className="w-full min-h-[200px] p-6 text-base bg-gray-100 rounded-3xl focus:outline-none resize-none"
             />
             <div className="flex justify-end gap-4 p-4">
-              <button
+              <button disabled={loading.faq}
                 onClick={() => handleSave("faq")}
                 className="bg-[#2D8062] hover:bg-emerald-600 text-white px-8 py-2 rounded-full"
               >
-                Save
+                {loading.faq ? "Updating..." :"Save"}
               </button>
-              <button
+              <button disabled={loading.faq}
                 onClick={() => handleCancel("faq")}
-                className="bg-[#D24040] hover:bg-red-600 text-white px-8 py-2 rounded-full"
+                className={`bg-[#D24040] hover:bg-red-600 text-white px-8 py-2 rounded-full`}
               >
                 Cancel
               </button>
@@ -114,14 +127,16 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
             {FAQ.faq ? (
               <div dangerouslySetInnerHTML={{ __html: FAQ.faq }} />
             ) : (
-              <p className="text-gray-500">Text that owner inputs for AI to know about the property</p>
+              <p className="text-gray-500">
+                Text that owner inputs for AI to know about the property
+              </p>
             )}
           </div>
         )}
       </div>
       <div className="mb-10">
         <div className="flex justify-between items-center mb-5">
-          <h1 className="font-medium text-xl">Near By</h1>
+          <h1 className="font-medium text-xl">Nearby Spots</h1>
         </div>
 
         {editMode.nearby ? (
@@ -133,13 +148,13 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
               className="w-full min-h-[200px] p-6 text-base bg-gray-100 rounded-3xl focus:outline-none resize-none"
             />
             <div className="flex justify-end gap-4 p-4">
-              <button
+              <button disabled={loading.nearby}
                 onClick={() => handleSave("nearby")}
                 className="bg-[#2D8062] hover:bg-emerald-600 text-white px-8 py-2 rounded-full"
               >
-                Save
+                {loading.nearby ? "Updating.." : "Save"}
               </button>
-              <button
+              <button disabled={loading.nearby}
                 onClick={() => handleCancel("nearby")}
                 className="bg-[#D24040] hover:bg-red-600 text-white px-8 py-2 rounded-full"
               >
