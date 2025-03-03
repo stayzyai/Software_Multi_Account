@@ -32,7 +32,7 @@ const Messages = ({ handleClickMessages, title }) => {
   const messages = useSelector((state) => state.messages);
   const listings = useSelector((state) => state.listings);
 
-    const getConversationData = async (newMessage) => {
+    const getConversationData = async (newMessage = null) => {
       const data = await getConversations();
       dispatch(setConversations(data));
       const conversationIds = data?.map((conv) => conv.id);
@@ -49,7 +49,7 @@ const Messages = ({ handleClickMessages, title }) => {
       setAllListings(getListingsName(listingData));
       setSimplifiedConversation(simplifiedData);
       setLoading(false);
-      dispatch(setUnreadChat({chatId: newMessage.conversationId}))
+      newMessage && dispatch(setUnreadChat({chatId: newMessage?.conversationId}))
     };
 
   useEffect(() => {

@@ -139,3 +139,21 @@ async def update_checkin_checkout(request: Request, token: str = Depends(get_tok
     except Exception as e:
         logging.error(f"Error updating check-in/check-out times: {str(e)}")
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@router.post("/update-listing")
+async def update_ai_info(request: Request, token: str = Depends(get_token), db: Session = Depends(get_db)):
+    try:
+        body = await request.json()
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
+        if not account:
+            raise HTTPException(status_code = 404, detail="Hostaway account not found")
+        listingId = body['id']
+        response = hostaway_put_request(account.hostaway_token, f"/listings/{listingId}", body)
+        data = json.loads(response)
+        return  {"detail": {"message": "listings updated", "response": data}}
+
+    except Exception as e:
+        logging.error(f"Error updating at AI Info: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
