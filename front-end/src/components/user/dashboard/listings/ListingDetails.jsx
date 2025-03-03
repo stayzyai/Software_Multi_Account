@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import PropertyListingSidebar from "./ListingSidebar";
 import Header from "../Header";
 import ListingInfo from "./ListingAbout";
-import ListingAdditionalInfo from "./ListingAdditionalInfo";
+import ListingAdditionalInfo from "./ListingAdditionInfo";
 import ListingBookingDetails from "./ListingBooking";
 import ListingNearbyDetails from "./ListingNearbyDetails";
 import { useSelector, useDispatch } from "react-redux";

@@ -3,7 +3,6 @@ import { Pencil } from "lucide-react";
 import { formatedFAQ, updateListings } from "../../../../helpers/ListingsHelper";
 import { useDispatch } from "react-redux";
 import { setListings } from "../../../../store/listingSlice";
-import { toast } from "sonner";
 
 const ListingAdditionalInfo = ({ listings, listingId }) => {
 
