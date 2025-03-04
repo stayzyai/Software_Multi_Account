@@ -83,7 +83,7 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-4 mt-8">
+    <div className="w-full px-10 mx-auto p-4 mt-8">
       <div className="mb-10">
         <div className="flex justify-between items-center mb-5">
           <h1 className="font-medium text-xl">FAQ</h1>
@@ -100,13 +100,13 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
             <div className="flex justify-end gap-4 p-4">
               <button disabled={loading.faq}
                 onClick={() => handleSave("faq")}
-                className="bg-[#2D8062] hover:bg-emerald-600 text-white px-8 py-2 rounded-full"
+                className="bg-[#2D8062] hover:bg-emerald-600 text-white px-6 py-2 rounded-[20px] font-normal text-xl border border-black"
               >
                 {loading.faq ? "Updating..." :"Save"}
               </button>
               <button disabled={loading.faq}
                 onClick={() => handleCancel("faq")}
-                className={`bg-[#D24040] hover:bg-red-600 text-white px-8 py-2 rounded-full`}
+                className={`bg-[#D24040] hover:bg-red-600 text-white px-6 py-2 rounded-[20px] font-normal text-xl border border-black`}
               >
                 Cancel
               </button>
@@ -150,13 +150,13 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
             <div className="flex justify-end gap-4 p-4">
               <button disabled={loading.nearby}
                 onClick={() => handleSave("nearby")}
-                className="bg-[#2D8062] hover:bg-emerald-600 text-white px-8 py-2 rounded-full"
+                className="bg-[#2D8062] hover:bg-emerald-600 text-white px-6 py-2 rounded-[20px] font-normal text-xl border border-black"
               >
                 {loading.nearby ? "Updating.." : "Save"}
               </button>
               <button disabled={loading.nearby}
                 onClick={() => handleCancel("nearby")}
-                className="bg-[#D24040] hover:bg-red-600 text-white px-8 py-2 rounded-full"
+                className="bg-[#D24040] hover:bg-red-600 text-white px-6 py-2 rounded-[20px] font-normal text-xl border border-black"
               >
                 Cancel
               </button>
