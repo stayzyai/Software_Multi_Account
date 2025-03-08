@@ -1,13 +1,11 @@
 import React from "react";
-import { Menu, Search, ChevronDown, MessageCircle } from "lucide-react";
+import { Menu, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 import { useSelector, useDispatch } from "react-redux";
-import { clearUser } from "./../../../store/userSlice";
 import {setOpenModal} from "./../../../store/sidebarSlice";
 import { useState } from "react";
 import SearchResultsList from "./SearchResultsList";
+import  DropdownMenu  from "./LogoutMenu"
 
 const Header = ({ title, role, messages, openListingName, openListingDetails, setOpenListingDetails }) => {
   const [isDropDownOpen, setIsDropDownOpen] = React.useState(false);
@@ -21,6 +19,7 @@ const Header = ({ title, role, messages, openListingName, openListingDetails, se
   const userRole = useSelector((state) => state.user.role);
   const listings = useSelector((state) => state.listings.listings);
   const conversations = useSelector((state) => state.conversation.conversations);
+  const tasks = useSelector((state)=>state.tasks.tasks)
 
   const toggleDropDown = () => {
     setIsDropDownOpen(!isDropDownOpen);
@@ -55,12 +54,13 @@ const Header = ({ title, role, messages, openListingName, openListingDetails, se
     const filteredConversations = conversations.filter(
       (conv) => conv.recipientName?.toLowerCase().includes(searchQuery)
     );
+    const filteredTasks = tasks?.filter((item) => item.title.toLowerCase().includes(query.toLowerCase()));
 
     const normalizedConversations = filteredConversations.map((conv) => ({
       ...conv,
       name: conv.recipientName,
     }));
-    setSearchResults([...filteredListings, ...normalizedConversations]);
+    setSearchResults([...filteredListings, ...normalizedConversations, ...filteredTasks]);
   };
 
   const handleSelectResult = (result) => {
@@ -76,7 +76,7 @@ const Header = ({ title, role, messages, openListingName, openListingDetails, se
   return (
     <div style={{width:"-webkit-fill-available"}}
       className={`z-30 fixed top-0 bg-[#FCFDFC] flex items-center justify-between ${title === "Chat" ? "pt-1": "pt-5"} ${ title === "Chat" ? "": "border-b border-gray-400"} ${
-        title === "Dashboard" || title === "Messages" || title === "Listings" || title === "Integrations" || title === "Settings" || title === "Staff" || title === "Tasks"
+        title === "Dashboard" || title === "Messages" || title === "Listings" || title === "Integrations" || title === "Settings" || title === "Staff" || title === "Tasks" || title === "Upsells"
           ? "bg-white flex items-center justify-between px-7 pb-2"
           : "flex items-center justify-between"
       } `}
@@ -90,7 +90,7 @@ const Header = ({ title, role, messages, openListingName, openListingDetails, se
           <Menu className="h-5 w-5 text-gray-600" />
         </button>
         {!openListingDetails && title !== "Chat" && (
-          <h1  style={{"-webkit-text-stroke-width": "0.5px", "-webkit-text-stroke-color":"#060606"}} className={`font-normal hidden md:block text-2xl ${title === "Listings" ? "text-2xl" : "xl:text-[32px]"}`}>
+          <h1  style={{WebkitTextStrokeWidth: "0.5px", WebkitTextStrokeColor:"#060606"}} className={`font-normal hidden md:block text-2xl ${title === "Listings" ? "text-2xl" : "xl:text-[32px]"}`}>
             {title}
           </h1>
         )}
@@ -100,7 +100,7 @@ const Header = ({ title, role, messages, openListingName, openListingDetails, se
             {title}
           </button >
           <ChevronDown className="sm:h-6 sm:w-7 h-4 -rotate-90"/>
-          <div className="xl:text-2xl md:text-lg text-xs font-medium cursor-pointer" style={{"-webkit-text-stroke-width": "0.2px", "-webkit-text-stroke-color":"#060606"}}>{openListingName}</div>
+          <div className="xl:text-2xl md:text-lg text-xs font-medium cursor-pointer" style={{WebkitTextStrokeWidth: "0.2px", WebkitTextStrokeColor:"#060606"}}>{openListingName}</div>
         </div>)}
       </div>
       <div className={`flex items-center ${title === "Chat" ? "":"gap-4"}`}>
@@ -148,41 +148,6 @@ const Header = ({ title, role, messages, openListingName, openListingDetails, se
               </div>
             )}
           </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const DropdownMenu = ({ role }) => {
-  const navigate = useNavigate();
-  const dispatch = useDispatch()
-
-  const { logout } = useAuth();
-  const handleLogout = () => {
-    dispatch(clearUser)
-    logout();
-    toast.success("Logged out successfully");
-    window.location.reload();
-    navigate(`/user/login`);
-  };
-
-  return (
-    <div className="relative bg-white">
-      <div className="origin-top-right absolute right-0 mt-8 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-        <div
-          className="py-1"
-          role="menu"
-          aria-orientation="vertical"
-          aria-labelledby="options-menu"
-        >
-          <button
-            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-            role="menuitem"
-            onClick={handleLogout}
-          >
-            Logout
-          </button>
         </div>
       </div>
     </div>

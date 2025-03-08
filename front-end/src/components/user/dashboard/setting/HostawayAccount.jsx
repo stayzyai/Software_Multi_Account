@@ -2,7 +2,6 @@ import React from "react";
 import { useState, useEffect } from "react";
 import api from "@/api/api";
 import { toast } from "sonner";
-import Header from "../Header";
 import { AlertCircle, Trash2, Plus } from "lucide-react";
 import { removeItem } from "../../../../helpers/localstorage";
 import SettingShimmer from "../../../common/shimmer/settingShimmer";
@@ -82,7 +81,6 @@ const HostawayAccount = ({ setOpenModal }) => {
                 </div>
                 <button
                   onClick={() => setOpenPopup(true)}
-                  // onClick={handleDeleteAccount}
                   className="w-full border border-red-600 sm:w-auto mt-6 px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md transition duration-300 ease-in-out flex items-center justify-center"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />

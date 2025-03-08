@@ -9,7 +9,7 @@ const ListingShimmer = () => {
           <div className="h-4 bg-gray-300 rounded w-full"></div>
           <div className="h-4 bg-gray-300 rounded w-24"></div>
         </div>
-        <div className="space-y-5">
+        <div className="space-y-5 pb-6">
           {[...Array(5)].map((_, index) => (
             <div key={index} className="grid grid-cols-3 gap-7">
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>

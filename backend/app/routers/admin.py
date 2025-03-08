@@ -6,7 +6,7 @@ from app.models.user import User
 from app.schemas.user import Role
 from app.schemas.admin import UserUpdateSchema
 from app.common.user_query import admin_update_user, get_user_statics, get_automated_message_statics, get_ticket_statics
-from app.schemas.user import  UserDelete
+from app.schemas.user import UserDelete
 import logging
 
 router = APIRouter(prefix="/admin", tags=["admin"])

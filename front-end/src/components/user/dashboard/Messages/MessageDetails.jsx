@@ -1,19 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { FiChevronsLeft } from "react-icons/fi";
 import { toast } from "sonner";
-import { simplifiedResult, filterReservations, getAllconversation, getConversations, getIdsWithLatestIncomingMessages, getHostawayReservation, getAllListings, sendMessages } from "../../../../helpers/Message";
+import { simplifiedResult, filterReservations, getIdsWithLatestIncomingMessages, getHostawayReservation, getAllListings, sendMessages } from "../../../../helpers/Message";
 import { useSelector, useDispatch } from "react-redux";
 import { setMessages } from "../../../../store/messagesSlice";
 import FilterModal from "../Messages/MessageFilter"
 import { setReservations } from "../../../../store/reservationSlice"
 import { useNavigate } from "react-router-dom";
 import { setListings } from "../../../../store/listingSlice"
-import { io } from "socket.io-client";
-import { setConversations } from "../../../../store/conversationSlice"
 import MessageChatDetails from "./MessageChatDetails"
 import ChatSidebar from "./MessageSidebar";
 
-const MessageDetails = ({ chatInfo, handleClickMessages }) => {
+const MessageDetails = ({ chatInfo, handleClickMessages, fromatedConversation, setMessage, messages }) => {
 
   const conversation = useSelector((state)=>state.conversation.conversations)
   const reservation = useSelector((state)=>state.reservations.reservations)
@@ -21,104 +19,57 @@ const MessageDetails = ({ chatInfo, handleClickMessages }) => {
   const  messsage = useSelector((state)=>state.messages)
   const [openBooking, setOpenBooking] = useState(false);
   const [openSidebarMessage, setOpenSidebarMessage] = useState(false);
-  const [messages, setMessage] = useState([]);
-  // const [input, setInput] = useState("");
   const [input, setInput] = useState({});
   const [messageLoader, setMessagesLoader] = useState(false)
-  const [fromatedConversation, setFormatedConversation] = useState([])
   const [openFilter, setOpenFilter] = useState(null)
   const [filters, setFilters] = useState({quickFilter: "", selectedListing: ""});
   const [filteredConversations, setFilteredConversations] = useState([])
-  const unreadChats = useSelector((state) => state.notifications.unreadChats);
   const dispatch = useDispatch()
   const navigate = useNavigate();
-  const { messageId }  = useParams()
-
-    const getReservations = async () => {
-        const data  = await getHostawayReservation()
-        dispatch(setReservations(data));
-    };
 
     const getListings = async () => {
-        await getReservations()
         const data = await getAllListings()
+        const reservationData  = await getHostawayReservation()
+        dispatch(setReservations(reservationData));
         dispatch(setListings(data));
     };
-
-    const getConversationData = async () => {
-      const data = await getConversations();
-      dispatch(setConversations(data));
-      const conversationIds = data?.map((conv) => conv.id);
-  
-        const conversationPromises = conversationIds.map(async (id) => {
-          const messages = await getAllconversation(id);
-          dispatch(setMessages({ id: id, message: messages }));
-          return { id, messages };
-        });
-        const simplifiedDataArray = await Promise.all(conversationPromises);
-        const simplifiedData = simplifiedResult(data, simplifiedDataArray);
-        setFormatedConversation(simplifiedData)
-      };
-
       useEffect(() => {
-        const newSocket = io(import.meta.env.VITE_SOCKET_HOST, {transports: ["websocket"],});
-         newSocket.on("connect", () => {
-         console.log("Connected to WebSocket server");
-          });
-         newSocket.on("received_message", (newMessage) => {
-         console.log("New message received: ", newMessage);
-         getConversationData()
-          });
-        setFormatedConversation(simplifiedResult(conversation, messsage))
-        if(reservation.length !== 0){
+        if(reservation?.length !== 0){
           getListings()
         }
-      },[messages])
+      },[])
 
-const getFirstTwoWords = (name)=>{
-  const words = name?.split(' ');
-  const firstTwoWords = words?.slice(0, 2).join(' ');
-  return firstTwoWords
-}
-  const handleSendMessage = async (chat_id) => {
-    const messageBody = input[chat_id]?.trim();
-    if (messageBody) {
-      setMessagesLoader(true);
-      const payload = { body: messageBody, communicationType: "channel" };
-      try {
+    const handleSendMessage = async (chat_id) => {
+      const messageBody = input[chat_id]?.trim();
+      if (messageBody) {
+        setMessagesLoader(true);
+        const payload = { body: messageBody, communicationType: "channel" };
         const data = await sendMessages(chat_id, payload);
-        if (data?.length > 0) {
-          setMessage([...messages, data[0]]);
-          const currentChat = messages.find((item) => item?.id === chat_id);
-          const newMessages = [...(currentChat?.messages || []), data[0]];
-          dispatch(setMessages({ id: chat_id, message: newMessages }));
-        } else {
-          toast.error("An error occurred while sending messages. Please try again.");
+          if (data?.length > 0) {
+            setMessage([...messages, data[0]]);
+            const currentChat = messages.find((item) => item?.id === chat_id);
+            const newMessages = [...(currentChat?.messages || []), data[0]];
+            dispatch(setMessages({ id: chat_id, message: newMessages }));
+            setMessagesLoader(false);
+            setInput((prev) => ({ ...prev, [chat_id]: "" }));
+          } else {
+            toast.error("An error occurred while sending messages. Please try again.");
+            setMessagesLoader(false);
+            setInput((prev) => ({ ...prev, [chat_id]: "" }));
+          }
         }
-      } catch (error) {
-        console.error("Error sending message:", error);
-        toast.error("An unexpected error occurred. Please try again later.");
-      } finally {
-        setMessagesLoader(false);
-        setInput((prev) => ({ ...prev, [chat_id]: "" }));
+      };
+    const handleApplyFilter = () => {
+      const data = filterReservations(reservation, filters);
+      const listingMapIds = data?.map(item => item.listingMapId);
+      let matchingConversations = conversation?.filter(convo => listingMapIds.includes(convo.listingMapId));
+      if (filters.quickFilter == "last_message") {
+          const latestIncomingIds = getIdsWithLatestIncomingMessages(conversation);
+          matchingConversations = matchingConversations.filter(convo => latestIncomingIds.includes(convo.id));
       }
-    }
-  };
-  const handleCloseMessage = () => {
-    navigate("/user/messages")
-  }
-
-  const handleApplyFilter = () => {
-    const data = filterReservations(reservation, filters);
-    const listingMapIds = data?.map(item => item.listingMapId);
-    let matchingConversations = conversation.filter(convo => listingMapIds.includes(convo.listingMapId));
-    if (filters.quickFilter == "last_message") {
-        const latestIncomingIds = getIdsWithLatestIncomingMessages(messsage);
-        matchingConversations = matchingConversations.filter(convo => latestIncomingIds.includes(convo.id));
-    }
-    setFilteredConversations(simplifiedResult(matchingConversations, messsage));
-    setOpenFilter(false);
-};
+      setFilteredConversations(simplifiedResult(matchingConversations));
+      setOpenFilter(false);
+    };
 
   return (
     <div className="flex max-h-screen bg-[#fff]">
@@ -127,7 +78,7 @@ const getFirstTwoWords = (name)=>{
           <button onClick={()=>navigate("/user/messages")}>
             <img src="/icons/left.svg" alt="down icon" width={12} height={10} />
           </button>
-          <span style={{ "-webkit-text-stroke-width": "0.5px" }} className="text-2xl font-medium"> Messages </span>
+          <span style={{ WebkitTextStrokeWidth: "0.5px" }} className="text-2xl font-medium"> Messages </span>
         </div>
           {openFilter && (
             <FilterModal
@@ -150,9 +101,9 @@ const getFirstTwoWords = (name)=>{
             <path
               d="M5.65385 10.5H15.3462M3.5 6.125H17.5M8.88461 14.875H12.1154"
               stroke="black"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             />
           </svg>
         </div>

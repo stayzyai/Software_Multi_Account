@@ -2,18 +2,25 @@ import { markChatAsRead } from "../../../../store/notificationSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 
-
-const ChatSidebar = ({ handleClickMessages, filters, filteredConversations, fromatedConversation }) => {
+const ChatSidebar = ({
+  handleClickMessages,
+  filters,
+  filteredConversations,
+  fromatedConversation,
+}) => {
   const unreadChats = useSelector((state) => state.notifications.unreadChats);
-    const { messageId }  = useParams()
-    const dispatch = useDispatch();
+  const { messageId } = useParams();
+  const dispatch = useDispatch();
 
   const getFirstTwoWords = (name) => {
     const words = name?.split(" ");
     const firstTwoWords = words?.slice(0, 2).join(" ");
     return firstTwoWords;
   };
-  const noMessages = filters?.quickFilter || filters?.selectedListing ? !filteredConversations?.length : !fromatedConversation?.length;
+  const noMessages =
+    filters?.quickFilter || filters?.selectedListing
+      ? !filteredConversations?.length
+      : !fromatedConversation?.length;
 
   return (
     <>
@@ -52,7 +59,7 @@ const ChatSidebar = ({ handleClickMessages, filters, filteredConversations, from
                 <p>{getFirstTwoWords(item?.recipientName)}</p>
                 <div
                   className={`w-[124px] text-[#292D3270] text-xs overflow-hidden truncate whitespace-nowrap  ${
-                    unreadChats[item.id] || item?.isIncoming && "font-bold text-gray-700"
+                    item?.isIncoming && "font-bold text-gray-700"
                   }`}
                 >
                   {item?.conversationMessages !== ""
@@ -64,7 +71,11 @@ const ChatSidebar = ({ handleClickMessages, filters, filteredConversations, from
             </div>
           </div>
         ))}
-        {noMessages && (<div className="text-center text-gray-500 mt-10"> No messages found </div>
+        {noMessages && (
+          <div className="text-center text-gray-500 mt-10">
+            {" "}
+            No messages found{" "}
+          </div>
         )}
       </div>
     </>

@@ -113,12 +113,6 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
                 <div className="flex gap-16 xl:gap-[60px] 2xl:gap-[70px] mb-8">
                   <div className="flex gap-1 items-center text-nowrap">
                     <p>{item.timeIn.date}</p>{" "}
-                    {/* <img
-                      src="/icons/down.svg"
-                      alt="down icon"
-                      width={14}
-                      height={14}
-                    /> */}
                   </div>
                   <CheckInOutDropdown
                     chatInfo={chatInfo}
@@ -135,12 +129,6 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
                 <div className="flex gap-16 xl:gap-[60px] 2xl:gap-[70px]">
                   <div className="flex gap-2 text-nowrap items-center">
                     <p>{item.timeOut.date}</p>{" "}
-                    {/* <img
-                      src="/icons/down.svg"
-                      alt="down icon"
-                      width={14}
-                      height={14}
-                    /> */}
                   </div>
                   <CheckInOutDropdown
                     chatInfo={chatInfo}

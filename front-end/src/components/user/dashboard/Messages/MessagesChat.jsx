@@ -1,13 +1,11 @@
 import { FiChevronsLeft, FiChevronsRight } from "react-icons/fi";
 import { useEffect, useState, useRef } from "react";
-import { io } from "socket.io-client";
 import { getAllconversation } from "../../../../helpers/Message";
 import { ScaleLoader } from 'react-spinners';
 import { openAISuggestion, formatedMessages, getAmenity } from "../../../../helpers/Message";
 import { useSelector } from "react-redux";
 import { toast } from "sonner";
-import { useDispatch } from "react-redux";
-import { setUnreadChat } from "../../../../store/notificationSlice"
+import ButtonLoader from "./ButtonLoader"
 
 const ChatMessages = ({ messages, handleSendMessage, setInput, input, setOpenBooking,
   openBooking, setOpenSidebarMessage, openSidebarMessage, chatInfo, setMessage, messageLoader}) => {
@@ -17,7 +15,6 @@ const messagesEndRef = useRef(null);
 const [isSuggestion, setSuggestion] = useState(null)
 const [amenity, setAmenity] = useState([])
 const chat_id = chatInfo?.length > 0 && chatInfo[0]["id"]
-const dispatch = useDispatch()
 
 const listings = useSelector((state)=>state.listings.listings)
 
@@ -41,21 +38,7 @@ const amenityList = async ()=>{
   }, [messages]);
 
   useEffect(() => {
-    const newSocket = io(import.meta.env.VITE_SOCKET_HOST,{transports: ['websocket'],});
-    newSocket.on("connect", () => {
-      console.log("Connected to WebSocket server");
-    });
-    newSocket.on("received_message", (newMessage) => {
-      console.log("New message received:", newMessage);
-      dispatch(setUnreadChat({chatId: newMessage?.conversationId}))
-      if(chat_id == newMessage?.conversationId){
-        setMessage((prevMessages) => [...prevMessages, newMessage]);
-      }
-    });
     amenityList()
-    return () => {
-      newSocket.disconnect();
-    };
   }, []);
 
   const handleAISuggestion = async (messages, chatInfo) => {
@@ -69,20 +52,13 @@ const amenityList = async ()=>{
     setSuggestion(false)
     if(response){
       setInput((prev) => ({ ...prev, [chatId]: response }));
-      // setInput(response)
       return
     }
     toast.error("Some error occurred. Please try again")
   }
-
   const handleInputChange = (chatId, value) => {
     setInput((prev) => ({ ...prev, [chatId]: value }));
   };  
-
-const ButtonLoader = ()=><svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="w-8 h-8 animate-spin" viewBox="0 0 16 16">
-  <path d="M11.534 7h3.932a.25.25 0 0 1 .192.41l-1.966 2.36a.25.25 0 0 1-.384 0l-1.966-2.36a.25.25 0 0 1 .192-.41zm-11 2h3.932a.25.25 0 0 0 .192-.41L2.692 6.23a.25.25 0 0 0-.384 0L.342 8.59A.25.25 0 0 0 .534 9z" />
-  <path fill-rule="evenodd" d="M8 3c-1.552 0-2.94.707-3.857 1.818a.5.5 0 1 1-.771-.636A6.002 6.002 0 0 1 13.917 7H12.9A5.002 5.002 0 0 0 8 3zM3.1 9a5.002 5.002 0 0 0 8.757 2.182.5.5 0 1 1 .771.636A6.002 6.002 0 0 1 2.083 9H3.1z" />
-</svg>
 
 return (
     <div className="w-full flex flex-col mb-6 h-full">
@@ -138,9 +114,7 @@ return (
               type="text"
               placeholder="Write your reply here ..."
               className="p-2 w-full focus:outline-none bg-[#FCFDFC] resize-none"
-              // value={input}
               value={input[chat_id] || ""}
-              // onChange={(e) => setInput(e.target.value)}
               onChange={(e) => handleInputChange(chat_id, e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSendMessage(chat_id)}
             />

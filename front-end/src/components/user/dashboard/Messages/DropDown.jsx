@@ -1,7 +1,7 @@
 const Dropdown = ({ label, options, isOpen, onClick, onSelect, selectedValue }) => {
 
   const displayValue =
-    label === "Listing"
+    label === "Listing" || label === "Task"
       ? options.find(option => option.id === selectedValue)?.name || label
       : selectedValue || label;
 
@@ -35,17 +35,17 @@ const Dropdown = ({ label, options, isOpen, onClick, onSelect, selectedValue }) 
             Clear Filter
           </div>
 
-          {options.map((option) => (
-            <div
-              key={label === "Listing" ? option.id : option}
+          {options.map((option, index) => (
+            <div key={index}
+              // key={label === "Listing" || label === "Task" ? option.id : option}
               className="p-2 hover:bg-gray-50 cursor-pointer min-h-6"
               onClick={() => {
-                const value = label === "Listing" ? option.id : option;
+                const value = label === "Listing" || label === "Task" ? option.id : option;
                 onSelect(label, value);
                 onClick();
               }}
             >
-              {label === "Listing" ? option.name : option}
+              {label === "Listing" || label === "Task" ? option.name : option}
             </div>
           ))}
         </div>

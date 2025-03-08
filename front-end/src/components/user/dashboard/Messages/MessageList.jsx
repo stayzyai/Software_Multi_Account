@@ -19,7 +19,7 @@ const MessageList = ({title,
       .toUpperCase();
   };
 
-  const isFilteringActive = selectedFilters.Date !== "" || selectedFilters.Listing !== "";
+  const isFilteringActive = selectedFilters.Date !== "" || selectedFilters.Listing !== "" || selectedFilters.Task !== "";
 
   return (
     <>
@@ -69,8 +69,7 @@ const MessageList = ({title,
                     {item?.recipientName}
                   </p>
                   <p
-                    className={`text-sm text-[#7F7F7F] hidden md:block ${
-                      unreadChats[item.id] || item?.isIncoming && "font-semibold text-gray-700"
+                    className={`text-sm text-[#7F7F7F] hidden md:block ${item?.isIncoming && "font-semibold text-gray-700"
                     }`}
                   >
                     {item?.conversationMessages}

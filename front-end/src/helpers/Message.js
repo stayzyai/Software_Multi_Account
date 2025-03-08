@@ -69,9 +69,10 @@ const getHostawayReservation = async () => {
   }
 };
 
-const getConversations = async () => {
+const getConversations = async (limit=null) => {
   try {
-    const response = await api.get("/hostaway/get-all/conversations");
+    const url = limit ? `/hostaway/get-all/conversations?limit=${limit}` : "/hostaway/get-all/conversations"
+    const response = await api.get(url);
     if (response?.data?.detail?.data?.result) {
       const data = response?.data?.detail?.data?.result;
       return data;
@@ -83,9 +84,25 @@ const getConversations = async () => {
   }
 };
 
-const getAllListings = async () => {
+const getConversationsWithResources = async () => {
   try {
-    const response = await api.get("/hostaway/get-all/listings");
+    const url = `/hostaway/get-all/conversations?includeResources=1`
+    const response = await api.get(url);
+    if (response?.data?.detail?.data?.result) {
+      const data = response?.data?.detail?.data?.result;
+      return data;
+    }
+    return [];
+  } catch (error) {
+    console.log("Error at get conversations: ", error);
+    return [];
+  }
+};
+
+const getAllListings = async (limit=null) => {
+  try {
+    const url = limit ? `/hostaway/get-all/listings?limit=${limit}` : "/hostaway/get-all/listings"
+    const response = await api.get(url);
     if (response?.data?.detail?.data?.result) {
       const data = response?.data?.detail?.data?.result;
       return data;
@@ -109,30 +126,13 @@ const getAmenity = async () => {
     return []
   }
 };
+const formatedTime = (date) =>{
+  return date?.split(" ")[1]
+}
 
-const formatTime = (dateStr) => {
-  if (!dateStr) return null;
-  const dateObj = new Date(dateStr.replace(" ", "T"));
-  let hours = dateObj.getHours();
-  const minutes = dateObj.getMinutes();
-  const ampm = hours >= 12 ? "PM" : "AM";
-  hours = hours % 12;
-  hours = hours === 0 ? 12 : hours;
-  const minutesStr = minutes < 10 ? "0" + minutes : minutes;
-  return `${hours}:${minutesStr} ${ampm}`;
-};
-
-const simplifiedResult = (results, conversation) => {
-  return results
+const simplifiedResult = (conversations) => {
+  return conversations
     .map((result) => {
-      const conv = conversation.find((c) => c.id === result.id);
-      let latestConversationMessage = null;
-      if (conv && conv.messages.length > 0) {
-        latestConversationMessage = conv.messages.reduce((latest, msg) =>
-          new Date(msg.date) > new Date(latest.date) ? msg : latest
-        );
-      }
-
       return {
         id: result.id,
         recipientName: result.recipientName,
@@ -141,13 +141,9 @@ const simplifiedResult = (results, conversation) => {
         messageSentOn: result.messageSentOn,
         reservationId: result.reservationId,
         listingMapId: result.listingMapId,
-        latestMessageTime: latestConversationMessage?.time,
-        conversationMessages: latestConversationMessage
-          ? latestConversationMessage?.body
-          : "",
-        isIncoming: latestConversationMessage
-          ? latestConversationMessage?.isIncoming
-          : null,
+        latestMessageTime: result?.conversationMessages?.length ? formatedTime(result?.conversationMessages[0].date) : "",
+        conversationMessages: result?.conversationMessages?.length ? result?.conversationMessages[0].body :  "",
+        isIncoming: result?.conversationMessages?.length ? result?.conversationMessages[0].isIncoming :  "",
       };
     })
     .sort((a, b) => {
@@ -266,9 +262,9 @@ const updateMessages = (simplifiedConversation, newMessage) => {
 };
 
 const filterMessages = (messages, filters) => {
-  const { Date: filterType, Listing: selectedListing } = filters;
+  const { Date: filterType, Listing: selectedListing, Task: selectedTask } = filters;
 
-  if (filterType === "Date" && !selectedListing) {
+  if (filterType === "Date" && !selectedListing && !selectedTask) {
     return messages;
   }
 
@@ -307,7 +303,11 @@ const filterMessages = (messages, filters) => {
       listingMatch = message.listingMapId == selectedListing;
     }
 
-    return dateMatch && listingMatch;
+    let taskMatch = true;
+    if (selectedTask && selectedTask !== "") {
+      taskMatch = message.reservationId == selectedTask;
+    }
+    return dateMatch && listingMatch && taskMatch;
   });
 };
 
@@ -320,19 +320,19 @@ const getListingsName = (listings) => {
   ];
 };
 
-const getIdsWithLatestIncomingMessages = (data) => {
-  const result = data
-    .filter((item) => Array.isArray(item.messages) && item.messages.length > 0)
-    .map((item) => ({
-      id: item.id,
-      latestMessage: item.messages.reduce((latest, msg) =>
-        new Date(msg.date) > new Date(latest.date) ? msg : latest
-      ),
-    }))
-    .filter((item) => item.latestMessage.isIncoming === 1)
-    .map((item) => item.id);
+const getTasksTitle = (tasks)=>{
+  return [
+    ...tasks?.map((item) => ({
+      id: item.reservationId,
+      name: item.title,
+    })),
+  ];
+}
 
-  return result;
+const getIdsWithLatestIncomingMessages = (data) => {
+  return data .filter(convo => 
+    convo.conversationMessages.some(message => message.isIncoming === 1)
+  ).map(convo => convo.id);
 };
 
 const filterReservations = (reservations, filters) => {
@@ -379,6 +379,16 @@ const filterReservations = (reservations, filters) => {
   });
 };
 
+const formattedNewMessage = (data) =>{
+  return {
+    body: data.body,
+    time: formatedTime(data.date),
+    imagesUrls: data.imagesUrls,
+    isIncoming: data.isIncoming,
+    date: data.date
+}
+}
+
 export {
   getAllconversation,
   sendMessages,
@@ -396,5 +406,8 @@ export {
   filterReservations,
   getIdsWithLatestIncomingMessages,
   getHostawayReservation,
-  getAmenity
+  getAmenity,
+  getTasksTitle,
+  getConversationsWithResources,
+  formattedNewMessage
 };

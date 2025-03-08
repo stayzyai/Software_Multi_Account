@@ -53,12 +53,6 @@ const CommonTable = ({
                 key={index}
                 className="md:py-5 p-1 border-b-[1px] border-[#D1D1D1] cursor-pointer hover:bg-gray-50 active:bg-gray-100"
               >
-                {/* <td className="md:py-4 lg:pl-3 xl:pl-0 p-1 pl-4 text-right">
-                  <input
-                    type="checkbox"
-                    className="w-5 h-5 rounded-md border-2 border-gray-300 cursor-pointer appearance-none checked:bg-blue-500 checked:border-transparent checked:relative checked:before:content-['✔'] checked:before:absolute checked:before:text-white checked:before:left-1/2 checked:before:top-1/2 checked:before:transform checked:before:-translate-x-1/2 checked:before:-translate-y-1/2 focus:outline-none bg-white"
-                  />
-                </td> */}
                 <td onClick={() => handleClick(property.property, property.id)} className="flex items-center space-x-2 md:py-2 p-1 md:w-54 w-[220px] md:px-6 px-8">
                   {property.image ? (
                     <div className="w-9 h-9 rounded-full">

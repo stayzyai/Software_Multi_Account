@@ -9,13 +9,21 @@ import json
 load_dotenv()
 url = os.getenv('HOSTAWAY_URL')
 
-def hostaway_get_request(token, endpoint, id=None, limit=None, offset=None):
+def hostaway_get_request(token, endpoint, id=None, limit=None, offset=None, includeResources=None):
     try:
         hostaway_url = os.getenv('HOSTAWAY_API_URL')
         api_url = f"{hostaway_url}/{endpoint}"
         if id:
             api_url = f"{api_url}/{id}"
-        querystring = {"limit": limit, "offset": offset} if limit and offset else None
+        # querystring = {"limit": limit, "offset": offset} if limit and offset else None
+        querystring = {}
+        if limit is not None:
+            querystring['limit'] = limit
+        if offset is not None and limit is not None:
+            querystring['offset'] = offset
+        if includeResources is not None:
+            querystring['includeResources'] = includeResources
+
         headers = {
             'Authorization': f"Bearer {token}",
             'Cache-control': "no-cache",

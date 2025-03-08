@@ -16,9 +16,16 @@ const Listings = () => {
   const listing = useSelector((state) => state.listings.listings);
 
   const getReservations = async () => {
-    const data =  await getHostawayReservation()
+    const data = await getHostawayReservation();
     dispatch(setReservations(data));
-    return data
+    return data;
+  };
+
+  const getListings = async () => {
+    const reservations = await getReservations();
+    const data = await getAllListings();
+    setProperties(formattedListing(data, reservations));
+    dispatch(setListings(data));
   };
 
   useEffect(() => {
@@ -26,12 +33,6 @@ const Listings = () => {
       setProperties(formattedListing(listing, reservation));
       return;
     }
-    const getListings = async () => {
-      const reservations = await getReservations();
-      const data = await getAllListings()
-      setProperties(formattedListing(data, reservations));
-      dispatch(setListings(data));
-    };
     getListings();
   }, []);
 

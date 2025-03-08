@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Home, Users, Settings, X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { setIconToggle, setOpenModal } from "../../../store/sidebarSlice";
@@ -15,7 +14,8 @@ const navigationConfig = {
     { id: "messages", label: "Messages", icon: "/icons/file-02.svg", route: "/user/messages" },
     { id: "listings", label: "Listings", icon: "/icons/Outline.svg", route: "/user/listings" },
     { id: "tasks", label: "Tasks", icon: "/icons/task.svg", route: "/user/tasks" },
-    { id: "staff", label: "Staff", icon: "/icons/people.svg", route: "/user/staff" },
+    { id: "upsell", label: "Upsells", icon: "/icons/upsell.svg", route: "/user/upsell" },
+    // { id: "staff", label: "Staff", icon: "/icons/people.svg", route: "/user/staff" },
     { id: "integrations", label: "Integrations", icon: "/icons/plug-01.svg", route: "/user/integrations",},
     { id: "settings", label: "Settings", icon: Settings, route: "/user/settings" },
   ],
@@ -72,9 +72,7 @@ const Sidebar = ({ role = "admin" }) => {
           <div className="max-h-[calc(100vh-100px)] overflow-y-auto scrollbar-hide">
             {navItems?.map((item) => {
               const isImageIcon = typeof item.icon === "string";
-              // const isActive = location.pathname === item.route;
-              // const isActive = location.pathname === item.route || (item.id === "messages" && (location.pathname.startsWith("/user/messages") || location.pathname.startsWith("/user/chat/")));
-              const isActive = location.pathname === item.route || (item.id === "messages" && (location.pathname.startsWith("/user/messages") || location.pathname.startsWith("/user/chat/"))) || (item.id === "listings" && (location.pathname.startsWith("/user/listings") || location.pathname.startsWith("/user/listing/")));
+              const isActive = location.pathname === item.route || (item.id === "messages" && (location.pathname.startsWith("/user/messages") || location.pathname.startsWith("/user/chat/"))) || (item.id === "listings" && (location.pathname.startsWith("/user/listings") || location.pathname.startsWith("/user/listing/"))) || (item.id === "tasks" && (location.pathname.startsWith("/user/tasks") || location.pathname.startsWith("/user/task")));
               return (
                 <div key={item.id} className="flex justify-center mb-3">
                   <button onClick={() => {handleNavigation(item)}}

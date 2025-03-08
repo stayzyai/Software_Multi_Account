@@ -6,22 +6,11 @@ import { useEffect } from "react";
 import api from "../../../../api/api";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../../../store/userSlice";
-import { io } from "socket.io-client";
 
 const Home = ({ role }) => {
 const dispatch = useDispatch();
 
   useEffect(() => {
-      const newSocket = io(import.meta.env.VITE_SOCKET_HOST,{transports: ['websocket']});
-      newSocket.on("connect", () => {
-        console.log("Connected to WebSocket server");
-      });
-      newSocket.on("disconnect", () => {
-        console.log("disconnected to WebSocket server");
-      });
-      newSocket.on("notify", (newMessage) => {
-        console.log("Notification received: ", newMessage);
-    });
     const getProfile = async () => {
       try {
         const response = await api.get("/user/profile");
@@ -34,9 +23,6 @@ const dispatch = useDispatch();
       }
     };
     getProfile();
-    return () => {
-      newSocket.disconnect();
-    };
   }, []);
 
   return (
