@@ -16,7 +16,7 @@ const DataTable = ({
     >
       <div className="xl:flex justify-between items-center mb-7">
         <h1 className={`text-base ${title === "Listings"?"font-normal":"font-semibold"}`}>{title}</h1>
-        {filters.length > 0 && (
+        {/* {filters.length > 0 && (
           <div className="flex items-center justify-end lg:justify-normal sm:gap-4">
             {filters.map((filter) => (
               <div key={filter} className="flex items-center sm:gap-2 mr-8 mt-4 sm:mt-0">
@@ -27,14 +27,14 @@ const DataTable = ({
               </div>
             ))}
           </div>
-        )}
+        )} */}
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full">
+        {data?.length !== 0 ? <table className="w-full">
           <thead>
             <tr className="text-[14px] border-b">
-              {columns.map((column) => (
-                <th style={title !== "Listings"? {"webkit-text-stroke-width":".5px", "-webkit-text-stroke-color": "#060606"}:{}}
+              {columns?.map((column) => (
+                <th style={title !== "Listings"? { WebkitTextStrokeWidth :".5px", WebkitTextStrokeColor: "#060606"}:{}}
                   key={column.key}
                   className={`pb-2 ${column.width} font-normal ${column.key === "status" ?"text-center":"text-left"}`}
                 >
@@ -58,7 +58,8 @@ const DataTable = ({
               </tr>
             ))}
           </tbody>
-        </table>
+        </table>:
+        <div className="w-full flex justify-center h-10 items-center text-gray-600 border-t border-gray-400">No data available</div>}
       </div>
     </div>
   );

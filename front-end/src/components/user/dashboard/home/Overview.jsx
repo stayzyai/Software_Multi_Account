@@ -12,7 +12,7 @@ export const Overview = () => {
     <>
       <div>
         <div className="flex items-center justify-between mt-2 px-2">
-          <span style={{"webkit-text-stroke-width":"0.5px"}} className="text-[22px] text-[#060606]">
+          <span style={{ WebkitTextStrokeWidth: "0.5px"}} className="text-[22px] text-[#060606]">
             Overview
           </span>
           <div className="flex gap-3 items-center bg-white rounded-[17px] p-[2px_14px] h-[34px] ">

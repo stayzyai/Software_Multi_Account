@@ -1,73 +1,62 @@
 import { useState } from "react";
 import { FiChevronsRight } from "react-icons/fi";
 import { useSelector, useDispatch } from "react-redux";
-import { getTimeDetails, getBookingdetails } from "../../../../helpers/Message";
+import { getTimeDetails, getBookingdetails, getHostawayReservation } from "../../../../helpers/Message";
 import { useEffect } from "react";
 import { setReservations } from "../../../../store/reservationSlice";
-import api from "@/api/api";
-import MessageRightSidebar from "../../../common/shimmer/MessageRightSidebr"
-import CheckInOutDropdown from "./CheckInOutDropdown";
+import MessageRightSidebar from "../../../common/shimmer/MessageRightSidebr";
+import BookingDetails from "./BookingDetails";
+import BookingIssue from "./BookingIssue";
 
 const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
   const [activeSession, setActiveSession] = useState("booking");
   const reservation = useSelector((state) => state.reservations.reservations);
   const [timeDetails, setTimeDetails] = useState([]);
   const [bookingDetails, setbookingDetails] = useState([]);
-  const [loading, setLoading] = useState(true)
-  const dispatch = useDispatch()
+  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
 
   const getReservations = async () => {
-      try {
-        const response = await api.get("/hostaway/get-all/reservations");
-        if (response?.data?.detail?.data?.result) {
-          const data = response?.data?.detail?.data?.result;
-          dispatch(setReservations(data));
-          setLoading(false)
-          return data;
-        }
-      } catch (error) {
-        setLoading(false)
-        console.log("Error at get reservastion: ", error);
-        return []
-      }
-    };
+    const data = await getHostawayReservation();
+    dispatch(setReservations(data));
+    setLoading(false);
+    return data;
+  };
 
   useEffect(() => {
-    if(reservation?.length !== 0){
+    if (reservation?.length !== 0) {
       const reservationId = chatInfo[0]["reservationId"];
       const reservationData = reservation?.find(
-        (item) => item.id === reservationId
+        (item) => item.id == reservationId
       );
       const timeData = getTimeDetails(reservationData);
       const bookingdata = getBookingdetails(reservationData);
       setbookingDetails(bookingdata);
       setTimeDetails(timeData);
-      setLoading(false)
-      return
+      setLoading(false);
+      return;
     }
-    const fetchReservations = async() =>{
+    const fetchReservations = async () => {
       const reservationId = chatInfo[0]["reservationId"];
-      const NewReservation = await getReservations()
+      const NewReservation = await getReservations();
       const reservationData = NewReservation?.find(
-        (item) => item.id === reservationId
+        (item) => item.id == reservationId
       );
       const timeData = getTimeDetails(reservationData);
       const bookingdata = getBookingdetails(reservationData);
       setbookingDetails(bookingdata);
       setTimeDetails(timeData);
-      setLoading(false)
-    }
-    fetchReservations()
+      setLoading(false);
+    };
+    fetchReservations();
   }, [chatInfo]);
 
-  if(loading) return <div className="xl:w-[440px] 2xl:w-[440px] w-[340px]"> <MessageRightSidebar/> </div>
-
-  const Switch = () => (
-    <label className="inline-flex items-center cursor-pointer">
-      <input type="checkbox" className="sr-only peer"/>
-      <div className="relative w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-0 peer-focus:ring-[#34C759] dark:peer-focus:ring-[#34C759] rounded-full peer dark:bg-white peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[#34C759] after:content-[''] after:absolute after:top-[1px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-[18px] after:w-[18px] after:transition-all dark:border-[#34C759] peer-checked:bg-[#34C759]"></div>
-    </label>
-  );
+  if (loading)
+    return (
+      <div className="xl:w-[440px] 2xl:w-[440px] w-[340px]">
+        <MessageRightSidebar />
+      </div>
+    );
 
   return (
     <div
@@ -79,7 +68,8 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
     >
       <button
         onClick={() => setOpenBooking(!openBooking)}
-        className="absolute top-1/2 bg-gray-100 p-1 py-2 rounded-lg xl:hidden">
+        className="absolute top-1/2 bg-gray-100 p-1 py-2 rounded-lg xl:hidden"
+      >
         <FiChevronsRight size={24} />
       </button>
       <div className="pt-6 pb-3">
@@ -116,87 +106,16 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
               Upsell
             </p>
           </div>
-          {timeDetails?.map((item, index) => {
-            return (
-              <div key={index} className="text-lg">
-                <p className="mb-4 text-gray-500">Check in</p>
-                <div className="flex gap-16 xl:gap-[60px] 2xl:gap-[70px] mb-8">
-                  <div className="flex gap-1 items-center text-nowrap">
-                    <p>{item.timeIn.date}</p>{" "}
-                    {/* <img
-                      src="/icons/down.svg"
-                      alt="down icon"
-                      width={14}
-                      height={14}
-                    /> */}
-                  </div>
-                  {/* <div className="flex gap-2 items-center text-nowrap">
-                    <p>{item.timeIn.time}</p>{" "}
-                    <img
-                      src="/icons/down.svg"
-                      alt="down icon"
-                      width={14}
-                      height={14}
-                    />
-                  </div> */}
-                  <CheckInOutDropdown
-                    chatInfo={chatInfo}
-                    type={"checkIn"}
-                    selectedTime={item.timeIn.time}
-                    onSelect={(time) => setTimeDetails((prev) => {
-                      const updated = [...prev];
-                      updated[index].timeIn.time = time;
-                      return updated;
-                    })}
-                  />
-                </div>
-                <p className="mb-4 text-gray-500">Check out</p>
-                <div className="flex gap-16 xl:gap-[60px] 2xl:gap-[70px]">
-                  <div className="flex gap-2 text-nowrap items-center">
-                    <p>{item.timeOut.date}</p>{" "}
-                    {/* <img
-                      src="/icons/down.svg"
-                      alt="down icon"
-                      width={14}
-                      height={14}
-                    /> */}
-                  </div>
-                  {/* <div className="flex gap-2 text-nowrap items-center">
-                    <p>{item.timeOut.time}</p>{" "}
-                    <img
-                      src="/icons/down.svg"
-                      alt="down icon"
-                      width={14}
-                      height={14}
-                    />
-                  </div> */}
-                  <CheckInOutDropdown
-                    chatInfo={chatInfo}
-                    type={"checkOut"}
-                    selectedTime={item.timeOut.time}
-                    onSelect={(time) => setTimeDetails((prev) => {
-                      const updated = [...prev];
-                      updated[index].timeOut.time = time;
-                      return updated;
-                    })}
-                  />
-                </div>
-              </div>
-            );
-          })}
         </div>
-        <div className="pt-10 grid grid-cols-2 text-nowrap xl:gap-6 gap-12 text-lg bg-[#FCFDFC]">
-        {bookingDetails?.map((item, index) => (
-        <div key={index} className="ml-6">
-          <p className="text-gray-500 mb-3">{item.label}</p>
-          {item.label === 'AI' ? (
-            <Switch checked={item.value === 'Enabled'} />
-          ) : (
-            <p>{item.value}</p>
-          )}
-        </div>
-      ))}
-        </div>
+        {activeSession === "booking" && (
+          <BookingDetails
+            bookingDetails={bookingDetails}
+            timeDetails={timeDetails}
+            setTimeDetails={setTimeDetails}
+            chatInfo={chatInfo}
+          />
+        )}
+        {activeSession == "issue" && <BookingIssue chatInfo={chatInfo} />}
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Enum, DateTime, func, ForeignKey
+from sqlalchemy import Column, Integer, String, Enum, DateTime, func, ForeignKey, Boolean
 from app.database.db import Base
 import enum
 
@@ -39,3 +39,38 @@ class HostawayAccount(Base):
 
     def __repr__(self):
         return f"<HostawayAccount(id={self.id}, account_id={self.account_id}, user_id={self.user_id})>"
+
+class Subscription(Base):
+    __tablename__ = 'subscriptions'
+
+    id = Column(Integer, primary_key=True, index=True, nullable=False)
+    email = Column(String, unique=True, index=True)
+    stripe_subscription_id = Column(String, unique=True, nullable=False)
+    stripe_customer_id = Column(String, nullable=False)
+    is_active = Column(Boolean, default=False, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
+    payment_at = Column(DateTime, nullable=False)
+    expire_at = Column(DateTime, nullable=False)
+
+    def __repr__(self):
+        return (
+            f"<Subscription(id={self.id}, "
+            f"stripe_subscription_id={self.stripe_subscription_id}, "
+            f"stripe_customer_id={self.stripe_customer_id}, "
+            f"is_active={self.is_active}, "
+            f"user_id={self.user_id}, "
+            f"created_at={self.created_at}, "
+            f"payment_at={self.payment_at}, "
+            f"expire_at={self.expire_at}, "
+        )
+
+class Upsell(Base):
+    __tablename__ = "upsell_offers"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    discount = Column(String, index=True)
+    detect_upsell_days = Column(String)
+    upsell_message = Column(String)
+    enabled = Column(Boolean, default=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)

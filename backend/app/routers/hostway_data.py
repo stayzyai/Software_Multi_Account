@@ -1,14 +1,19 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
-import logging
+import logging, requests
+from app.schemas.user import ChatRequest, EmailRequest
+from app.common.open_ai import gpt_taskCreation
 import json
 from app.common.hostaway_setup import hostaway_get_request, hostaway_post_request, hostaway_put_request
 from sqlalchemy.orm import Session
 from app.common.auth import get_hostaway_key
 from app.database.db import get_db
-from app.models.user import ChromeExtensionToken, HostawayAccount
+from app.models.user import ChromeExtensionToken, HostawayAccount, Upsell, User
 from app.common.auth import get_token
 from app.common.auth import decode_access_token
 from app.websocket import handle_webhook, handle_reservation
+from app.schemas.hostaway import UpsellData, UpsellStatusUpdate
+from typing import Optional
+from app.common.send_email import send_email
 
 router = APIRouter(prefix="/hostaway", tags=["hostaway"])
 
@@ -41,14 +46,14 @@ def get_list(params: str, id: int,  db: Session = Depends(get_db), key: str = De
         raise HTTPException(status_code = 500, detail=f"Error at hostaway authentication: {str(e)}")
 
 @router.get("/get-all/{params}")
-def get_all_list(params:str, token: str = Depends(get_token), db: Session = Depends(get_db)):
+def get_all_list(params:str, limit: Optional[int] = None, includeResources: Optional[int] = None, token: str = Depends(get_token), db: Session = Depends(get_db)):
     try:
         decode_token = decode_access_token(token)
         user_id = decode_token['sub']
         account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
         if not account:
             raise HTTPException(status_code = 404, detail="Hostaway account not found")
-        response = hostaway_get_request(account.hostaway_token, params)
+        response = hostaway_get_request(account.hostaway_token, params, None, limit, None, includeResources)
         data = json.loads(response)
         if data['status'] == 'success':
             return {"detail": {"message": "User authenticated successfully on hostaway", "data":  data}}
@@ -157,3 +162,153 @@ async def update_ai_info(request: Request, token: str = Depends(get_token), db: 
     except Exception as e:
         logging.error(f"Error updating at AI Info: {str(e)}")
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@router.post("/create-upsell")
+async def create_or_update_upsell(upsell_data: UpsellData, token: str = Depends(get_token), db: Session = Depends(get_db)):
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        if not upsell_data.name or not upsell_data.detect_upsell_days or not upsell_data.upsell_message or not upsell_data.discount:
+            raise HTTPException(status_code=400, detail="Missing required fields")
+
+        if hasattr(upsell_data, 'id') and upsell_data.id:
+            existing_upsell = db.query(Upsell).filter(Upsell.id == upsell_data.id, Upsell.user_id == user.id).first()
+            if existing_upsell:
+                existing_upsell.name = upsell_data.name
+                existing_upsell.discount = upsell_data.discount
+                existing_upsell.detect_upsell_days = upsell_data.detect_upsell_days
+                existing_upsell.upsell_message = upsell_data.upsell_message
+                db.commit()
+                db.refresh(existing_upsell)
+                return {"message": "Upsell offer updated successfully", "data": existing_upsell}
+
+        new_upsell = Upsell(name=upsell_data.name, discount=upsell_data.discount,
+                            detect_upsell_days=upsell_data.detect_upsell_days,
+                            upsell_message=upsell_data.upsell_message, user_id=user.id)
+        db.add(new_upsell)
+        db.commit()
+        db.refresh(new_upsell)
+        return {"message": "Upsell offer created successfully", "data": new_upsell}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/update-upsell-status")
+async def update_upsell_status(payload: UpsellStatusUpdate, db: Session = Depends(get_db)):
+    try:
+        upsell = db.query(Upsell).filter(Upsell.id == payload.upsell_id).first()
+        if not upsell:
+            raise HTTPException(status_code=404, detail="Upsell offer not found")
+        upsell.enabled = payload.enabled
+        db.commit()
+        db.refresh(upsell)
+        return {"message": "Upsell status updated successfully", "upsell": upsell}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@router.get("/get-upsell")
+def get_all_upsell(token: str = Depends(get_token), db: Session = Depends(get_db)):
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        upsell_data = db.query(Upsell).filter(Upsell.user_id == user_id).all()
+        return {"message": "Upsell offers retrieved successfully", "data": upsell_data}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.delete("/delete-upsell/{upsell_id}")
+async def delete_upsell(upsell_id: int, token: str = Depends(get_token), db: Session = Depends(get_db)):
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+
+        upsell = db.query(Upsell).filter(Upsell.id == upsell_id, Upsell.user_id == user.id).first()
+        if not upsell:
+            raise HTTPException(status_code=404, detail="Upsell offer not found")
+        db.delete(upsell)
+        db.commit()
+        return {"message": "Upsell offer deleted successfully"}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/create/{params}")
+async def post_data(request: Request ,params:str, token: str = Depends(get_token), db: Session = Depends(get_db)):
+    try:
+        body = await request.json()
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
+        if not account:
+            raise HTTPException(status_code = 404, detail="Hostaway account not found")
+        response = hostaway_post_request(account.hostaway_token, f"{params}", body)
+        data = json.loads(response)
+        if data['status'] == 'success':
+            return {"detail": {"message": "data post successfully..", "data":  data}}
+        return {"detail": {"message": "Some error occured at post request.. ", "data": data}}
+
+    except HTTPException as exc:
+        logging.error(f"****some error at hostaway post request*****{exc}")
+        raise exc
+    except Exception as e:
+        raise HTTPException(status_code = 500, detail=f"Error at hostaway post request: {str(e)}")
+
+@router.post("/update/{params}/{id}")
+async def post_data(request: Request, params:str, id:int, token: str = Depends(get_token), db: Session = Depends(get_db)):
+    try:
+        body = await request.json()
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
+        if not account:
+            raise HTTPException(status_code = 404, detail="Hostaway account not found")
+        response = hostaway_put_request(account.hostaway_token, f"/{params}/{id}", body)
+        data = json.loads(response)
+        if data['status'] == 'success':
+            return {"detail": {"message": "data updated successfully..", "data":  data}}
+        return {"detail": {"message": "Some error occured at updated request.. ", "data": data}}
+
+    except HTTPException as exc:
+        logging.error(f"****some error at hostaway post request*****{exc}")
+        raise exc
+    except Exception as e:
+        raise HTTPException(status_code = 500, detail=f"Error at hostaway post request: {str(e)}")
+
+@router.post("/ai-issue-detection")
+def detect_issues(request: ChatRequest, db: Session = Depends(get_db), token: str = Depends(get_token)):
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        prompt = request.prompt
+        gpt_response = gpt_taskCreation(prompt)
+        if gpt_response is None:
+            raise HTTPException(status_code=400, detail="Some error occurred. Please try again.")
+        logging.info(f"chat gpt response{gpt_response}")
+        return {"answer": gpt_response}
+
+    except requests.exceptions.RequestException as req_err:
+        logging.error(f"Error at issue detection {req_err}")
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(req_err)}")
+
+@router.post("/send-email")
+def send_task_email(request: EmailRequest, db: Session = Depends(get_db), token: str = Depends(get_token)):
+    decode_token = decode_access_token(token)
+    user_id = decode_token['sub']
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Not authorized to use this feature")
+    return send_email(request.userEmail, request.subject, request.body)

@@ -2,9 +2,7 @@ import { useState } from "react";
 import Sidebar from "../components/common/sidebar/Sidebar";
 import HomePage from "../components/user/dashboard/home/Home";
 import Listings from "../components/user/dashboard/listings/Listings";
-import Staff from "../components/user/dashboard/Staff";
-import Workflow from "../components/user/dashboard/WorkFlow";
-import Tasks from "../components/user/dashboard/Tasks";
+import StaffTab from "../components/user/dashboard/staff/StaffTab";
 import MessageTab from "../components/user/dashboard/Messages/MessageTab";
 import Integrations from "../components/user/dashboard/Integrations";
 import { useEffect } from "react";
@@ -15,6 +13,9 @@ import MainSetting from "../components/user/dashboard/setting/MainSetting";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import MessageDetailsWrapper from "../components/user/dashboard/Messages/MessageDetailsWrapper";
 import ListingsWraper from "../components/user/dashboard/listings/ListingsWrapper"
+import TasksTab from "../components/user/dashboard/task/TasksTab";
+import TaskDetailsWrapper from "../components/user/dashboard/task/TaskDetailsWrapper"
+import UpsellTab from "../components/user/dashboard/upsell/UpsellTab"
 
 export function UserDashboardComponent({ role = "user" }) {
   const [isOpen, setOpenModal] = useState(false);
@@ -49,13 +50,14 @@ export function UserDashboardComponent({ role = "user" }) {
             <Route path="dashboard" element={<HomePage role={role} />} />
             <Route path="messages" element={<MessageTab  />} />
             <Route path="listings" element={<Listings  />} />
-            <Route path="staff" element={<Staff  />} />
-            <Route path="workflow" element={<Workflow  />} />
-            <Route path="tasks" element={<Tasks  />} />
+            <Route path="staff" element={<StaffTab  />} />
+            <Route path="tasks" element={<TasksTab  />} />
             <Route path="integrations" element={<Integrations />}/>
             <Route path="settings" element={<MainSetting />} />
             <Route path="chat/:messageId" element={ <MessageDetailsWrapper/>} />
             <Route path="listing/:listingId" element={ <ListingsWraper/>} />
+            <Route path="task/:taskId" element={ <TaskDetailsWrapper/>} />
+            <Route path="upsell" element={ <UpsellTab/>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </div>

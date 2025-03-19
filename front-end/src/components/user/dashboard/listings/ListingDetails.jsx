@@ -9,8 +9,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { getListing, formatReservations} from "../../../../helpers/ListingsHelper";
 import { setListings } from "../../../../store/listingSlice";
 import { setReservations } from "../../../../store/reservationSlice";
-import api from "@/api/api";
 import { useParams } from "react-router-dom";
+import { getHostawayReservation, getAllListings} from "../../../../helpers/Message"
 
 const ListingDetails = ({
   openListingName,
@@ -23,45 +23,27 @@ const ListingDetails = ({
   const [activeListingSection, setActiveListingSection] = useState("about");
   const [aboutListing, setAboutListing] = useState([]);
   const [calenderDetails, setCalenderDetails] = useState({});
-  const [listingCustomValue, setListingsCustomValue] = useState([])
   const { listingId } = useParams();
   const dispatch = useDispatch();
 
   const getReservations = async () => {
-    try {
-      const response = await api.get("/hostaway/get-all/reservations");
-      if (response?.data?.detail?.data?.result) {
-        const data = response?.data?.detail?.data?.result;
-        dispatch(setReservations(data));
-        return data;
-      }
-    } catch (error) {
-      console.log("Error at get conversation: ", error);
-    }
+    const data = await getHostawayReservation()
+    dispatch(setReservations(data));
+    return data;
   };
 
   const getListings = async () => {
     const reservations = await getReservations();
-    try {
-      const response = await api.get("/hostaway/get-all/listings");
-      if (response?.data?.detail?.data?.result) {
-        const data = response?.data?.detail?.data?.result;
-        dispatch(setListings(data));
-        const listing = data?.find((item) => item.id == listingId);
-        const ListingData = getListing(listing);
-        const { bookings, dateRanges } = formatReservations(
-          reservations,
-          listingId
-        );
-        setCalenderDetails({
-          bookings: bookings,
-          dateRanges: dateRanges,
-        });
-        setAboutListing(ListingData);
-      }
-    } catch (error) {
-      console.log("Error at get listings: ", error);
-    }
+    const data = await getAllListings()
+    dispatch(setListings(data));
+    const listing = data?.find((item) => item.id == listingId);
+    const ListingData = getListing(listing);
+    const { bookings, dateRanges } = formatReservations(reservations, listingId);
+    setCalenderDetails({
+      bookings: bookings,
+      dateRanges: dateRanges,
+    });
+    setAboutListing(ListingData);
   };
 
   useEffect(() => {

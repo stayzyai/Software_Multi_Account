@@ -5,7 +5,7 @@ const initialState = {
 };
 
 const hostawayUserSlice = createSlice({
-  name: "hostawayUsers",
+  name: "users",
   initialState,
   reducers: {
     setHostawayUsers: (state, action) => {

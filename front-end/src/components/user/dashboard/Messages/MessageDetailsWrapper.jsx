@@ -3,66 +3,98 @@ import { useState, useEffect } from "react";
 import MessageDetails from "../Messages/MessageDetails";
 import { useSelector, useDispatch } from "react-redux";
 import { setConversations } from "../../../../store/conversationSlice";
-import { setMessages } from "../../../../store/messagesSlice";
 import {
   simplifiedResult,
-  getAllconversation,
-  getConversations,
+  getConversationsWithResources,
+  formattedNewMessage,
 } from "../../../../helpers/Message";
 import { useNavigate } from "react-router-dom";
-import ChatShimmer from "../../../common/shimmer/ChatShimmer"
+import ChatShimmer from "../../../common/shimmer/ChatShimmer";
+import { io } from "socket.io-client";
+import { setUnreadChat } from "../../../../store/notificationSlice";
+import { getHostawayUser } from '../../../../helpers/TaskHelper';
+import { setHostawayUsers } from '../../../../store/hostawayUserSlice';
 
 const MessageDetailsWrapper = () => {
   const { messageId } = useParams();
 
   const [chatInfo, setChatInfo] = useState([]);
+  const [fromatedConversation, setFormatedConversation] = useState([]);
+  const [messages, setMessage] = useState([]);
   const conversation = useSelector((state) => state.conversation.conversations);
-  const messsage = useSelector((state) => state.messages);
+  const users = useSelector((state) => state.hostawayUser.users);
   const dispatch = useDispatch();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+
+  const getConversationData = async (newMessage = null) => {
+    const data = await getConversationsWithResources();
+    dispatch(setConversations(data));
+    const simplifiedData = simplifiedResult(data);
+    setFormatedConversation(simplifiedData);
+    if (newMessage) {
+      if (messageId == newMessage?.conversationId) {
+        setMessage((prevMessages) => [
+          ...prevMessages,
+          formattedNewMessage(newMessage),
+        ]);
+      }
+      dispatch(setUnreadChat({ chatId: newMessage?.conversationId }));
+    }
+    return simplifiedData;
+  };
+
+  useEffect(() => {
+    const newSocket = io(import.meta.env.VITE_SOCKET_HOST, {
+      transports: ["websocket"],
+    });
+    newSocket.on("connect", () => {
+      console.log("Connected to WebSocket server");
+    });
+    newSocket.on("received_message", (newMessage) => {
+      console.log("New message received: ", newMessage);
+      getConversationData(newMessage);
+    });
+    const fetchData = async () => {
+      if (fromatedConversation.length == 0 && chatInfo.length == 0) {
+        const data = await getConversationData();
+        setChatInfo(data?.filter((msg) => msg.id == messageId));
+      }
+      const userData = users?.length === 0 ? await getHostawayUser() : users;
+      if (users?.length === 0) dispatch(setHostawayUsers(userData));
+    };
+    fetchData();
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const fetchChatInfo = () => {
-      const data = simplifiedResult(conversation, messsage);
+      const data = simplifiedResult(conversation);
       setChatInfo(data?.filter((msg) => msg.id == messageId));
     };
-
-    const getConversationData = async () => {
-      const data = await getConversations();
-      dispatch(setConversations(data));
-      const conversationIds = data?.map((conv) => conv.id);
-
-      const conversationPromises = conversationIds.map(async (id) => {
-        const messages = await getAllconversation(id);
-        dispatch(setMessages({ id: id, message: messages }));
-        return { id, messages };
-      });
-      const simplifiedDataArray = await Promise.all(conversationPromises);
-      const simplifiedData = simplifiedResult(data, simplifiedDataArray);
-      setChatInfo(simplifiedData?.filter((msg) => msg.id == messageId));
-    };
-
     if (messageId && conversation.length !== 0) {
       fetchChatInfo();
-      return;
     }
-    getConversationData();
   }, [messageId]);
 
   const handleClickMessages = (chatId, messages) => {
-    if( chatId == messageId ) return
+    if (chatId == messageId) return;
     setChatInfo(messages.filter((msg) => msg.id == chatId));
     navigate(`/user/chat/${chatId}`);
-  };  
+  };
 
-  return chatInfo.length !== 0 ? (
+  return chatInfo.length !== 0 && fromatedConversation.length !== 0 ? (
     <MessageDetails
       chatInfo={chatInfo}
       setChatInfo={setChatInfo}
       handleClickMessages={handleClickMessages}
+      fromatedConversation={fromatedConversation}
+      setMessage={setMessage}
+      messages={messages}
     />
   ) : (
-    <ChatShimmer/>
+    <ChatShimmer />
   );
 };
 
