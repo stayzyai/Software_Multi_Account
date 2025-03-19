@@ -14,7 +14,10 @@ const ModalFooter = ({
   detectPeriod,
   message,
   upsells,
-  discount
+  discount,
+  setUpsellName,
+  setDiscount,
+  setDetectPeriod
 }) => {
   const upsellOffer = useSelector((state) => state.upsells.upsell);
   const dispatch = useDispatch();
@@ -65,6 +68,9 @@ const ModalFooter = ({
     setExisting({});
     setEditMode(false);
     setModalOpen(false);
+    setUpsellName("")
+    setDiscount("")
+    setDetectPeriod("1 days")
   };
 
   const handleDelete = async () => {

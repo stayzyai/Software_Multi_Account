@@ -103,7 +103,7 @@ const statusOptions = [
         <select
           value={assignee}
           onChange={(e) => setAssignee(e.target.value)}
-          className="w-full p-1 border border-gray-300 rounded-md"
+          className="w-full p-1 border border-gray-300 rounded-md bg-white"
         >
           <option value="Unassigned">Unassigned</option>
           {users?.map((user) => (
@@ -120,7 +120,7 @@ const statusOptions = [
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="w-full p-1 border border-gray-300 rounded-md"
+          className="w-full p-1 border border-gray-300 rounded-md bg-white"
         >
           <option value="">Select</option>
           {statusOptions.map((option) => (

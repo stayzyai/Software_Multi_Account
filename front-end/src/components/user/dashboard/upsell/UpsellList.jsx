@@ -46,7 +46,7 @@ const UpsellManagement = ({
   };
 
   return (
-    <div className="mt-28 px-10">
+    <div className="mt-28 px-10 pb-10">
       <div className="flex justify-end mb-6">
         <button
           onClick={() => setModalOpen(!isOpen)}

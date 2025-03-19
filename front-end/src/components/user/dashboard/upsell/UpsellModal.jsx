@@ -28,7 +28,6 @@ const CreateUpsellModal = ({
   const variablesDropdownRef = useRef(null);
   const periodDropdownRef = useRef(null);
   const textareaRef = useRef(null);
-  const dispatch = useDispatch();
 
   useEffect(() => {
     if (showUpsell && Object.keys(showUpsell).length !== 0) {
@@ -127,6 +126,9 @@ const CreateUpsellModal = ({
           detectPeriod={detectPeriod}
           message={message}
           upsells={upsells}
+          setUpsellName={setUpsellName}
+          setDiscount={setDiscount}
+          setDetectPeriod={setDetectPeriod}
         />
       </div>
     </div>

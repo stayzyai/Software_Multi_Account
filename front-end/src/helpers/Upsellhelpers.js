@@ -61,7 +61,7 @@ const deleteUpsell = async (id) => {
   try {
     const response = await api.delete(`/hostaway/delete-upsell/${id}`);
     if (response?.status == 200) {
-      toast.success("Upsell offer deleted successfully!");
+      toast.error("Upsell offer deleted successfully!");
       return true;
     }
     toast.error("Something went wrong. Please try again.");
