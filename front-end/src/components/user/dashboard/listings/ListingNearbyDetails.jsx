@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label"
 import api from "@/api/api";
@@ -20,33 +19,33 @@ const ListingNearbyDetails = ({ listingId, properties })=>{
     setIsGoogleMapsEnabled((prevState) => !prevState);
   };
 
-  useEffect(()=>{
-        const getNearLoc = async () => {
-          setLoading(true)
-          const listing = listings?.find((item)=>item.id == listingId)
-          if(listing?.lat === null && listing?.lat == null){
-            toast.error("Owner has not provided the nearby spots")
-            setLoading(false)
-            return
-          }
-          const payload = {"lat": listing.lat, "lng": listing.lng
-        }
-        setDisplayText('')
-          const response = await api.post("/user/nearby-places", payload)
-          if(response?.data?.results){
-            setNearbySpots(response.data.results)
-          }
-          setLoading(false)
-        }
-        const property = properties?.find((item)=>item.id == listingId)
-        setOccupancy(property?.occupancy)
-        if(isGoogleMapsEnabled){
-          getNearLoc()
-        }
-  },[isGoogleMapsEnabled])
+  useEffect(() => {
+    const getNearLoc = async () => {
+      setLoading(true);
+      setDisplayText(null);
+      const listing = listings?.find((item) => item.id == listingId);
+      if (listing?.lat === null && listing?.lat == null) {
+        toast.error("Owner has not provided the nearby spots");
+        setLoading(false);
+        return;
+      }
+      const payload = { lat: listing.lat, lng: listing.lng };
+      setDisplayText("");
+      const response = await api.post("/user/nearby-places", payload);
+      if (response?.data?.results) {
+        setNearbySpots(response.data.results);
+      }
+      setLoading(false);
+    };
+    const property = properties?.find((item) => item.id == listingId);
+    setOccupancy(property?.occupancy);
+    if (isGoogleMapsEnabled) {
+      getNearLoc();
+    }
+  }, [isGoogleMapsEnabled, listingId, listings, properties]);
 
   useEffect(() => {
-    if (index < nearBySpots?.length) {
+    if (nearBySpots && index < nearBySpots.length) {
       const timer = setTimeout(() => {
         setDisplayText((prev) => prev + nearBySpots[index]);
         setIndex((prev) => prev + 1);
@@ -63,20 +62,20 @@ const ListingNearbyDetails = ({ listingId, properties })=>{
   );
 
     return(
-        <div className="w-full md:pl-11 pr-5 pt-16">
-        <div className="flex flex-col">
+    <div className="w-full md:pl-11 pr-5 pt-16">
+      <div className="flex flex-col">
           <div className={`lg:flex justify-end w-full font-normal md:text-xl text-md pb-4 lg:pb-0 ${occupancy !== "Vacant" ? "text-[#2D8062]" : "text-red-600" }`}>Current Status : {occupancy}</div>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div className="flex items-center space-x-4 mb-10 z-10">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center space-x-4 mb-10 z-10">
                 <Label htmlFor="maps-toggle" className="text-xl lg:text-2xl font-normal">
-                  Google Maps
-                </Label>
-                <Switch />
-            </div>
+              Google Maps
+            </Label>
+            <Switch />
           </div>
-            <div className="space-y-5">
-            <h2 className="text-xl lg:text-2xl font-normal">Info</h2>
-              <div className="text-xl lg:text-2xl py-12 px-5 bg-[#F8F8F8] rounded-2xl border border-gray-300 border-solid min-h-[341px]">
+        </div>
+        <div className="space-y-5">
+          <h2 className="text-xl lg:text-2xl font-normal">Info</h2>
+          <div className="text-xl lg:text-2xl py-12 px-5 bg-[#F8F8F8] rounded-2xl border border-gray-300 border-solid min-h-[341px]">
                 {loading ? <div><BeatLoader size={12}/></div> : <span className="md:text-lg text-sm">{displayText}</span>}
               </div>
           </div>

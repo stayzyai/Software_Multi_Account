@@ -3,9 +3,11 @@ import { useEffect, useState, useRef } from "react";
 import { getAllconversation } from "../../../../helpers/Message";
 import { ScaleLoader } from 'react-spinners';
 import { openAISuggestion, formatedMessages, getAmenity } from "../../../../helpers/Message";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { toast } from "sonner";
 import ButtonLoader from "./ButtonLoader"
+import DetectIssue from "./DetectIssue"
+import { setIssueStatus } from "../../../../store/taskSlice"
 
 const ChatMessages = ({ messages, handleSendMessage, setInput, input, setOpenBooking,
   openBooking, setOpenSidebarMessage, openSidebarMessage, chatInfo, setMessage, messageLoader}) => {
@@ -14,7 +16,10 @@ const [isLoading, setLoading] = useState(true)
 const messagesEndRef = useRef(null);
 const [isSuggestion, setSuggestion] = useState(null)
 const [amenity, setAmenity] = useState([])
+const [isTaskId, setIsIdTask] = useState(null);
+const users = useSelector((state) => state.hostawayUser.users);
 const chat_id = chatInfo?.length > 0 && chatInfo[0]["id"]
+const dispatch = useDispatch();
 
 const listings = useSelector((state)=>state.listings.listings)
 
@@ -44,11 +49,13 @@ const amenityList = async ()=>{
   const handleAISuggestion = async (messages, chatInfo) => {
     setSuggestion(true)
     const listingMapId = chatInfo[0]["listingMapId"]
+    const reservationId = chatInfo[0]["reservationId"]
     const chatId = chatInfo[0]["id"]
     const listing = listings?.find((item)=>item.id === listingMapId)
     const {systemPrompt, lastUserMessage } =  formatedMessages(messages, listing, amenity)
     const payload = { prompt: systemPrompt, messsages: lastUserMessage}
-    const response = await openAISuggestion(payload)
+    const {response, taskId} = await openAISuggestion(payload, listingMapId, reservationId, users, setIssueStatus, dispatch)
+    setIsIdTask(taskId)
     setSuggestion(false)
     if(response){
       setInput((prev) => ({ ...prev, [chatId]: response }));
@@ -62,7 +69,7 @@ const amenityList = async ()=>{
 
 return (
     <div className="w-full flex flex-col mb-6 h-full">
-      <div className="flex-1 overflow-y-auto p-6 scrollbar-hide ">
+      <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
       {!isLoading ? (
           messages?.length > 0 ? (
             messages.map((msg, index) => (
@@ -92,6 +99,7 @@ return (
           </div>
         )}
          <div ref={messagesEndRef}></div>
+         <DetectIssue isTaskId={isTaskId} setIsIdTask={setIsIdTask}/>
       </div>
       <div className="flex justify-between mb-4 xl:hidden">
         <button

@@ -2,8 +2,7 @@ import Header from "../Header";
 import CommonTable from "../common/Table";
 import ListingShimmer from "../../../common/shimmer/ListingShimmer";
 
-const Properties = ({ properties}) => {
-
+const Properties = ({ properties }) => {
   const columns = ["Name", "Address", "Occupancy", "Issues", "AI"];
 
   return (
@@ -12,11 +11,10 @@ const Properties = ({ properties}) => {
         <div className="border border-b border-black">
           <Header title="Listings" />
         </div>
-        <div className={`${properties?.length !== 0 ? "mt-[70px]" : "mt-[40px]"}`}>
-          {properties?.length !== 0 ? <CommonTable
-            properties={properties}
-            columns={columns}
-          />:<ListingShimmer/>}
+        <div
+          className={`${properties?.length !== 0 ? "mt-[70px]" : "mt-[40px]"}`}
+        >
+          <CommonTable properties={properties} columns={columns} />
         </div>
       </div>
     </>

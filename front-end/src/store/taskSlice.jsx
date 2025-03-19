@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 const initialState = {
   tasks: [],
+  issueStaus: {}
 };
 
 const taskSlice = createSlice({
@@ -11,8 +12,11 @@ const taskSlice = createSlice({
     setTasks: (state, action) => {
       state.tasks = action.payload;
     },
+    setIssueStatus: (state, action) => {    
+      state.issueStaus = action.payload;
+    }
   },
 });
 
-export const { setTasks } = taskSlice.actions;
+export const { setTasks, setIssueStatus } = taskSlice.actions;
 export default taskSlice.reducer;

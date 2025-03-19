@@ -1,16 +1,28 @@
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { markChatAsRead } from "../../../../store/notificationSlice";
+import { useState, useEffect } from "react";
 
-const MessageList = ({title,
+const MessageList = ({
+  title,
   simplifiedConversation,
   filteredConversations,
   handleClickMessages,
-  selectedFilters
+  selectedFilters,
 }) => {
+  const [isFilteringActive, setFilteringActive] = useState(false);
   const unreadChats = useSelector((state) => state.notifications.unreadChats);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const filterActive =
+      selectedFilters.Date !== "" ||
+      selectedFilters.Listing !== "" ||
+      selectedFilters.Task !== "";
+    setFilteringActive(filterActive);
+  }, [selectedFilters]);
+
   const getInitials = (name) => {
     let words = name?.trim().split(" ").slice(0, 1);
     return words
@@ -18,8 +30,6 @@ const MessageList = ({title,
       .join("")
       .toUpperCase();
   };
-
-  const isFilteringActive = selectedFilters.Date !== "" || selectedFilters.Listing !== "" || selectedFilters.Task !== "";
 
   return (
     <>
@@ -69,7 +79,8 @@ const MessageList = ({title,
                     {item?.recipientName}
                   </p>
                   <p
-                    className={`text-sm text-[#7F7F7F] hidden md:block ${item?.isIncoming && "font-semibold text-gray-700"
+                    className={`text-sm text-[#7F7F7F] hidden md:block ${
+                      item?.isIncoming && "font-semibold text-gray-700"
                     }`}
                   >
                     {item?.conversationMessages}

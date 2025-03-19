@@ -1,4 +1,4 @@
- import { getConversations } from "./Message";
+import { getConversations } from "./Message";
 import api from "@/api/api";
 
 const getListingData = (listings) => {
@@ -87,9 +87,11 @@ const getCompletedTasks = (tasks, listings, users) => {
     });
 };
 
-const getHostawayTask = async (limit=null) => {
+const getHostawayTask = async (limit = null) => {
   try {
-    const url = limit ? `/hostaway/get-all/tasks?limit=${limit}` : `/hostaway/get-all/tasks`;
+    const url = limit
+      ? `/hostaway/get-all/tasks?limit=${limit}`
+      : `/hostaway/get-all/tasks`;
     const response = await api.get(url);
     if (response?.data?.detail?.data?.result) {
       const data = response?.data?.detail?.data?.result;
@@ -102,9 +104,11 @@ const getHostawayTask = async (limit=null) => {
   }
 };
 
-const getHostawayUser = async (limit=null) => {
+const getHostawayUser = async (limit = null) => {
   try {
-    const url = limit ? `/hostaway/get-all/users?limit=${limit}` : `/hostaway/get-all/users`;
+    const url = limit
+      ? `/hostaway/get-all/users?limit=${limit}`
+      : `/hostaway/get-all/users`;
     const response = await api.get(url);
     if (response?.data?.detail?.data?.result) {
       const data = response?.data?.detail?.data?.result;
@@ -123,14 +127,22 @@ const formatDate = (dateString) => {
   return `${month}/${day}/${year}`;
 };
 
-const formatedTaskDetails = async (listings, tasks, taskId, users, conversations) => {
+const formatedTaskDetails = async (
+  listings,
+  tasks,
+  taskId,
+  users,
+  conversations
+) => {
   const task = tasks?.find((item) => item.id == taskId);
   const listing = listings?.find(
     (listing) => listing?.id == task?.listingMapId
   );
   const user = users?.find((item) => item.id == task.assigneeUserId);
   const date = task?.canStartFrom?.split(" ")[0];
-  const conversation = conversations.find((item)=>item.reservationId === task.reservationId)
+  const conversation = conversations.find(
+    (item) => item.reservationId === task.reservationId
+  );
 
   return {
     id: task.id,
@@ -142,7 +154,7 @@ const formatedTaskDetails = async (listings, tasks, taskId, users, conversations
     listingAddress: listing.address,
     reservationId: task.reservationId,
     assigned: user ? user?.firstName : "Unassigned",
-    chatId: conversation?.id
+    chatId: conversation?.id,
   };
 };
 
@@ -159,6 +171,25 @@ const TaskOverview = (tasks, hostawayUsers) => {
   });
 };
 
+const formattedIssues = (tasks, users, chatInfo) => {
+  const reservationId = chatInfo[0]?.reservationId;
+  const listingMapId = chatInfo[0]?.listingMapId;
+  const allTasks = tasks?.filter((task) => task.reservationId == reservationId) || [];
+  return allTasks.map((task) => {
+    // const user = users?.find((item) => item.id == task.assigneeUserId);
+    return {
+      id: task.id,
+      title: task.title,
+      status: task.status,
+      reservationId: task.reservationId,
+      assigned:  task.assigneeUserId  ? task.assigneeUserId : "",
+      description: task.description,
+      listingMapId: listingMapId
+    };
+  });
+};
+
+
 export {
   getListingData,
   formatedTask,
@@ -167,5 +198,6 @@ export {
   getHostawayUser,
   formatedTaskDetails,
   TaskOverview,
-  getCompletedTasks
+  getCompletedTasks,
+  formattedIssues,
 };

@@ -30,10 +30,10 @@ const DataTable = ({
         )} */}
       </div>
       <div className="overflow-x-auto">
-        <table className="w-full">
+        {data?.length !== 0 ? <table className="w-full">
           <thead>
             <tr className="text-[14px] border-b">
-              {columns.map((column) => (
+              {columns?.map((column) => (
                 <th style={title !== "Listings"? { WebkitTextStrokeWidth :".5px", WebkitTextStrokeColor: "#060606"}:{}}
                   key={column.key}
                   className={`pb-2 ${column.width} font-normal ${column.key === "status" ?"text-center":"text-left"}`}
@@ -58,7 +58,8 @@ const DataTable = ({
               </tr>
             ))}
           </tbody>
-        </table>
+        </table>:
+        <div className="w-full flex justify-center h-10 items-center text-gray-600 border-t border-gray-400">No data available</div>}
       </div>
     </div>
   );

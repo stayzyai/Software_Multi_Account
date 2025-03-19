@@ -39,7 +39,7 @@ const TaskInformation = ({ taskInfo, taskList }) => {
             >
               <div className="flex justify-between items-center w-full text-[#292D32] text-nowrap text-base">
                 <div>
-                  <p className="md:text-sm text-xs">{item?.title}</p>
+                  <p className="md:text-sm text-xs truncate whitespace-nowrap w-40">{item?.title}</p>
                 </div>
                 <div className="text-xs">{item?.date}</div>
               </div>

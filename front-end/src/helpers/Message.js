@@ -1,5 +1,6 @@
 import api from "@/api/api";
 import { SYSTEM_PROMPT } from "./prompt";
+import { TASK_GENERATION_PROMPT } from "./taskPrompt";
 
 const filteredResult = (result) =>
   result
@@ -51,7 +52,7 @@ const sendMessages = async (chat_id, payload) => {
     }
     return [];
   } catch (Error) {
-    console.log("Error at get all messages: ", Error);
+    console.log("Error at send messages: ", Error);
     return [];
   }
 };
@@ -171,16 +172,94 @@ const formatedMessages = (messages, listing, amenity) => {
   return { systemPrompt, lastUserMessage };
 };
 
-
-const openAISuggestion = async (payload) => {
+const sendEmail = async(payload) => {
   try {
-    const response = await api.post(`/user/ai-suggestion`, payload);
-    if (response?.data?.answer) {
-      return response?.data?.answer;
+    const response = await api.post(`/hostaway/send-email`, payload);
+    if (response?.status === 200) {
+      return response
     }
     return null;
   } catch (Error) {
-    console.log("Error at get all messages: ", Error);
+    console.log("Error at send message: ", Error);
+    return null;
+  }
+};
+
+const formatDateTime = (date) => {
+    return date.toISOString().replace('T', ' ').split('.')[0];
+};
+
+const ticketCreateByAI = async (message, listingMapId, reservationId, users) => {
+  try {
+    const usersDetails = JSON.stringify(users);
+    const payload = {"prompt" : TASK_GENERATION_PROMPT.replace(/{{message}}/g, message).replace(/{{users}}/g, usersDetails)};
+    const response = await api.post(`/hostaway/ai-issue-detection`, payload);
+    if(response?.data?.answer){
+     const parsedResponse = JSON.parse(response?.data?.answer);
+     const { email, ...taskDetails } = parsedResponse;
+     const payloadResponse = {...taskDetails, listingMapId: listingMapId,reservationId: reservationId, canStartFrom: formatDateTime(new Date())}
+      return {payloadResponse, email};
+    }
+    return null;
+  } catch (Error) {
+    console.log("Error at create ticket by AI: ", Error);  
+    return null;
+  }
+};
+
+const createTicket = async (payload) => {
+  try {
+    const response = await api.post(`/hostaway/create/tasks`, payload);
+    if (response?.status === 200) {
+      return response?.data?.detail?.data?.result;
+    }
+    return null;
+  } catch (Error) {
+    console.log("Error at create ticket: ", Error);
+    return null;
+  }
+};
+
+const updateTask = async (payload, id) => {
+  try {
+    const response = await api.post(`/hostaway/update/tasks/${id}`, payload);
+    if (response?.status === 200) {
+      return response?.data?.detail?.data?.result;
+    }
+    return null;
+  } catch (Error) {
+    console.log("Error at create ticket: ", Error);
+    return null;
+  }
+}
+
+const openAISuggestion = async (payload, listingMapId, reservationId, users, setIssueStatus, dispatch) => {
+  try {
+    const response = await api.post(`/user/ai-suggestion`, payload);
+    if (response?.data?.answer) {
+      const answer = response?.data?.answer.trim()
+      let parsedResponse;
+      if (answer.startsWith("{") && answer.endsWith("}")){
+        parsedResponse = JSON.parse(response?.data?.answer);
+        if (parsedResponse?.response && parsedResponse?.issues){
+          if (parsedResponse?.issues !== "Yes, issue detected"){
+              return {response: parsedResponse.response, taskId: null}
+          }
+          dispatch(setIssueStatus("issue detected"));
+          const {payloadResponse, email} = await ticketCreateByAI(payload?.messsages, listingMapId, reservationId, users);
+          const task = await createTicket(payloadResponse);
+          if (task){
+            dispatch(setIssueStatus("task created"));
+           await sendEmail(email);
+          }
+          return {response : parsedResponse.response, taskId: task?.id};
+        }
+      }
+      return {response: response?.data?.answer, taskId: null};
+    }
+    return null;
+  } catch (Error) {
+    console.log("Error at get AI suggestion: ", Error);
     return null;
   }
 };
@@ -409,5 +488,7 @@ export {
   getAmenity,
   getTasksTitle,
   getConversationsWithResources,
-  formattedNewMessage
+  formattedNewMessage,
+  createTicket,
+  updateTask,
 };

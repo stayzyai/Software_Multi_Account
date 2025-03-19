@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from enum import Enum
 from typing import Optional
 from datetime import datetime
@@ -57,5 +57,10 @@ class ForgotPasswordRequest(BaseModel):
 
 class ChatRequest(BaseModel):
     prompt: str
-    max_tokens: int = 100
+    max_tokens: int = 300
     messsages: Optional[str] = None
+
+class EmailRequest(BaseModel):
+    userEmail: EmailStr
+    subject: str
+    body: str

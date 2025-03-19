@@ -1,5 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, Request
-import logging
+import logging, requests
+from app.schemas.user import ChatRequest, EmailRequest
+from app.common.open_ai import gpt_taskCreation
 import json
 from app.common.hostaway_setup import hostaway_get_request, hostaway_post_request, hostaway_put_request
 from sqlalchemy.orm import Session
@@ -11,6 +13,7 @@ from app.common.auth import decode_access_token
 from app.websocket import handle_webhook, handle_reservation
 from app.schemas.hostaway import UpsellData, UpsellStatusUpdate
 from typing import Optional
+from app.common.send_email import send_email
 
 router = APIRouter(prefix="/hostaway", tags=["hostaway"])
 
@@ -239,3 +242,73 @@ async def delete_upsell(upsell_id: int, token: str = Depends(get_token), db: Ses
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/create/{params}")
+async def post_data(request: Request ,params:str, token: str = Depends(get_token), db: Session = Depends(get_db)):
+    try:
+        body = await request.json()
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
+        if not account:
+            raise HTTPException(status_code = 404, detail="Hostaway account not found")
+        response = hostaway_post_request(account.hostaway_token, f"{params}", body)
+        data = json.loads(response)
+        if data['status'] == 'success':
+            return {"detail": {"message": "data post successfully..", "data":  data}}
+        return {"detail": {"message": "Some error occured at post request.. ", "data": data}}
+
+    except HTTPException as exc:
+        logging.error(f"****some error at hostaway post request*****{exc}")
+        raise exc
+    except Exception as e:
+        raise HTTPException(status_code = 500, detail=f"Error at hostaway post request: {str(e)}")
+
+@router.post("/update/{params}/{id}")
+async def post_data(request: Request, params:str, id:int, token: str = Depends(get_token), db: Session = Depends(get_db)):
+    try:
+        body = await request.json()
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
+        if not account:
+            raise HTTPException(status_code = 404, detail="Hostaway account not found")
+        response = hostaway_put_request(account.hostaway_token, f"/{params}/{id}", body)
+        data = json.loads(response)
+        if data['status'] == 'success':
+            return {"detail": {"message": "data updated successfully..", "data":  data}}
+        return {"detail": {"message": "Some error occured at updated request.. ", "data": data}}
+
+    except HTTPException as exc:
+        logging.error(f"****some error at hostaway post request*****{exc}")
+        raise exc
+    except Exception as e:
+        raise HTTPException(status_code = 500, detail=f"Error at hostaway post request: {str(e)}")
+
+@router.post("/ai-issue-detection")
+def detect_issues(request: ChatRequest, db: Session = Depends(get_db), token: str = Depends(get_token)):
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        prompt = request.prompt
+        gpt_response = gpt_taskCreation(prompt)
+        if gpt_response is None:
+            raise HTTPException(status_code=400, detail="Some error occurred. Please try again.")
+        logging.info(f"chat gpt response{gpt_response}")
+        return {"answer": gpt_response}
+
+    except requests.exceptions.RequestException as req_err:
+        logging.error(f"Error at issue detection {req_err}")
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(req_err)}")
+
+@router.post("/send-email")
+def send_task_email(request: EmailRequest, db: Session = Depends(get_db), token: str = Depends(get_token)):
+    decode_token = decode_access_token(token)
+    user_id = decode_token['sub']
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="Not authorized to use this feature")
+    return send_email(request.userEmail, request.subject, request.body)

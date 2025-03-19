@@ -1,20 +1,16 @@
 import { useNavigate } from "react-router-dom";
 
-const CommonTable = ({
-  properties,
-  columns,
-}) => {
-
-  const navigate = useNavigate()
+const CommonTable = ({ properties, columns }) => {
+  const navigate = useNavigate();
   const handleClick = (name, id) => {
-    navigate(`/user/listing/${id}`)
+    navigate(`/user/listing/${id}`);
   };
 
-  const getFirstTwoWords = (name)=>{
-    const words = name?.split(' ');
-    const firstTwoWords = words?.slice(0, 2).join(' ');
-    return firstTwoWords
-  }
+  const getFirstTwoWords = (name) => {
+    const words = name?.split(" ");
+    const firstTwoWords = words?.slice(0, 2).join(" ");
+    return firstTwoWords;
+  };
 
   const getInitials = (name) => {
     let words = name.trim().split(" ").slice(0, 1);
@@ -26,7 +22,7 @@ const CommonTable = ({
 
   return (
     <div className="overflow-x-auto px-4 pt-16 md:pl-10 md:pr-4 w-full">
-      <div className="sm:min-w-full border-[0.5px] border-[#D1D1D1] rounded-xl min-h-[380px] min-w-fit mb-16">
+      <div className="sm:min-w-full border-[0.5px] border-[#D1D1D1] rounded-xl min-h-52 min-w-fit mb-16">
         <table
           className="lg:text-sm text-xs mb-10"
           style={{ width: "-webkit-fill-available" }}
@@ -34,7 +30,16 @@ const CommonTable = ({
           <thead>
             <tr className="text-[#222222] border-b-[1px] border-[#D6D8DB]">
               {columns?.map((item, index) => (
-                <th key={index} className={`md:py-5 py-2 p-1 ${ item === "" ? "text-right w-12 lg:w-auto" : item === "Address" || item === "Occupancy" ? "text-left" :"text-center" }`}>
+                <th
+                  key={index}
+                  className={`md:py-5 py-2 p-1 ${
+                    item === ""
+                      ? "text-right w-12 lg:w-auto"
+                      : item === "Address" || item === "Occupancy"
+                      ? "text-left"
+                      : "text-center"
+                  }`}
+                >
                   {item === "" ? (
                     <input
                       type="checkbox"
@@ -53,10 +58,17 @@ const CommonTable = ({
                 key={index}
                 className="md:py-5 p-1 border-b-[1px] border-[#D1D1D1] cursor-pointer hover:bg-gray-50 active:bg-gray-100"
               >
-                <td onClick={() => handleClick(property.property, property.id)} className="flex items-center space-x-2 md:py-2 p-1 md:w-54 w-[220px] md:px-6 px-8">
+                <td
+                  onClick={() => handleClick(property.property, property.id)}
+                  className="flex items-center space-x-2 md:py-2 p-1 md:w-54 w-[220px] md:px-6 px-8"
+                >
                   {property.image ? (
                     <div className="w-9 h-9 rounded-full">
-                      <img src={property.image} alt="Property Image" className="w-full h-full object-cover"/>
+                      <img
+                        src={property.image}
+                        alt="Property Image"
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                   ) : (
                     <div className="w-9 h-9 rounded-full bg-red-900 flex items-center justify-center text-lg text-white font-semibold">
@@ -83,6 +95,11 @@ const CommonTable = ({
             ))}
           </tbody>
         </table>
+        {properties?.length === 0 && (
+          <div className="flex justify-center items-center text-xl text-gray-500">
+            No data available
+          </div>
+        )}
       </div>
     </div>
   );

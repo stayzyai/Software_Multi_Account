@@ -12,6 +12,8 @@ import { useNavigate } from "react-router-dom";
 import ChatShimmer from "../../../common/shimmer/ChatShimmer";
 import { io } from "socket.io-client";
 import { setUnreadChat } from "../../../../store/notificationSlice";
+import { getHostawayUser } from '../../../../helpers/TaskHelper';
+import { setHostawayUsers } from '../../../../store/hostawayUserSlice';
 
 const MessageDetailsWrapper = () => {
   const { messageId } = useParams();
@@ -20,6 +22,7 @@ const MessageDetailsWrapper = () => {
   const [fromatedConversation, setFormatedConversation] = useState([]);
   const [messages, setMessage] = useState([]);
   const conversation = useSelector((state) => state.conversation.conversations);
+  const users = useSelector((state) => state.hostawayUser.users);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -56,6 +59,8 @@ const MessageDetailsWrapper = () => {
         const data = await getConversationData();
         setChatInfo(data?.filter((msg) => msg.id == messageId));
       }
+      const userData = users?.length === 0 ? await getHostawayUser() : users;
+      if (users?.length === 0) dispatch(setHostawayUsers(userData));
     };
     fetchData();
     return () => {

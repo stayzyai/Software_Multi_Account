@@ -52,7 +52,6 @@ class Subscription(Base):
     created_at = Column(DateTime, server_default=func.now())
     payment_at = Column(DateTime, nullable=False)
     expire_at = Column(DateTime, nullable=False)
-    credit_score = Column(Integer, nullable=True)
 
     def __repr__(self):
         return (
@@ -64,7 +63,6 @@ class Subscription(Base):
             f"created_at={self.created_at}, "
             f"payment_at={self.payment_at}, "
             f"expire_at={self.expire_at}, "
-            f"credit_score={self.credit_score})>"
         )
 
 class Upsell(Base):
