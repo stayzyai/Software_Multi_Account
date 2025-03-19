@@ -46,15 +46,15 @@ const UpsellManagement = ({
   };
 
   return (
-    <div className="mt-28 px-10 pb-10">
+    <div className="mt-28 px-4 md:px-10 pb-10">
       <div className="flex justify-end mb-6">
         <button
           onClick={() => setModalOpen(!isOpen)}
-          className="bg-[#2D8062] hover:bg-green-800 text-white px-5 py-3 rounded-2xl flex items-center gap-2 transition-colors"
+          className="bg-[#2D8062] hover:bg-green-800 text-white px-3 py-2 md:px-5 md:py-3 rounded-xl md:rounded-2xl flex items-center gap-1 md:gap-2 text-sm md:text-base transition-colors"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-5 w-5"
+            className="h-4 w-4 md:h-5 md:w-5"
             viewBox="0 0 20 20"
             fill="currentColor"
           >
@@ -68,33 +68,42 @@ const UpsellManagement = ({
         </button>
       </div>
 
-      <div className="space-y-5 text-[#060606]">
+      <div className="space-y-4 md:space-y-5 text-[#060606]">
         {upsells?.length !== 0 ? (
           <>
             {upsells?.map((upsell) => (
               <div
                 key={upsell.id}
-                className="border-[0.3px] border-gray-400 rounded-2xl p-4 px-20 flex items-center"
+                className="border-[0.3px] border-gray-400 rounded-xl md:rounded-2xl p-3 md:p-4 px-4 md:px-20 flex items-center"
               >
                 <div
                   onClick={() => handleClickUpsell(upsell.id)}
-                  className="w-full flex justify-between cursor-pointer"
+                  className="w-full flex flex-col md:flex-row md:justify-between cursor-pointer"
                 >
-                  <div className="w-1/3 font-normal text-[#060606] text-xl">
+                  <div className="font-normal text-[#060606] text-lg md:text-xl md:w-1/3 mb-2 md:mb-0">
                     {upsell.name}
                   </div>
-                  <div className="w-1/3 text-base">{upsell.timing}</div>
-                  <div className="w-1/3 flex justify-between items-center">
-                    <span>{upsell.discount}</span>
+                  <div className="text-sm md:text-base md:w-1/3 mb-2 md:mb-0">
+                    {upsell.timing}
+                  </div>
+                  <div className="w-full md:w-1/3 flex justify-between items-center">
+                    <span className="text-sm md:text-base">
+                      {upsell.discount}
+                    </span>
                     <button
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      className={`relative inline-flex h-5 md:h-6 w-10 md:w-11 items-center rounded-full transition-colors ${
                         upsell.enabled ? "bg-[#34C759]" : "bg-gray-200"
                       }`}
-                      onClick={() => toggleUpsell(upsell.id, upsell.enabled)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleUpsell(upsell.id, upsell.enabled);
+                      }}
                     >
                       <span
-                        className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                          upsell.enabled ? "translate-x-6" : "translate-x-1"
+                        className={`inline-block h-4 md:h-5 w-4 md:w-5 transform rounded-full bg-white transition-transform ${
+                          upsell.enabled
+                            ? "translate-x-5 md:translate-x-6"
+                            : "translate-x-1"
                         }`}
                       />
                     </button>
@@ -104,7 +113,7 @@ const UpsellManagement = ({
             ))}
           </>
         ) : (
-          <div className="w-full flex justify-center text-xl text-gray-400">
+          <div className="w-full flex justify-center text-lg md:text-xl text-gray-400">
             No upsells found
           </div>
         )}

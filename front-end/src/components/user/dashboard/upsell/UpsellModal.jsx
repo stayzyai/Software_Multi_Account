@@ -60,7 +60,7 @@ const CreateUpsellModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-0 flex items-center md:left-[35%] z-40 font-inter">
-      <div className="bg-[#FCFDFC] rounded-lg shadow-lg w-full max-w-[600px] max-h-[650px] overflow-y-scroll scrollbar-hide mx-4 border border-gray-400">
+      <div className="bg-[#FCFDFC] rounded-lg shadow-lg w-full max-w-[600px] max-h-[550px] overflow-y-scroll scrollbar-hide mx-4 border border-gray-400">
         <div className="flex items-center justify-between p-4 border-b">
           <h2 className="text-md font-semibold">
             {isEditMode ? "Edit Upsell" : "Create Upsell"}
@@ -85,7 +85,6 @@ const CreateUpsellModal = ({
               onChange={(e) => setUpsellName(e.target.value)}
               className="w-full text-sm border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-green-200 resize-none scrollbar-hide"
             />
-            Create Upsell
             <div className="mt-3">
               <p className="text-sm pb-1">Upsell discount</p>
               <input
