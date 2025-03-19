@@ -3,7 +3,7 @@ import { XIcon } from "lucide-react";
 import RenderPreview from "./MessagePreview";
 import UpsellMessages from "./UpsellMessages";
 import DetectUpsell from "./DetectUpsell";
-import { saveUpsell } from "../../../../helpers/Upsellhelpers";
+import { saveUpsell, deleteUpsell } from "../../../../helpers/Upsellhelpers";
 import { toast } from "sonner";
 
 const EditUpsellModal = ({ setModalOpen, isOpen, showUpsell }) => {
@@ -21,7 +21,6 @@ const EditUpsellModal = ({ setModalOpen, isOpen, showUpsell }) => {
   const textareaRef = useRef(null);
 
   useEffect(() => {
-    console.log("------showUpsell---->-", showUpsell)
     if (showUpsell) {
       setExisting(showUpsell)
       setEditMode(true);
@@ -155,7 +154,7 @@ const EditUpsellModal = ({ setModalOpen, isOpen, showUpsell }) => {
             </button>
           )}
           <button
-            onClick={() => setModalOpen(false)}
+            onClick={() => {setModalOpen(false); setEditMode(false)}}
             className="px-3 py-2 border rounded-md hover:bg-gray-200"
           >
             Cancel

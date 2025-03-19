@@ -100,7 +100,7 @@ const ModalFooter = ({
         </button>
       )}
       <button
-        onClick={() => setModalOpen(false)}
+        onClick={() => {setModalOpen(false); setEditMode(false);}}
         className="px-3 py-2 border rounded-md hover:bg-gray-200"
       >
         Cancel

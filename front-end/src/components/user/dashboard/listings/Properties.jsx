@@ -1,6 +1,5 @@
 import Header from "../Header";
 import CommonTable from "../common/Table";
-import ListingShimmer from "../../../common/shimmer/ListingShimmer";
 
 const Properties = ({ properties }) => {
   const columns = ["Name", "Address", "Occupancy", "Issues", "AI"];
