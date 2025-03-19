@@ -3,7 +3,6 @@ import { XIcon } from "lucide-react";
 import RenderPreview from "./MessagePreview";
 import UpsellMessages from "./UpsellMessages";
 import DetectUpsell from "./DetectUpsell";
-import { useDispatch } from "react-redux";
 import ModalFooter from "./UpsellModalFooter";
 
 const CreateUpsellModal = ({
@@ -38,10 +37,16 @@ const CreateUpsellModal = ({
       setMessage(showUpsell.message || "");
     }
     function handleClickOutside(event) {
-      if (periodDropdownRef.current && !periodDropdownRef.current.contains(event.target)) {
+      if (
+        periodDropdownRef.current &&
+        !periodDropdownRef.current.contains(event.target)
+      ) {
         setPeriodDropdownOpen(false);
       }
-      if (variablesDropdownRef.current && !variablesDropdownRef.current.contains(event.target)) {
+      if (
+        variablesDropdownRef.current &&
+        !variablesDropdownRef.current.contains(event.target)
+      ) {
         setVariablesDropdownOpen(false);
       }
     }
@@ -49,7 +54,7 @@ const CreateUpsellModal = ({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, []);
+  }, [showUpsell]);
 
   if (!isOpen) return null;
 
@@ -80,12 +85,14 @@ const CreateUpsellModal = ({
               onChange={(e) => setUpsellName(e.target.value)}
               className="w-full text-sm border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-green-200 resize-none scrollbar-hide"
             />
+            Create Upsell
             <div className="mt-3">
               <p className="text-sm pb-1">Upsell discount</p>
               <input
-                type="text"
+                type="number"
                 id="upsell-offer"
                 placeholder="Enter discount offer"
+                onWheel={(e) => e.target.blur()}
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
                 className="w-full text-sm border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-green-200 resize-none scrollbar-hide"

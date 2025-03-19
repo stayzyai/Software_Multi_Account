@@ -78,31 +78,35 @@ const UpsellManagement = ({
               >
                 <div
                   onClick={() => handleClickUpsell(upsell.id)}
-                  className="w-1/3 font-normal text-[#060606] text-xl cursor-pointer"
+                  className="w-full flex justify-between cursor-pointer"
                 >
-                  {upsell.name}
-                </div>
-                <div className="w-1/3 text-base">{upsell.timing}</div>
-                <div className="w-1/3 flex justify-between items-center">
-                  <span>{upsell.discount}</span>
-                  <button
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                      upsell.enabled ? "bg-[#34C759]" : "bg-gray-200"
-                    }`}
-                    onClick={() => toggleUpsell(upsell.id, upsell.enabled)}
-                  >
-                    <span
-                      className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                        upsell.enabled ? "translate-x-6" : "translate-x-1"
+                  <div className="w-1/3 font-normal text-[#060606] text-xl">
+                    {upsell.name}
+                  </div>
+                  <div className="w-1/3 text-base">{upsell.timing}</div>
+                  <div className="w-1/3 flex justify-between items-center">
+                    <span>{upsell.discount}</span>
+                    <button
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                        upsell.enabled ? "bg-[#34C759]" : "bg-gray-200"
                       }`}
-                    />
-                  </button>
+                      onClick={() => toggleUpsell(upsell.id, upsell.enabled)}
+                    >
+                      <span
+                        className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                          upsell.enabled ? "translate-x-6" : "translate-x-1"
+                        }`}
+                      />
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}
           </>
         ) : (
-          <div className="w-full flex justify-center text-xl text-gray-400">No upsells found</div>
+          <div className="w-full flex justify-center text-xl text-gray-400">
+            No upsells found
+          </div>
         )}
       </div>
       {isEditMode && (

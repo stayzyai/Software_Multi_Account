@@ -1,7 +1,12 @@
 import { Trash2 } from "lucide-react";
 import { useSelector, useDispatch } from "react-redux";
 import { setUpsellOffer } from "../../../../store/upsellSlice";
-import { saveUpsell, formateUpsell, deleteUpsell } from "../../../../helpers/Upsellhelpers";
+import {
+  saveUpsell,
+  formateUpsell,
+  deleteUpsell,
+} from "../../../../helpers/Upsellhelpers";
+import { toast } from "sonner";
 
 const ModalFooter = ({
   isEditMode,
@@ -17,7 +22,7 @@ const ModalFooter = ({
   discount,
   setUpsellName,
   setDiscount,
-  setDetectPeriod
+  setDetectPeriod,
 }) => {
   const upsellOffer = useSelector((state) => state.upsells.upsell);
   const dispatch = useDispatch();
@@ -68,9 +73,9 @@ const ModalFooter = ({
     setExisting({});
     setEditMode(false);
     setModalOpen(false);
-    setUpsellName("")
-    setDiscount("")
-    setDetectPeriod("1 days")
+    setUpsellName("");
+    setDiscount("");
+    setDetectPeriod("1 days");
   };
 
   const handleDelete = async () => {
@@ -100,7 +105,10 @@ const ModalFooter = ({
         </button>
       )}
       <button
-        onClick={() => {setModalOpen(false); setEditMode(false);}}
+        onClick={() => {
+          setModalOpen(false);
+          setEditMode(false);
+        }}
         className="px-3 py-2 border rounded-md hover:bg-gray-200"
       >
         Cancel
