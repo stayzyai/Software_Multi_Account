@@ -8,6 +8,7 @@ import SignUp from "../../components/user/auth/signup";
 import { ProtectedRoute } from "../../helpers/ProtectedRoute";
 import { UserDashboardComponent } from "../../pages/userdashboard";
 import PaymentSuccess from "../../pages/payment/paymentSuccess";
+import PaymentDeclined from "../../pages/payment/paymentDeclined";
 
 function AppRoutes() {
   const { isAuthenticated, userRole } = useAuth();
@@ -72,6 +73,7 @@ function AppRoutes() {
         }
       />
       <Route path="/payment-success" element={<PaymentSuccess />} />
+      <Route path="/payment-declined" element={<PaymentDeclined />} />
       <Route
         path="/user/*"
         element={
