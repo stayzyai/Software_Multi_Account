@@ -2,6 +2,10 @@ import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { createTicket, updateTask } from "../../../../helpers/Message";
 import { toast } from "sonner";
+import {  getHostawayTask, getHostawayUser} from "../../../../helpers/TaskHelper";
+import { setHostawayUsers } from "../../../../store/hostawayUserSlice";
+import { setTasks } from "../../../../store/taskSlice";
+import { useDispatch } from "react-redux";
 
 const AddTask = ({
   setCreateTask,
@@ -10,8 +14,7 @@ const AddTask = ({
   chatInfo,
   fetchedTasks,
 }) => {
-
-const statusOptions = [
+  const statusOptions = [
     { label: "In Progress", value: "inProgress" },
     { label: "Completed", value: "completed" },
     { label: "Pending", value: "pending" },
@@ -21,9 +24,17 @@ const statusOptions = [
   const users = useSelector((state) => state.hostawayUser.users);
   const [taskName, setTaskName] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
-  const [assignee, setAssignee] = useState('');
+  const [assignee, setAssignee] = useState("");
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch()
+
+  const updateTasks = async () => {
+    const taskData = await getHostawayTask();
+    dispatch(setTasks(taskData));
+    const userData = await getHostawayUser();
+    dispatch(setHostawayUsers(userData));
+  };
 
   useEffect(() => {
     if (editedData) {
@@ -61,6 +72,7 @@ const statusOptions = [
         editedData ? "Task updated successfully." : "Task created successfully."
       );
       setLoading(false);
+      updateTasks();
       setCreateTask(false);
       setSelectedTask(null);
       fetchedTasks();
