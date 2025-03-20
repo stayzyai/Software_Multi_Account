@@ -35,22 +35,20 @@ const getListing = (data) => {
     {
       title: "Basic Details",
       content: [
-        { label: "Bed", value: data.bedsNumber || "Not specified" },
-        { label: "Bath", value: data.bathroomsNumber || "Not specified" },
-        { label: "Address", value: data.address || "Not available" },
+        { label: "Bed", value: data?.bedsNumber || "Not specified" },
+        { label: "Bath", value: data?.bathroomsNumber || "Not specified" },
+        { label: "Address", value: data?.address || "Not available" },
         {
           label: "Accommodates",
-          value: `${data.personCapacity} guest${
-            data.personCapacity > 1 ? "s" : ""
-          }`,
+          value: data?.personCapacity ? `${data?.personCapacity} guest${data?.personCapacity > 1 ? "s" : ""}` : "",
         },
         {
           label: "Room type",
-          value: data.roomType
-            ? data.roomType.replace("_", " ")
+          value: data?.roomType
+            ? data?.roomType.replace("_", " ")
             : "Not specified",
         },
-        { label: "Property type", value: data.name },
+        { label: "Property type", value: data?.name || "" },
       ],
     },
     {
@@ -58,8 +56,8 @@ const getListing = (data) => {
       content: [
         {
           value:
-            data.listingAmenities.length !== 0
-              ? data.listingAmenities.map((amenity) => amenity.amenityName)
+            data?.listingAmenities.length !== 0
+              ? data?.listingAmenities.map((amenity) => amenity.amenityName)
               : "Not specified",
         },
       ],
@@ -67,18 +65,18 @@ const getListing = (data) => {
     {
       title: "Prices",
       content: [
-        { label: "Nightly rate", value: `$${data?.price}` },
+        { label: "Nightly rate", value: data?.price ? `$${data?.price || ""}`: "" },
         {
           label: "Weekly Discount",
-          value: data.weeklyDiscount ? `${data.weeklyDiscount}%` : "None",
+          value: data?.weeklyDiscount ? `${data?.weeklyDiscount|| "N/A"}%` : "None",
         },
         {
           label: "Monthly Discount",
-          value: data.monthlyDiscount ? `${data.monthlyDiscount}%` : "None",
+          value: data?.monthlyDiscount ? `${data?.monthlyDiscount || "N/A"}%` : "None",
         },
         {
           label: "Price for extra person",
-          value: `$${data.priceForExtraPerson} per night`,
+          value:  data?.priceForExtraPerson ? `$${data?.priceForExtraPerson} per night`: "",
         },
       ],
     },
@@ -87,28 +85,28 @@ const getListing = (data) => {
       content: [
         {
           label: "Instant bookable",
-          value: data.instantBookable ? "Yes" : "No",
+          value: data?.instantBookable ? "Yes" : "No",
         },
-        { label: "Wi-Fi Username", value: data.wifiUsername || "-" },
-        { label: "Wi-Fi Password", value: data.wifiPassword || "-" },
-        { label: "Person Capacity", value: data.personCapacity || "-" },
+        { label: "Wi-Fi Username", value: data?.wifiUsername || "-" },
+        { label: "Wi-Fi Password", value: data?.wifiPassword || "-" },
+        { label: "Person Capacity", value: data?.personCapacity || "-" },
         {
           label: "Check-in time start",
-          value: data.checkInTimeStart ? `${data.checkInTimeStart}:00pm` : "-",
+          value: data?.checkInTimeStart ? `${data?.checkInTimeStart || ""}:00pm` : "-",
         },
-        { label: "Check-in time end", value: data.checkInTimeEnd || "-" },
+        { label: "Check-in time end", value: data?.checkInTimeEnd || "-" },
         {
           label: "Check-out time",
-          value: data.checkOutTime ? `${data.checkOutTime}:00pm` : "-",
+          value: data?.checkOutTime ? `${data?.checkOutTime}:00pm` : "-",
         },
-        { label: "Square Meters", value: data.squareMeters || "-" },
+        { label: "Square Meters", value: data?.squareMeters || "-" },
         {
           label: "Listing's cleanness status",
-          value: data.cleannessStatus || "Unknown",
+          value: data?.cleannessStatus || "Unknown",
         },
         {
           label: "Cleaning instruction",
-          value: data.cleaningInstruction || "-",
+          value: data?.cleaningInstruction || "-",
         },
       ],
     },
@@ -117,9 +115,9 @@ const getListing = (data) => {
       content: [
         {
           label: "Policy",
-          value:
+          value:  data?.cancellationPolicy?
             data?.cancellationPolicy.charAt(0).toUpperCase() +
-            data?.cancellationPolicy.slice(1),
+            data?.cancellationPolicy.slice(1) : "",
         },
         {
           label: "Details",

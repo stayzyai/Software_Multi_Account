@@ -9,7 +9,7 @@ const ListingInfo = ({ aboutListing }) => {
               {section.title === "Amenities" ? (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
                   {section?.content[0]?.value !== "Not specified" ? (
-                    section?.content[0]?.value.map((amenity, amenityIndex) => (
+                    section?.content[0]?.value?.map((amenity, amenityIndex) => (
                       <span
                         key={amenityIndex}
                         className="bg-gray-50 px-2 py-1 rounded-lg"
