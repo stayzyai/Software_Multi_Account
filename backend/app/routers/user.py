@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from app.schemas.user import UserUpdate, ChangePasswordRequest, UserProfile, ChatRequest
-from app.models.user import User, ChromeExtensionToken
+from app.models.user import User, ChromeExtensionToken, Subscription
 from app.database.db import get_db
 from app.common.auth import verify_password, get_password_hash, decode_access_token, get_token, get_hostaway_key
 from app.common.user_query import update_user_details
@@ -135,9 +135,10 @@ def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_tok
         db_user = db.query(User).filter(User.id == user_id).first()
         if not db_user:
             raise HTTPException(status_code=404, detail={"message": "User not found"})
-
+        subscribed_user = db.query(Subscription).filter(Subscription.user_id == user_id).first()
+        is_premium_member = subscribed_user.is_active if subscribed_user else False
         return UserProfile(id=db_user.id, firstname=db_user.firstname, lastname=db_user.lastname, email=db_user.email, role=db_user.role,
-            created_at=db_user.created_at)
+            created_at=db_user.created_at, is_premium_member=is_premium_member)
 
     except HTTPException as exc:
         logging.error(f"An error occurred while changing the password: {exc}")
