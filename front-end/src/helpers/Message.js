@@ -70,9 +70,11 @@ const getHostawayReservation = async () => {
   }
 };
 
-const getConversations = async (limit=null) => {
+const getConversations = async (limit = null) => {
   try {
-    const url = limit ? `/hostaway/get-all/conversations?limit=${limit}` : "/hostaway/get-all/conversations"
+    const url = limit
+      ? `/hostaway/get-all/conversations?limit=${limit}`
+      : "/hostaway/get-all/conversations";
     const response = await api.get(url);
     if (response?.data?.detail?.data?.result) {
       const data = response?.data?.detail?.data?.result;
@@ -87,7 +89,7 @@ const getConversations = async (limit=null) => {
 
 const getConversationsWithResources = async () => {
   try {
-    const url = `/hostaway/get-all/conversations?includeResources=1`
+    const url = `/hostaway/get-all/conversations?includeResources=1`;
     const response = await api.get(url);
     if (response?.data?.detail?.data?.result) {
       const data = response?.data?.detail?.data?.result;
@@ -100,9 +102,11 @@ const getConversationsWithResources = async () => {
   }
 };
 
-const getAllListings = async (limit=null) => {
+const getAllListings = async (limit = null) => {
   try {
-    const url = limit ? `/hostaway/get-all/listings?limit=${limit}` : "/hostaway/get-all/listings"
+    const url = limit
+      ? `/hostaway/get-all/listings?limit=${limit}`
+      : "/hostaway/get-all/listings";
     const response = await api.get(url);
     if (response?.data?.detail?.data?.result) {
       const data = response?.data?.detail?.data?.result;
@@ -117,19 +121,19 @@ const getAllListings = async (limit=null) => {
 
 const getAmenity = async () => {
   try {
-    const response = await api.get("/hostaway/get-all/bedTypes")
+    const response = await api.get("/hostaway/get-all/bedTypes");
     if (response?.data?.detail?.data?.result) {
       const responseData = response?.data?.detail?.data?.result;
       return responseData;
     }
   } catch (error) {
-    console.log("Error get all amenity", error)
-    return []
+    console.log("Error get all amenity", error);
+    return [];
   }
 };
-const formatedTime = (date) =>{
-  return date?.split(" ")[1]
-}
+const formatedTime = (date) => {
+  return date?.split(" ")[1];
+};
 
 const simplifiedResult = (conversations) => {
   return conversations
@@ -142,9 +146,15 @@ const simplifiedResult = (conversations) => {
         messageSentOn: result.messageSentOn,
         reservationId: result.reservationId,
         listingMapId: result.listingMapId,
-        latestMessageTime: result?.conversationMessages?.length ? formatedTime(result?.conversationMessages[0].date) : "",
-        conversationMessages: result?.conversationMessages?.length ? result?.conversationMessages[0].body :  "",
-        isIncoming: result?.conversationMessages?.length ? result?.conversationMessages[0].isIncoming :  "",
+        latestMessageTime: result?.conversationMessages?.length
+          ? formatedTime(result?.conversationMessages[0].date)
+          : "",
+        conversationMessages: result?.conversationMessages?.length
+          ? result?.conversationMessages[0].body
+          : "",
+        isIncoming: result?.conversationMessages?.length
+          ? result?.conversationMessages[0].isIncoming
+          : "",
       };
     })
     .sort((a, b) => {
@@ -164,19 +174,22 @@ const formatedMessages = (messages, listing, amenity) => {
     .find((msg) => msg?.role === "user")?.content;
   const previousConversation = JSON.stringify(formattedMessages);
   const propertyDetails = JSON.stringify(listing);
-  const amenityDetails = JSON.stringify(amenity)
-  const systemPrompt = SYSTEM_PROMPT.replace(/{previous_conversation}/g, previousConversation)
+  const amenityDetails = JSON.stringify(amenity);
+  const systemPrompt = SYSTEM_PROMPT.replace(
+    /{previous_conversation}/g,
+    previousConversation
+  )
     .replace(/{latest_message}/g, lastUserMessage)
     .replace(/{property_details}/g, propertyDetails)
     .replace(/{amenities_detail}/g, amenityDetails);
   return { systemPrompt, lastUserMessage };
 };
 
-const sendEmail = async(payload) => {
+const sendEmail = async (payload) => {
   try {
     const response = await api.post(`/hostaway/send-email`, payload);
     if (response?.status === 200) {
-      return response
+      return response;
     }
     return null;
   } catch (Error) {
@@ -186,23 +199,38 @@ const sendEmail = async(payload) => {
 };
 
 const formatDateTime = (date) => {
-    return date.toISOString().replace('T', ' ').split('.')[0];
+  return date.toISOString().replace("T", " ").split(".")[0];
 };
 
-const ticketCreateByAI = async (message, listingMapId, reservationId, users) => {
+const ticketCreateByAI = async (
+  message,
+  listingMapId,
+  reservationId,
+  users
+) => {
   try {
     const usersDetails = JSON.stringify(users);
-    const payload = {"prompt" : TASK_GENERATION_PROMPT.replace(/{{message}}/g, message).replace(/{{users}}/g, usersDetails)};
+    const payload = {
+      prompt: TASK_GENERATION_PROMPT.replace(/{{message}}/g, message).replace(
+        /{{users}}/g,
+        usersDetails
+      ),
+    };
     const response = await api.post(`/hostaway/ai-issue-detection`, payload);
-    if(response?.data?.answer){
-     const parsedResponse = JSON.parse(response?.data?.answer);
-     const { email, ...taskDetails } = parsedResponse;
-     const payloadResponse = {...taskDetails, listingMapId: listingMapId,reservationId: reservationId, canStartFrom: formatDateTime(new Date())}
-      return {payloadResponse, email};
+    if (response?.data?.answer) {
+      const parsedResponse = JSON.parse(response?.data?.answer);
+      const { email, ...taskDetails } = parsedResponse;
+      const payloadResponse = {
+        ...taskDetails,
+        listingMapId: listingMapId,
+        reservationId: reservationId,
+        canStartFrom: formatDateTime(new Date()),
+      };
+      return { payloadResponse, email };
     }
     return null;
   } catch (Error) {
-    console.log("Error at create ticket by AI: ", Error);  
+    console.log("Error at create ticket by AI: ", Error);
     return null;
   }
 };
@@ -231,31 +259,43 @@ const updateTask = async (payload, id) => {
     console.log("Error at create ticket: ", Error);
     return null;
   }
-}
+};
 
-const openAISuggestion = async (payload, listingMapId, reservationId, users, setIssueStatus, dispatch) => {
+const openAISuggestion = async (
+  payload,
+  listingMapId,
+  reservationId,
+  users,
+  setIssueStatus,
+  dispatch
+) => {
   try {
     const response = await api.post(`/user/ai-suggestion`, payload);
     if (response?.data?.answer) {
-      const answer = response?.data?.answer.trim()
+      const answer = response?.data?.answer.trim();
       let parsedResponse;
-      if (answer.startsWith("{") && answer.endsWith("}")){
+      if (answer.startsWith("{") && answer.endsWith("}")) {
         parsedResponse = JSON.parse(response?.data?.answer);
-        if (parsedResponse?.response && parsedResponse?.issues){
-          if (parsedResponse?.issues !== "Yes, issue detected"){
-              return {response: parsedResponse.response, taskId: null}
+        if (parsedResponse?.response && parsedResponse?.issues) {
+          if (parsedResponse?.issues !== "Yes, issue detected") {
+            return { response: parsedResponse.response, taskId: null };
           }
           dispatch(setIssueStatus("issue detected"));
-          const {payloadResponse, email} = await ticketCreateByAI(payload?.messsages, listingMapId, reservationId, users);
+          const { payloadResponse, email } = await ticketCreateByAI(
+            payload?.messsages,
+            listingMapId,
+            reservationId,
+            users
+          );
           const task = await createTicket(payloadResponse);
-          if (task){
+          if (task) {
             dispatch(setIssueStatus("task created"));
-           await sendEmail(email);
+            await sendEmail(email);
           }
-          return {response : parsedResponse.response, taskId: task?.id};
+          return { response: parsedResponse.response, taskId: task?.id };
         }
       }
-      return {response: response?.data?.answer, taskId: null};
+      return { response: response?.data?.answer, taskId: null };
     }
     return null;
   } catch (Error) {
@@ -273,7 +313,9 @@ const getTimeDetails = (currentReservation) => {
   };
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    const [year, month, day] = dateString?.split("-");
+    const [year, month, day] = dateString
+      ? dateString.split("-")
+      : ["", "", ""];
     return `${month}/${day}/${year}`;
   };
   const timeDetails = [
@@ -341,7 +383,11 @@ const updateMessages = (simplifiedConversation, newMessage) => {
 };
 
 const filterMessages = (messages, filters) => {
-  const { Date: filterType, Listing: selectedListing, Task: selectedTask } = filters;
+  const {
+    Date: filterType,
+    Listing: selectedListing,
+    Task: selectedTask,
+  } = filters;
 
   if (filterType === "Date" && !selectedListing && !selectedTask) {
     return messages;
@@ -392,26 +438,28 @@ const filterMessages = (messages, filters) => {
 
 const getListingsName = (listings) => {
   return [
-    ...listings?.map((item) => ({
+    ...(listings || []).map((item) => ({
       id: item.id,
       name: item.name,
     })),
   ];
 };
 
-const getTasksTitle = (tasks)=>{
+const getTasksTitle = (tasks) => {
   return [
-    ...tasks?.map((item) => ({
+    ...(tasks || []).map((item) => ({
       id: item.reservationId,
       name: item.title,
     })),
   ];
-}
+};
 
 const getIdsWithLatestIncomingMessages = (data) => {
-  return data .filter(convo => 
-    convo.conversationMessages.some(message => message.isIncoming === 1)
-  ).map(convo => convo.id);
+  return data
+    .filter((convo) =>
+      convo.conversationMessages.some((message) => message.isIncoming === 1)
+    )
+    .map((convo) => convo.id);
 };
 
 const filterReservations = (reservations, filters) => {
@@ -458,15 +506,15 @@ const filterReservations = (reservations, filters) => {
   });
 };
 
-const formattedNewMessage = (data) =>{
+const formattedNewMessage = (data) => {
   return {
     body: data.body,
     time: formatedTime(data.date),
     imagesUrls: data.imagesUrls,
     isIncoming: data.isIncoming,
-    date: data.date
-}
-}
+    date: data.date,
+  };
+};
 
 export {
   getAllconversation,
