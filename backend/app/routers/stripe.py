@@ -74,10 +74,10 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             db.refresh(new_subscription)
 
             print(f"Subscription created: {new_subscription}")
+            return {"status": "success", "message": "Payment completed successfully."}
         else:
             print(f"Unhandled event type: {event['type']}")
-
-        return {"status": "success", "message": "Payment completed successfully."}
+        return {"status": "failed", "message": "Payment not completed."}
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid payload")
     except Exception as e:
