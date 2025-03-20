@@ -68,7 +68,7 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
             new_subscription = Subscription(email=email, stripe_subscription_id=stripe_subscription_id,
                 stripe_customer_id=stripe_customer_id, is_active=True, user_id=user_id, payment_at=payment_at,
-                expire_at=expire_at)
+                expire_at=expire_at, ai_enable=True)
             db.add(new_subscription)
             db.commit()
             db.refresh(new_subscription)

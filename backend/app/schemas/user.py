@@ -21,7 +21,7 @@ class UserProfile(BaseModel):
     email: str
     role: Role
     created_at: datetime
-    is_premium_member: Optional[bool]
+    ai_enable: Optional[bool]
 
     class Config:
         from_attributes = True    

@@ -52,6 +52,7 @@ class Subscription(Base):
     created_at = Column(DateTime, server_default=func.now())
     payment_at = Column(DateTime, nullable=False)
     expire_at = Column(DateTime, nullable=False)
+    ai_enable = Column(Boolean, default=False, nullable=False)
 
     def __repr__(self):
         return (

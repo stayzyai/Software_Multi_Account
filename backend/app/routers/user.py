@@ -20,6 +20,8 @@ from sqlalchemy.exc import NoResultFound
 import os
 import httpx
 from app.common.chat_query import haversine_distance
+from datetime import datetime
+
 load_dotenv()
 
 router = APIRouter(prefix="/user", tags=["users"])
@@ -136,9 +138,9 @@ def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_tok
         if not db_user:
             raise HTTPException(status_code=404, detail={"message": "User not found"})
         subscribed_user = db.query(Subscription).filter(Subscription.user_id == user_id).first()
-        is_premium_member = subscribed_user.is_active if subscribed_user else False
+        is_premium_member = subscribed_user.ai_enable if subscribed_user else False
         return UserProfile(id=db_user.id, firstname=db_user.firstname, lastname=db_user.lastname, email=db_user.email, role=db_user.role,
-            created_at=db_user.created_at, is_premium_member=is_premium_member)
+            created_at=db_user.created_at, ai_enable=is_premium_member)
 
     except HTTPException as exc:
         logging.error(f"An error occurred while changing the password: {exc}")
@@ -269,3 +271,42 @@ async def get_nearby_places(request: Request, token: str = Depends(get_token), d
     except Exception as e:
         logging.error(f"Error at get near places {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching nearby places: {str(e)}")
+
+
+@router.get("/update-ai", response_model=UserProfile)
+def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_token)):
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail={"message": "User not found"})
+        subscription = db.query(Subscription).filter(Subscription.user_id == user_id).first()
+
+        is_premium_member = False
+        if subscription:
+            if subscription.is_active and subscription.expire_at > datetime.utcnow():
+                # Toggle ai_enable (if True -> False, if False -> True)
+                subscription.ai_enable = not subscription.ai_enable
+                is_premium_member = subscription.ai_enable
+            else:
+                # If subscription expired, set ai_enable to False
+                subscription.ai_enable = False
+                subscription.is_active = False
+                is_premium_member = False
+            db.commit()
+            db.refresh(subscription)
+
+        return UserProfile(
+            id=db_user.id,
+            firstname=db_user.firstname,
+            lastname=db_user.lastname,
+            email=db_user.email,
+            role=db_user.role,
+            created_at=db_user.created_at,
+            ai_enable=is_premium_member
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail={"message": str(e)})
+
