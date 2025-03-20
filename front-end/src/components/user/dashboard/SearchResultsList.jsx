@@ -1,9 +1,9 @@
-import React from "react";
-
 const SearchResultsList = ({ searchResults, handleSelectResult }) => {
   if (searchResults.length === 0) return null;
 
-  const listings = searchResults?.filter((result) => !result.recipientName && !result?.title);
+  const listings = searchResults?.filter(
+    (result) => !result.recipientName && !result?.title
+  );
   const conversations = searchResults?.filter((result) => result.recipientName);
   const tasks = searchResults?.filter((result) => result?.title);
 

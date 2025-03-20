@@ -1,4 +1,3 @@
-import React from "react";
 import { useEffect, useState } from "react";
 import api from "@/api/api";
 import { toast } from "sonner";
@@ -8,7 +7,6 @@ import { ExternalLink } from "lucide-react";
 import { FaRegCopy } from "react-icons/fa";
 import HostawayAccount from "./setting/HostawayAccount";
 import SettingShimmer from "../../common/shimmer/settingShimmer";
-
 
 const Integrations = () => {
   const [extensionKey, setExtensionKey] = useState("");
@@ -57,8 +55,7 @@ const Integrations = () => {
 
   return (
     <>
-      <Header
-        title={"Integrations"} role={"user"}/>
+      <Header title={"Integrations"} role={"user"} />
       {!loading ? (
         <div>
           <div>

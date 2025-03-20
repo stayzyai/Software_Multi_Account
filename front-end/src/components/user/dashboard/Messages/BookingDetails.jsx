@@ -1,30 +1,53 @@
 import CheckInOutDropdown from "./CheckInOutDropdown";
 import { useState } from "react";
 import CheckoutModal from "../../../common/modals/CheckoutModal";
-import { checkout } from "../../../../helpers/payment";
-
+import { checkout, updateAIStatus } from "../../../../helpers/payment";
+import { useSelector, useDispatch } from "react-redux";
+import { toast } from "sonner";
+import { setUser } from "../../../../store/userSlice";
 const BookingDetails = ({
   timeDetails,
   bookingDetails,
   setTimeDetails,
   chatInfo,
 }) => {
+  const dispatch = useDispatch();
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState("");
-
-  const Switch = ({handleSwitch}) => (
+  const ai_enabled = useSelector((state) => state.user.ai_enable);
+  const Switch = ({ checked, handleSwitch }) => (
     <label className="inline-flex items-center cursor-pointer">
-      <input onClick={handleSwitch} type="checkbox" className="sr-only peer" />
+      <input
+        checked={checked}
+        onChange={handleSwitch}
+        type="checkbox"
+        className="sr-only peer"
+      />
       <div className="relative w-10 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-0 peer-focus:ring-[#34C759] dark:peer-focus:ring-[#34C759] rounded-full peer dark:bg-white peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[#34C759] after:content-[''] after:absolute after:top-[1px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-[18px] after:w-[18px] after:transition-all dark:border-[#34C759] peer-checked:bg-[#34C759]"></div>
     </label>
   );
 
   const handleCheckOut = async () => {
-    const response = await checkout();
-    console.log(response);
-    if (response?.detail?.checkout_url) {
-      setCheckoutUrl(response.detail.checkout_url);
-      setIsCheckoutModalOpen(true);
+    if (!ai_enabled) {
+      const response = await updateAIStatus();
+      if (response?.ai_enable === false) {
+        const response = await checkout();
+        if (response?.detail?.checkout_url) {
+          setCheckoutUrl(response.detail.checkout_url);
+          setIsCheckoutModalOpen(true);
+        }
+      } else {
+        const { firstname, lastname, email, role, ai_enable } = response;
+        dispatch(setUser({ firstname, lastname, email, role, ai_enable }));
+        toast.success("Enabled AI for this chat");
+      }
+    } else {
+      const response = await updateAIStatus();
+      if (response?.ai_enable === false) {
+        const { firstname, lastname, email, role, ai_enable } = response;
+        dispatch(setUser({ firstname, lastname, email, role, ai_enable }));
+        toast.info("Disabled AI for this chat");
+      }
     }
   };
 
@@ -79,7 +102,7 @@ const BookingDetails = ({
           <div key={index} className="ml-6">
             <p className="text-gray-500 mb-3">{item.label}</p>
             {item.label === "AI" ? (
-              <Switch checked={item.value === "Enabled"} handleSwitch={handleCheckOut}/>
+              <Switch checked={ai_enabled} handleSwitch={handleCheckOut} />
             ) : (
               <p>{item.value}</p>
             )}

@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 
-const DropdownMenu = ({ role }) => {
+const DropdownMenu = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 

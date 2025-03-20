@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
-price_id = os.getenv("BASIC_PLAN_ID")
+price_id = os.getenv("STRIPE_BASIC_PLAN_ID")
 
 def create_checkout_session(email: str):
     try:
