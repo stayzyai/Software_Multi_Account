@@ -32,10 +32,11 @@ const MessageDetailsWrapper = () => {
     const simplifiedData = simplifiedResult(data);
     setFormatedConversation(simplifiedData);
     if (newMessage) {
+      const currentMessage = formattedNewMessage(newMessage)
       if (messageId == newMessage?.conversationId) {
         setMessage((prevMessages) => [
           ...prevMessages,
-          formattedNewMessage(newMessage),
+          currentMessage,
         ]);
       }
       dispatch(setUnreadChat({ chatId: newMessage?.conversationId }));
