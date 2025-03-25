@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import StatCard from "@/components/common/statcard/StatCard";
 import {
   MessageCircle,
@@ -6,8 +7,54 @@ import {
   Smile,
   ChevronDown,
 } from "lucide-react";
+import axios from "axios";
 
 export const Overview = () => {
+  const [responseQuality, setResponseQuality] = useState({
+    average_score: 0,
+    is_increase: false,
+    percentage_change: 0,
+  });
+  
+  const [messageStats, setMessageStats] = useState({
+    total_messages: 0,
+    is_increase: false,
+    percentage_change: 0,
+  });
+  
+  const baseURL = import.meta.env.VITE_API_HOST;
+  
+  useEffect(() => {
+    // Fetch data for the dashboard
+    const fetchDashboardData = async () => {
+      try {
+        // Fetch response quality data
+        console.log("Fetching response quality data");
+        const qualityResponse = await axios.get(`${baseURL}/stats/response-quality`);
+        console.log("Response quality data:", qualityResponse.data);
+        setResponseQuality({
+          average_score: qualityResponse.data.average_score,
+          is_increase: true,  
+          percentage_change: 0,
+        });
+        
+        // Fetch message count data
+        console.log("Fetching message count data");
+        const messageResponse = await axios.get(`${baseURL}/stats/message-count`);
+        console.log("Message count data:", messageResponse.data);
+        setMessageStats({
+          total_messages: messageResponse.data.total_messages,
+          is_increase: true,
+          percentage_change: 0,
+        });
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      }
+    };
+    
+    fetchDashboardData();
+  }, []);
+
   return (
     <>
       <div>
@@ -27,9 +74,9 @@ export const Overview = () => {
             title="Total Automated Messages"
             icon={<MessageCircle />}
             stats={{
-              current_count: 10,
-              is_increase: true,
-              percentage_change: 15,
+              current_count: messageStats.total_messages,
+              is_increase: messageStats.is_increase,
+              percentage_change: messageStats.percentage_change,
             }}
           />
           <StatCard
@@ -54,9 +101,9 @@ export const Overview = () => {
             title="Avg Response Quality"
             icon={<Smile />}
             stats={{
-              current_count: 14,
-              is_increase: false,
-              percentage_change: 5,
+              current_count: responseQuality.average_score,
+              is_increase: responseQuality.is_increase,
+              percentage_change: responseQuality.percentage_change,
             }}
           />
         </div>
