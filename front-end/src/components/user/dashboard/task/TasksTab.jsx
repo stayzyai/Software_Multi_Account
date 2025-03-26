@@ -4,10 +4,10 @@ import { setTasks } from "../../../../store/taskSlice";
 import { useDispatch } from "react-redux";
 import { useSelector } from "react-redux";
 import {
-  getAllTask,
   getHostawayTask,
   getHostawayUser,
   getCompletedTasks,
+  getNonCompletedTasks
 } from "../../../../helpers/TaskHelper";
 import { getAllListings } from "../../../../helpers/Message";
 import Tasks from "./Tasks";
@@ -37,7 +37,7 @@ const TasksTab = () => {
       const userData = users.length === 0 ? await getHostawayUser() : users;
       if (users.length === 0) dispatch(setHostawayUsers(userData));
 
-      const allTask = getAllTask(taskData, listingData, userData);
+      const allTask = getNonCompletedTasks(taskData, listingData, userData);
       const allCompletedTask = getCompletedTasks(
         taskData,
         listingData,
@@ -74,7 +74,7 @@ const TasksTab = () => {
                 className="bg-[#E3E9F2] text-nowrap rounded-2xl h-8 flex gap-1 items-center px-3 py-3"
               >
                 <p>
-                  {!showCompeltedTask ? "See Completed Tasks" : "See All Tasks"}
+                  {!showCompeltedTask ? "See Completed Tasks" : "Hide Completed Tasks"}
                 </p>
                 <img
                   src="/icons/down.svg"

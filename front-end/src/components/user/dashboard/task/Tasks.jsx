@@ -31,7 +31,7 @@ const Tasks = ({ columns, tasks }) => {
               {tasks?.map((task, index) => (
                 <tr
                   key={index}
-                  className="md:py-5 lg:p-1 border-b-[1px] border-[#D1D1D1] cursor-pointer text-sm"
+                  className="md:py-5 lg:p-1 border-b-[1px] border-[#D1D1D1] cursor-pointer text-sm hover:bg-gray-50 active:bg-gray-100"
                 >
                   <td
                     onClick={() => handleClick(task.id)}

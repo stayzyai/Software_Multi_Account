@@ -1,6 +1,8 @@
 import { createSlice } from '@reduxjs/toolkit';
 const initialState = {
-  unreadChats: {}
+  unreadChats: {},
+  issueStaus: {},
+  issueId: null
 };
 const notificationsSlice = createSlice({
   name: 'notifications',
@@ -13,8 +15,14 @@ const notificationsSlice = createSlice({
     markChatAsRead: (state, action) => {
       // Mark a chat as read (set to false)
       state.unreadChats[action.payload.chatId] = false;
+    },
+    setIssueStatus: (state, action) => {    
+      state.issueStaus = action.payload;
+    },
+    setTaskId: (state, action)=>{
+      state.issueId = action.payload
     }
   }
 });
-export const { setUnreadChat, markChatAsRead } = notificationsSlice.actions;
+export const { setUnreadChat, markChatAsRead, setIssueStatus, setTaskId } = notificationsSlice.actions;
 export default notificationsSlice.reducer;

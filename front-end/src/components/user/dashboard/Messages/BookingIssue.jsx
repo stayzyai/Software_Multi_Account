@@ -51,15 +51,15 @@ const BookingIssue = ({ chatInfo }) => {
                         setSelectedTask(item);
                         setCreateTask(true);
                       }}
-                      className="font-semibold text-sm cursor-pointer"
+                      className="font-semibold text-xs cursor-pointer"
                     >
                       {item?.title}
                     </p>
                     <button
-                      className="bg-[#C7EADD] hover:bg-[#C7EAD1] p-1 text-md rounded-full px-3"
+                      className="bg-[#C7EADD] hover:bg-[#C7EAD1] p-1 text-xs px-2 rounded-full font-semibold"
                       onClick={() => navigate(`/user/task/${item.id}`)}
                     >
-                      View
+                      Inspect
                     </button>
                   </div>
                 );
@@ -70,7 +70,7 @@ const BookingIssue = ({ chatInfo }) => {
           )}
           <button
             onClick={() => setCreateTask(true)}
-            className="flex items-center bg-white hover:bg-gray-50 p-2 rounded-lg w-full mt-2"
+            className="flex items-center bg-white hover:bg-gray-50 p-2 rounded-lg w-full mt-4"
           >
             <Plus className="mr-2 h-4 w-4" />
             Create task

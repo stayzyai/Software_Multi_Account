@@ -87,6 +87,27 @@ const getCompletedTasks = (tasks, listings, users) => {
     });
 };
 
+const getNonCompletedTasks = (tasks, listings, users) => {
+  return tasks
+    ?.filter((task) => task.status !== "completed")
+    .map((task) => {
+      const listing = listings?.find(
+        (listing) => listing.id === task.listingMapId
+      );
+      const user = users?.find((item) => item.id === task?.assigneeUserId);
+
+      return {
+        id: task.id,
+        title: task?.title,
+        address: listing?.address || "No address available",
+        urgency: task?.priority ? task.priority : "Normal",
+        assigned: user ? user.firstName : "Unassigned",
+        date: formatDate(task.canStartFrom?.split(" ")[0]),
+      };
+    });
+};
+
+
 const getHostawayTask = async (limit = null) => {
   try {
     const url = limit
@@ -200,4 +221,5 @@ export {
   TaskOverview,
   getCompletedTasks,
   formattedIssues,
+  getNonCompletedTasks
 };
