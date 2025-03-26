@@ -7,7 +7,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { toast } from "sonner";
 import ButtonLoader from "./ButtonLoader"
 import DetectIssue from "./DetectIssue"
-import { setIssueStatus } from "../../../../store/taskSlice"
+import { setIssueStatus, setTaskId } from "../../../../store/notificationSlice"
 
 const ChatMessages = ({ messages, handleSendMessage, setInput, input, setOpenBooking,
   openBooking, setOpenSidebarMessage, openSidebarMessage, chatInfo, setMessage, messageLoader}) => {
@@ -16,7 +16,6 @@ const [isLoading, setLoading] = useState(true)
 const messagesEndRef = useRef(null);
 const [isSuggestion, setSuggestion] = useState(null)
 const [amenity, setAmenity] = useState([])
-const [isTaskId, setIsIdTask] = useState(null);
 const users = useSelector((state) => state.hostawayUser.users);
 const chat_id = chatInfo?.length > 0 && chatInfo[0]["id"]
 const dispatch = useDispatch();
@@ -55,7 +54,7 @@ const amenityList = async ()=>{
     const {systemPrompt, lastUserMessage } =  formatedMessages(messages, listing, amenity)
     const payload = { prompt: systemPrompt, messsages: lastUserMessage}
     const {response, taskId} = await openAISuggestion(payload, listingMapId, reservationId, users, setIssueStatus, dispatch)
-    setIsIdTask(taskId)
+    dispatch(setTaskId(taskId))
     setSuggestion(false)
     if(response){
       setInput((prev) => ({ ...prev, [chatId]: response }));
@@ -99,7 +98,7 @@ return (
           </div>
         )}
          <div ref={messagesEndRef}></div>
-         <DetectIssue isTaskId={isTaskId} setIsIdTask={setIsIdTask}/>
+         <DetectIssue/>
       </div>
       <div className="flex justify-between mb-4 xl:hidden">
         <button

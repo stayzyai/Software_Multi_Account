@@ -92,7 +92,7 @@ const TaskDetail = ({ setOpenTaskChat, openTaskChat}) => {
       </button>
       <TaskStepper status ={task.status} assigned={task.assigned}/>
       <div className="flex justify-center">
-      <button onClick={()=>navigate(`/user/chat/${task.chatId}`)} className="p-2 px-4 text-black font-semibold bg-[#C7EADD] rounded-lg flex justify-center">Go to Chat</button>
+      <button onClick={()=>navigate(`/user/chat/${task.chatId}`)} className="px-6 py-0.5 text-black font-semibold bg-[#C7EADD] hover:bg-[#C7EAD1] rounded-lg flex justify-center text-[14px]">Go to Chat</button>
       </div>
     </div>
   );
