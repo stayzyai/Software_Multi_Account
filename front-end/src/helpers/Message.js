@@ -206,15 +206,16 @@ const ticketCreateByAI = async (
   message,
   listingMapId,
   reservationId,
-  users
+  users,
+  tasks
 ) => {
   try {
     const usersDetails = JSON.stringify(users);
     const payload = {
-      prompt: TASK_GENERATION_PROMPT.replace(/{{message}}/g, message).replace(
-        /{{users}}/g,
-        usersDetails
-      ),
+      prompt: TASK_GENERATION_PROMPT.replace(/{{message}}/g, message)
+        .replace(/{{users}}/g, usersDetails)
+        .replace(/{{reservationId}}/g, reservationId)
+        .replace(/{{tasks}}/g, tasks),
     };
     const response = await api.post(`/hostaway/ai-issue-detection`, payload);
     if (response?.data?.answer) {
@@ -267,6 +268,7 @@ const openAISuggestion = async (
   reservationId,
   users,
   setIssueStatus,
+  tasks,
   dispatch
 ) => {
   try {
@@ -285,7 +287,8 @@ const openAISuggestion = async (
             payload?.messsages,
             listingMapId,
             reservationId,
-            users
+            users,
+            tasks
           );
           const task = await createTicket(payloadResponse);
           if (task) {
@@ -366,20 +369,6 @@ const updateConversation = (messages, newMessage) => {
     return updatedMessages;
   }
   return [];
-};
-
-const updateMessages = (simplifiedConversation, newMessage) => {
-  const data = simplifiedConversation.map((item) => {
-    if (item.id === newMessage.conversationId) {
-      return {
-        ...item,
-        conversationMessages: newMessage.body,
-        messageReceivedOn: newMessage.date,
-      };
-    }
-    return item;
-  });
-  return data;
 };
 
 const filterMessages = (messages, filters) => {
@@ -516,6 +505,17 @@ const formattedNewMessage = (data) => {
   };
 };
 
+const getStatusByChatId = async (chatId) => {
+  try {
+    const response = await api.get(`/hostaway/get-ai-status?chat_id=${chatId}`);
+    if (response.status === 200) {
+      return response;
+    }
+  } catch (error) {
+    console.log("Error at get chat status");
+  }
+};
+
 export {
   getAllconversation,
   sendMessages,
@@ -525,7 +525,6 @@ export {
   getBookingdetails,
   formatedMessages,
   updateConversation,
-  updateMessages,
   getConversations,
   filterMessages,
   getAllListings,
@@ -539,4 +538,5 @@ export {
   formattedNewMessage,
   createTicket,
   updateTask,
+  getStatusByChatId,
 };

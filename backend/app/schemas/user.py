@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from enum import Enum
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class Role(str, Enum):
@@ -14,6 +14,13 @@ class UserCreate(BaseModel):
     password: str
     role: Optional[Role] = Role.user.value
 
+class ChatAIStatusModel(BaseModel):
+    id: int
+    chat_id: int
+    ai_enabled: bool
+    class Config:
+        from_attributes = True  
+
 class UserProfile(BaseModel):
     id: int
     firstname: str
@@ -22,6 +29,7 @@ class UserProfile(BaseModel):
     role: Role
     created_at: datetime
     ai_enable: Optional[bool]
+    chat_list: List[ChatAIStatusModel] 
 
     class Config:
         from_attributes = True    

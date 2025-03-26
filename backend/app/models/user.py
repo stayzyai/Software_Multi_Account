@@ -52,7 +52,6 @@ class Subscription(Base):
     created_at = Column(DateTime, server_default=func.now())
     payment_at = Column(DateTime, nullable=False)
     expire_at = Column(DateTime, nullable=False)
-    ai_enable = Column(Boolean, default=False, nullable=False)
 
     def __repr__(self):
         return (
@@ -75,3 +74,11 @@ class Upsell(Base):
     upsell_message = Column(String)
     enabled = Column(Boolean, default=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
+
+class ChatAIStatus(Base):
+    __tablename__ = "chat_ai_status"
+
+    id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+    chat_id = Column(Integer, unique=True, index=True, nullable=False)
+    ai_enabled = Column(Boolean, default=False)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=False)

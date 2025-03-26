@@ -5,6 +5,9 @@ Given a user’s message describing a problem, generate a JSON response with the
 ### **Input Data**
 - **Users Data:** {{users}}
 - **User Message:** 📩 "{{message}}"
+- **Existing Tasks:** {{tasks}}
+- **Reservation ID:** "{{reservationId}}"
+
 
 ### **Required Fields in Output**
 1. **title** – A short and clear title summarizing the issue.
@@ -19,6 +22,17 @@ Given a user’s message describing a problem, generate a JSON response with the
     assigneeName: This must be the full name of the assigned user (assigneeUserId).
     subject: A concise and relevant subject line.
     body: A professionally written email including task details.
+5. **reservationId** – Must always be populated with the passed \`{{reservationId}}\`.
+
+### **Duplicate Task Handling**
+- Before creating a new task, **check if a task with the same \`reservationId\` exists** in \`{{tasks}}\`. 
+- If a task already exists for that \`reservationId\`, do **not** create a new task. Instead, return:
+  \`{"message": "Sorry to hear this. We've already informed the team about this issue. Please be patient, and it will be resolved soon."} \`
+  \` {"message": "We understand your concern. This issue has already been reported, and our team is working on it. Thank you for your patience!"} \`
+  \` {"message": "This issue has been logged, and the team is already working on a resolution. Please rest assured it will be addressed soon."} \`
+  \` {"message": "Thank you for bringing this to our attention. Our team has already been notified, and we're actively working to resolve the issue."}\`
+
+- If no existing task is found, proceed with generating a new structured task.
 
 ### **Instructions**
 - Return **only** a valid JSON object. Do **not** include additional text, explanations, markdown formatting, or code blocks.

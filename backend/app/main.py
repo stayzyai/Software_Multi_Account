@@ -6,7 +6,6 @@ import logging
 from app.common.chat_gpt_assistant import train_chat_gpt
 from apscheduler.schedulers.background import BackgroundScheduler
 from app.websocket import sio_app
-from app.routers.stats import router as stats_router
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -24,7 +23,6 @@ app.add_middleware(
 )
 
 app.include_router(main_router)
-app.include_router(stats_router)
 
 def start_scheduler():
     scheduler = BackgroundScheduler()

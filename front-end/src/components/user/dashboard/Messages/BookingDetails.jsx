@@ -1,10 +1,11 @@
 import CheckInOutDropdown from "./CheckInOutDropdown";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import CheckoutModal from "../../../common/modals/CheckoutModal";
 import { checkout, updateAIStatus } from "../../../../helpers/payment";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "sonner";
 import { setUser } from "../../../../store/userSlice";
+
 const BookingDetails = ({
   timeDetails,
   bookingDetails,
@@ -14,7 +15,12 @@ const BookingDetails = ({
   const dispatch = useDispatch();
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState("");
-  const ai_enabled = useSelector((state) => state.user.ai_enable);
+  const chatAIenabledList = useSelector((state) => state.user.chat_list);
+
+  const isChatInList = useCallback((chat_list, chatId) => {
+    return chat_list.some((chat) => chat.chat_id === chatId);
+  }, []);
+
   const Switch = ({ checked, handleSwitch }) => (
     <label className="inline-flex items-center cursor-pointer">
       <input
@@ -28,25 +34,24 @@ const BookingDetails = ({
   );
 
   const handleCheckOut = async () => {
-    if (!ai_enabled) {
-      const response = await updateAIStatus();
-      if (response?.ai_enable === false) {
-        const response = await checkout();
-        if (response?.detail?.checkout_url) {
-          setCheckoutUrl(response.detail.checkout_url);
-          setIsCheckoutModalOpen(true);
-        }
+    const chatId = chatInfo[0]["id"];
+    const response = await updateAIStatus(chatId);
+    const { firstname, lastname, email, role, ai_enable, chat_list } = response;
+    dispatch(
+      setUser({ firstname, lastname, email, role, ai_enable, chat_list })
+    );
+    const chatExists = isChatInList(chat_list, chatId);
+    if (ai_enable) {
+      if (!chatExists) {
+        toast.info("Disabled AI for this chat");
       } else {
-        const { firstname, lastname, email, role, ai_enable } = response;
-        dispatch(setUser({ firstname, lastname, email, role, ai_enable }));
         toast.success("Enabled AI for this chat");
       }
     } else {
-      const response = await updateAIStatus();
-      if (response?.ai_enable === false) {
-        const { firstname, lastname, email, role, ai_enable } = response;
-        dispatch(setUser({ firstname, lastname, email, role, ai_enable }));
-        toast.info("Disabled AI for this chat");
+      const checkoutResponse = await checkout(chatId);
+      if (checkoutResponse?.detail?.checkout_url) {
+        setCheckoutUrl(checkoutResponse.detail.checkout_url);
+        setIsCheckoutModalOpen(true);
       }
     }
   };
@@ -102,7 +107,10 @@ const BookingDetails = ({
           <div key={index} className="ml-6">
             <p className="text-gray-500 mb-3">{item.label}</p>
             {item.label === "AI" ? (
-              <Switch checked={ai_enabled} handleSwitch={handleCheckOut} />
+              <Switch
+                checked={isChatInList(chatAIenabledList, chatInfo[0]["id"])}
+                handleSwitch={handleCheckOut}
+              />
             ) : (
               <p>{item.value}</p>
             )}

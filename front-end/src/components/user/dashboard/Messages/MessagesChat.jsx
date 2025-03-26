@@ -7,7 +7,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { toast } from "sonner";
 import ButtonLoader from "./ButtonLoader"
 import DetectIssue from "./DetectIssue"
-import { setIssueStatus } from "../../../../store/taskSlice"
+import { setIssueStatus, setTasks } from "../../../../store/taskSlice"
+import { getHostawayTask } from "../../../../helpers/TaskHelper"
 
 const ChatMessages = ({ messages, handleSendMessage, setInput, input, setOpenBooking,
   openBooking, setOpenSidebarMessage, openSidebarMessage, chatInfo, setMessage, messageLoader}) => {
@@ -22,13 +23,20 @@ const chat_id = chatInfo?.length > 0 && chatInfo[0]["id"]
 const dispatch = useDispatch();
 
 const listings = useSelector((state)=>state.listings.listings)
+const tasks = useSelector((state)=>state.tasks.tasks)
 
 const amenityList = async ()=>{
   const data = await getAmenity()
   setAmenity(data)
 }
+const fetchedTask = async ()=>{
+  const response = await getHostawayTask()
+  if (!tasks || tasks.length === 0) {
+    dispatch(setTasks(response));
+  }
+}
 
-  useEffect(()=> {
+useEffect(()=> {
     const getAllMessages = async () => {
       setLoading(true)
       const response = await getAllconversation(chat_id)
@@ -44,9 +52,15 @@ const amenityList = async ()=>{
 
   useEffect(() => {
     amenityList()
+    fetchedTask()
   }, []);
 
   const handleAISuggestion = async (messages, chatInfo) => {
+    // const isIncoming = chatInfo[0]["isIncoming"]
+    // if (isIncoming !== 1) {
+    //   toast.info("Since the last message was not from the guest, no response will be generated.");
+    //   return
+    // };
     setSuggestion(true)
     const listingMapId = chatInfo[0]["listingMapId"]
     const reservationId = chatInfo[0]["reservationId"]
@@ -54,7 +68,7 @@ const amenityList = async ()=>{
     const listing = listings?.find((item)=>item.id === listingMapId)
     const {systemPrompt, lastUserMessage } =  formatedMessages(messages, listing, amenity)
     const payload = { prompt: systemPrompt, messsages: lastUserMessage}
-    const {response, taskId} = await openAISuggestion(payload, listingMapId, reservationId, users, setIssueStatus, dispatch)
+    const {response, taskId} = await openAISuggestion(payload, listingMapId, reservationId, users, setIssueStatus,tasks, dispatch)
     setIsIdTask(taskId)
     setSuggestion(false)
     if(response){

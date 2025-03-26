@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from app.schemas.user import UserUpdate, ChangePasswordRequest, UserProfile, ChatRequest
-from app.models.user import User, ChromeExtensionToken, Subscription
+from app.models.user import User, ChromeExtensionToken, Subscription, ChatAIStatus
 from app.database.db import get_db
 from app.common.auth import verify_password, get_password_hash, decode_access_token, get_token, get_hostaway_key
 from app.common.user_query import update_user_details
@@ -21,7 +21,7 @@ import os
 import httpx
 from app.common.chat_query import haversine_distance
 from datetime import datetime
-
+import threading
 load_dotenv()
 
 router = APIRouter(prefix="/user", tags=["users"])
@@ -138,9 +138,10 @@ def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_tok
         if not db_user:
             raise HTTPException(status_code=404, detail={"message": "User not found"})
         subscribed_user = db.query(Subscription).filter(Subscription.user_id == user_id).first()
-        is_premium_member = subscribed_user.ai_enable if subscribed_user else False
+        is_premium_member = subscribed_user.is_active if subscribed_user else False
+        ai_enable_list = db.query(ChatAIStatus).filter(ChatAIStatus.user_id == user_id, ChatAIStatus.ai_enabled == True).all()
         return UserProfile(id=db_user.id, firstname=db_user.firstname, lastname=db_user.lastname, email=db_user.email, role=db_user.role,
-            created_at=db_user.created_at, ai_enable=is_premium_member)
+            created_at=db_user.created_at, ai_enable=is_premium_member, chat_list=ai_enable_list)
 
     except HTTPException as exc:
         logging.error(f"An error occurred while changing the password: {exc}")
@@ -174,7 +175,10 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                 "prompt": request.messsages,
                 "completion": gpt_response
                 }
-        store_chat(interaction_data)
+        # Run store_chat in a separate thread
+        threading.Thread(target=store_chat, args=(interaction_data,), daemon=True).start()
+        
+        # Return response immediately
         return {"model": model_id, "answer": gpt_response}
 
     except requests.exceptions.RequestException as req_err:
@@ -274,7 +278,7 @@ async def get_nearby_places(request: Request, token: str = Depends(get_token), d
 
 
 @router.get("/update-ai", response_model=UserProfile)
-def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_token)):
+def get_user_profile(chatId: int = Query(..., description="Chat Id is for auto mode"), db: Session = Depends(get_db), token: str = Depends(get_token)):
     try:
         decode_token = decode_access_token(token)
         user_id = decode_token['sub']
@@ -282,20 +286,35 @@ def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_tok
         if not db_user:
             raise HTTPException(status_code=404, detail={"message": "User not found"})
         subscription = db.query(Subscription).filter(Subscription.user_id == user_id).first()
+        status_by_chatId = db.query(ChatAIStatus).filter(ChatAIStatus.chat_id == chatId).first()
 
         is_premium_member = False
         if subscription:
             if subscription.is_active and subscription.expire_at > datetime.utcnow():
-                # Toggle ai_enable (if True -> False, if False -> True)
-                subscription.ai_enable = not subscription.ai_enable
-                is_premium_member = subscription.ai_enable
+                is_premium_member = subscription.is_active
+                if status_by_chatId:
+                    status_by_chatId.ai_enabled = not status_by_chatId.ai_enabled
+                    db.commit()
+                    db.refresh(status_by_chatId)
+                else:
+                    new_chat = ChatAIStatus(chat_id=chatId, ai_enabled=True, user_id=user_id)
+                    db.add(new_chat)
+                    db.commit()
+                    db.refresh(new_chat)
             else:
                 # If subscription expired, set ai_enable to False
-                subscription.ai_enable = False
                 subscription.is_active = False
                 is_premium_member = False
+                if status_by_chatId:
+                    status_by_chatId.ai_enabled = False 
+                    db.commit()
+                    db.refresh(status_by_chatId)
             db.commit()
             db.refresh(subscription)
+        if not subscription:
+            db.query(ChatAIStatus).filter(ChatAIStatus.user_id == user_id).update({"ai_enabled": False})
+            db.commit()
+        active_ai_chats = db.query(ChatAIStatus).filter(ChatAIStatus.user_id == user_id, ChatAIStatus.ai_enabled == True).all()
 
         return UserProfile(
             id=db_user.id,
@@ -304,8 +323,8 @@ def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_tok
             email=db_user.email,
             role=db_user.role,
             created_at=db_user.created_at,
-            ai_enable=is_premium_member
-        )
+            ai_enable=is_premium_member,
+            chat_list=active_ai_chats)
 
     except Exception as e:
         raise HTTPException(status_code=500, detail={"message": str(e)})
