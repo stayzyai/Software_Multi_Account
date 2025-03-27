@@ -80,7 +80,7 @@ const getCompletedTasks = (tasks, listings, users) => {
         id: task.id,
         title: task?.title,
         address: listing?.address || "No address available",
-        urgency: task?.priority ? task.priority : "Normal",
+        urgency: task?.priority ? (task.priority === 1 ?"Urgent" :"Normal") : "Normal",
         assigned: user ? user.firstName : "Unassigned",
         date: formatDate(task.canStartFrom?.split(" ")[0]),
       };
