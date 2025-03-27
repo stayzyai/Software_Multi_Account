@@ -7,6 +7,7 @@ import {
   getHostawayUser,
 } from "../../../../helpers/TaskHelper";
 import { useNavigate, useParams } from "react-router-dom";
+import IssueLoader from "./IssueLoader";
 
 const BookingIssue = ({ chatInfo }) => {
   const [CreateTask, setCreateTask] = useState(false);
@@ -66,7 +67,7 @@ const BookingIssue = ({ chatInfo }) => {
               })}
             </>
           ) : (
-            <div className="flex justify-center">loading...</div>
+            <IssueLoader/>
           )}
           <button
             onClick={() => setCreateTask(true)}

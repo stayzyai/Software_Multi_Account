@@ -100,7 +100,7 @@ const getNonCompletedTasks = (tasks, listings, users) => {
         id: task.id,
         title: task?.title,
         address: listing?.address || "No address available",
-        urgency: task?.priority ? task.priority : "Normal",
+        urgency: task?.priority ? (task.priority === 1 ?"Urgent" :"Normal") : "Normal",
         assigned: user ? user.firstName : "Unassigned",
         date: formatDate(task.canStartFrom?.split(" ")[0]),
       };
@@ -205,7 +205,8 @@ const formattedIssues = (tasks, users, chatInfo) => {
       reservationId: task.reservationId,
       assigned:  task.assigneeUserId  ? task.assigneeUserId : "",
       description: task.description,
-      listingMapId: listingMapId
+      listingMapId: listingMapId,
+      priority: task.priority,
     };
   });
 };

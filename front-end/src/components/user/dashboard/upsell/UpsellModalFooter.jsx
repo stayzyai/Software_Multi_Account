@@ -94,7 +94,7 @@ const ModalFooter = ({
   };
 
   return (
-    <div className="flex justify-end gap-2 p-4 border-t">
+    <div className="w-[90%] ml-10 md:w-full md:ml-0 flex justify-end gap-2 p-4 border-t">
       {isEditMode && (
         <button
           onClick={handleDelete}

@@ -46,7 +46,7 @@ const UpsellMessages = ({
           Variables
         </button>
         {variablesDropdownOpen && (
-          <div className="absolute md:left-1/3 left-24 top-[43%] z-20 min-w-72 h-80 overflow-y-scroll scrollbar-hide bg-white border rounded-md shadow-lg">
+          <div className="absolute md:left-1/3 left-16 top-[43%] z-20 min-w-72 h-80 overflow-y-scroll scrollbar-hide bg-white border rounded-md shadow-lg">
             <ul className="py-1">
               {VARIABLES?.map((variable) => (
                 <li

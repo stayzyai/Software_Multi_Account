@@ -80,7 +80,7 @@ const ListingDetails = ({
             activeListingSection={activeListingSection}
           />
         </div>
-        <div className="lg:ml-48 sm:ml-44 ml-36 w-full mb-6">
+        <div className="lg:ml-48 sm:ml-44 ml-20 w-full mb-6">
           {activeListingSection === "about" && (
             <ListingInfo aboutListing={aboutListing} />
           )}
