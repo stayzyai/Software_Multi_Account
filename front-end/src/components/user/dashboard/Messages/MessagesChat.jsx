@@ -80,7 +80,7 @@ useEffect(()=> {
   };  
 
 return (
-    <div className="w-full flex flex-col mb-6 h-full">
+    <div className="w-full flex flex-col mb-6 h-full" onClick={() => setOpenSidebarMessage(!openSidebarMessage)}>
       <div className="flex-1 overflow-y-auto p-6 scrollbar-hide">
       {!isLoading ? (
           messages?.length > 0 ? (

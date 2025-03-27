@@ -83,7 +83,7 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
   };
 
   return (
-    <div className="w-full px-10 mx-auto p-4 mt-8">
+    <div className="w-full px-1 md:px-10 mx-auto p-4 mt-8 overflow-hidden md:overflow-auto">
       <div className="mb-10">
         <div className="flex justify-between items-center mb-5">
           <h1 className="font-medium text-xl">FAQ</h1>
@@ -95,9 +95,9 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
               value={tempValues.faq}
               onChange={(e) => handleChange(e, "faq")}
               placeholder="Enter FAQ information"
-              className="w-full min-h-[200px] p-6 text-base bg-gray-100 rounded-3xl focus:outline-none resize-none"
+              className={`w-[88%] md:w-full min-h-[200px] p-6 text-base bg-gray-100 rounded-3xl focus:outline-none resize-none`}
             />
-            <div className="flex justify-end gap-4 p-4">
+            <div className="w-[90%] md:w-full ml-2 flex justify-end gap-4 p-4">
               <button disabled={loading.faq}
                 onClick={() => handleSave("faq")}
                 className="bg-[#2D8062] hover:bg-emerald-600 text-white px-6 py-2 rounded-[20px] font-normal text-xl border border-black"
@@ -113,7 +113,7 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
             </div>
           </div>
         ) : (
-          <div className="bg-gray-100 rounded-3xl p-6 min-h-[200px]">
+          <div className={` bg-gray-100 rounded-3xl p-6 min-h-[200px] ${editMode.nearby ? "w-[88%] md:w-full" :"w-[100%] md:w-full"}`}>
             <div className="w-full flex justify-end">
               {!editMode.faq && (
                 <button
@@ -145,9 +145,9 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
               value={tempValues.nearby}
               onChange={(e) => handleChange(e, "nearby")}
               placeholder="Enter nearby attractions information"
-              className="w-full min-h-[200px] p-6 text-base bg-gray-100 rounded-3xl focus:outline-none resize-none"
+              className={`w-[88%] md:w-full min-h-[200px] p-6 text-base bg-gray-100 rounded-3xl focus:outline-none resize-none}`}
             />
-            <div className="flex justify-end gap-4 p-4">
+            <div className="w-[90%] md:w-full ml-2 flex justify-end gap-4 p-4">
               <button disabled={loading.nearby}
                 onClick={() => handleSave("nearby")}
                 className="bg-[#2D8062] hover:bg-emerald-600 text-white px-6 py-2 rounded-[20px] font-normal text-xl border border-black"
@@ -163,7 +163,7 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
             </div>
           </div>
         ) : (
-          <div className="bg-gray-100 rounded-3xl p-6 min-h-[200px]">
+          <div className={`bg-gray-100 rounded-3xl p-6 min-h-[200px] ${editMode.faq ? "w-[88%] md:w-full" :"w-[100%] sm:w-[100%] md:w-full"}`}>
             <div className="w-full flex justify-end">
               {!editMode.nearby && (
                 <button

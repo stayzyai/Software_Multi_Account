@@ -69,7 +69,7 @@ const ListingNearbyDetails = ({ listingId, properties }) => {
 
   return (
     <div className="w-full md:pl-11 pr-5 pt-16">
-      <div className="flex flex-col">
+      <div className="flex flex-col ml-3 md:ml-0">
         <div
           className={`lg:flex justify-end w-full font-normal md:text-xl text-md pb-4 lg:pb-0 ${
             occupancy !== "Vacant" ? "text-[#2D8062]" : "text-red-600"

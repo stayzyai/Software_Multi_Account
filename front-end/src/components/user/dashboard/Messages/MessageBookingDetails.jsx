@@ -60,7 +60,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
 
   return (
     <div
-      className={`transition-all duration-300 max-h-screen xl:w-[440px] 2xl:w-[440px] w-[340px] min-h-full overflow-y-auto scrollbar-hide font-inter ${
+      className={`transition-all duration-300 max-h-screen xl:w-[440px] 2xl:w-[440px] w-[320px] md:w-[340px] min-h-full overflow-y-auto scrollbar-hide font-inter ${
         openBooking
           ? "z-50 fixed xl:static  top-0 right-0 bg-[#FCFDFC] border border-gray-200 rounded xl:rounded-none pb-4"
           : "hidden xl:block border-l border-gray-300 "
@@ -68,13 +68,13 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
     >
       <button
         onClick={() => setOpenBooking(!openBooking)}
-        className="absolute top-1/2 bg-gray-100 p-1 py-2 rounded-lg xl:hidden"
+        className="absolute top-1/2 bg-gray-100 p-1 py-2 rounded-lg  md:ml-0 xl:hidden"
       >
         <FiChevronsRight size={24} />
       </button>
       <div className="pt-6 pb-3">
         <div className="pl-6">
-          <div className="flex gap-8 mb-10 text-lg">
+          <div className="flex gap-8 mb-10 text-lg ml-5 md:ml-0">
             <p
               onClick={() => setActiveSession("booking")}
               className={`cursor-pointer ${

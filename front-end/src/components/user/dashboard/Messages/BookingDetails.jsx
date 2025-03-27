@@ -61,7 +61,7 @@ const BookingDetails = ({
       <div className="pl-6">
         {timeDetails?.map((item, index) => {
           return (
-            <div key={index} className="text-lg">
+            <div key={index} className="text-lg ml-5 md:ml-0">
               <p className="mb-4 text-gray-500">Check in</p>
               <div className="flex gap-16 xl:gap-[60px] 2xl:gap-[70px] mb-8">
                 <div className="flex gap-1 items-center text-nowrap">
@@ -102,7 +102,7 @@ const BookingDetails = ({
           );
         })}
       </div>
-      <div className="pt-10 grid grid-cols-2 text-nowrap xl:gap-6 gap-12 text-lg bg-[#FCFDFC]">
+      <div className="pt-10 grid grid-cols-2 text-nowrap xl:gap-6 gap-12 ml-5 md:ml-0 text-lg bg-[#FCFDFC]">
         {bookingDetails?.map((item, index) => (
           <div key={index} className="ml-6">
             <p className="text-gray-500 mb-3">{item.label}</p>

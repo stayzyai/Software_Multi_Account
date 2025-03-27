@@ -106,10 +106,10 @@ const Messages = ({ handleClickMessages, title }) => {
       {!loading ? (
         <div className="flex flex-col space-y-6 py-4">
           <div className="overflow-hidden bg-white rounded-[14px] shadow-md mx-1 border-[0.2px] border-gray-400">
-            <div className="flex justify-between p-5">
+            <div className="flex flex-col gap-2 justify-between md:flex-row md:gap-0 p-5">
               <h2 className="text-lg font-semibold">Latest Messages</h2>
               <div className="flex gap-6 mr-4">
-                <div className="flex gap-2 text-[14px] cursor-pointer">
+                <div className="flex gap-4 text-[14px] cursor-pointer">
                   {["Date", "Listing", "Task"].map((label, index) => (
                     <Dropdown
                       key={index}

@@ -21,11 +21,17 @@ const AddTask = ({
     { label: "Confirmed", value: "confirmed" },
   ];
 
+  const urgencyOptions = [
+    { label: "Urgent", value: 1 },
+    { label: "Normal", value: 2 },
+  ]
+
   const users = useSelector((state) => state.hostawayUser.users);
   const [taskName, setTaskName] = useState("");
   const [taskDescription, setTaskDescription] = useState("");
   const [assignee, setAssignee] = useState("");
   const [status, setStatus] = useState("");
+  const [urgency, setUrgency] = useState("");
   const [loading, setLoading] = useState(false);
   const dispatch = useDispatch()
 
@@ -42,6 +48,8 @@ const AddTask = ({
       setTaskDescription(editedData.description) || "";
       setAssignee(editedData.assigned || "");
       setStatus(editedData.status || "");
+      setUrgency(editedData.priority || "");
+      console.log("editedData", editedData);
     }
   }, [editedData]);
 
@@ -56,6 +64,7 @@ const AddTask = ({
       description: taskDescription,
       assigneeUserId: Number(assignee),
       status: status,
+      priority: urgency,
       reservationId: chatInfo[0]?.reservationId || null,
       listingMapId: chatInfo[0]?.listingMapId || null,
       canStartFrom: new Date().toISOString().slice(0, 19).replace("T", " "),
@@ -136,6 +145,23 @@ const AddTask = ({
         >
           <option value="">Select</option>
           {statusOptions.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Urgency
+        </label>
+        <select
+          value={urgency}
+          onChange={(e) => setUrgency(parseInt(e.target.value))}
+          className="w-full p-1 border border-gray-300 rounded-md bg-white"
+        >
+          <option value="">Select</option>
+          {urgencyOptions.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
