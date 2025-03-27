@@ -66,7 +66,7 @@ const TaskDetail = ({ setOpenTaskChat, openTaskChat}) => {
         </li>
         <li className="flex items-center gap-2">
           <span>Urgency: </span>
-          <p className={`rounded-[20px] p-1 px-2 text-sm ${task?.priority !== "Normal" ? "text-[#E65F2B] bg-[#e65f2b2e]" : "text-yellow-700 bg-yellow-100"}`}>{task?.priority}</p>
+          <p className={`rounded-[20px] p-1 px-2 text-sm ${(task?.priority !== "Normal" && task?.priority !== 2)  ? "text-[#E65F2B] bg-[#e65f2b2e]" : "text-yellow-700 bg-yellow-100"}`}>{task?.priority === 1 ? "Urgent" : task?.priority === 2 ? "Normal":task?.priority}</p>
         </li>
         <li className="flex items-center gap-2">
           <span>Property: </span> {task?.listingName}
