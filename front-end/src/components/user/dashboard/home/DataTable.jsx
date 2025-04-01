@@ -1,5 +1,6 @@
 import { ChevronDown } from "lucide-react";
 import StatusBadge from "./StatusBadge";
+import { useNavigate } from "react-router-dom";
 
 const DataTable = ({
   title,
@@ -10,6 +11,15 @@ const DataTable = ({
   badgeColumn,
   className = "w-full",
 }) => {
+  const navigate = useNavigate();
+
+  const handleClick = (id, title) =>{
+    if(title === "Listings") {
+      navigate(`/user/listing/${id}`);
+    } else {
+      navigate(`/user/task/${id}`);
+    }
+  }
   return (
     <div
       className={`bg-white flex flex-col border-[0.2px] border-gray-400 shadow-xl rounded-[14px] ${className} p-4 pt-5`}
@@ -45,7 +55,7 @@ const DataTable = ({
           </thead>
           <tbody className={`text-[13px]`}>
             {data?.map((row, index) => (
-              <tr key={index} className="hover:bg-gray-50">
+              <tr key={index} className="hover:bg-gray-50 cursor-pointer" onClick={()=>handleClick(row?.id, title)}>
                 {columns?.map((column) => (
                   <td key={column.key} className={`py-2 ${column.key == "status" ?"text-center":"text-left"} ${column.key == "property" && "text-wrap lg:text-nowrap"}`}>
                     {column.key === badgeColumn ? (

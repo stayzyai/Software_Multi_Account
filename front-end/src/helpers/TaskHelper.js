@@ -59,7 +59,7 @@ const getAllTask = (tasks, listings, users) => {
     return {
       id: task.id,
       title: task?.title,
-      address: listing.address,
+      address: listing?.address,
       urgency: task?.priority ? task.priority : "Normal",
       assigned: user ? user.firstName : "Unassigned",
       date: formatDate(task.canStartFrom?.split(" ")[0]),
@@ -174,7 +174,9 @@ const formatedTaskDetails = async (
     listingName: listing ? listing.name : "Unknown Listing",
     listingAddress: listing.address,
     reservationId: task.reservationId,
-    assigned: user ? user?.firstName : "Unassigned",
+    description: task.description,
+    assignedName: user ? user.firstName : "Unassigned",
+    assigned: task && task.assigneeUserId ? task.assigneeUserId : user && user.firstName,
     chatId: conversation?.id,
   };
 };
@@ -184,7 +186,7 @@ const TaskOverview = (tasks, hostawayUsers) => {
     const user = hostawayUsers.find((user) => user.id == task?.assigneeUserId);
 
     return {
-      id: tasks?.id,
+      id: task?.id,
       name: task?.title,
       status: task?.status,
       staff: user ? user?.firstName : "Unassigned",
@@ -210,6 +212,10 @@ const formattedIssues = (tasks, users, chatInfo) => {
     };
   });
 };
+
+const formattedTaskIssue = (tasks, users) =>{
+
+}
 
 
 export {

@@ -34,7 +34,7 @@ const TaskInformation = ({ taskInfo, taskList }) => {
             <div
               key={index}
               onClick={() => navigate(`/user/task/${item?.id}`)}
-              className={`flex items-center space-x-2 cursor-pointer mt-[14px] w-full xl:px-3 px-3 h-12 border-b hover:bg-gray-50 ${taskInfo[0]["id"] == item.id ? "bg-green-50 hover:bg-green-50" : "bg-white" }`}
+              className={`flex items-center space-x-2 cursor-pointer mt-[14px] w-full xl:px-3 px-3 h-12 border-b hover:bg-gray-50 ${taskInfo[0]["id"] == item.id ? "bg-green-200 hover:bg-green-200" : "bg-white" }`}
             >
               <div className="flex justify-between items-center w-full text-[#292D32] text-nowrap text-base">
                 <div>

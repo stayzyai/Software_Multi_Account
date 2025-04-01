@@ -57,9 +57,9 @@ const CommonTable = ({ properties, columns }) => {
               <tr
                 key={index}
                 className="md:py-5 p-1 border-b-[1px] border-[#D1D1D1] cursor-pointer hover:bg-gray-50 active:bg-gray-100"
+                onClick={() => handleClick(property.property, property.id)}
               >
                 <td
-                  onClick={() => handleClick(property.property, property.id)}
                   className="flex items-center space-x-2 md:py-2 p-1 md:w-54 w-[220px] md:px-6 px-8"
                 >
                   {property.image ? (

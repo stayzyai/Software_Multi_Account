@@ -12,7 +12,9 @@ const AddTask = ({
   editedData = null,
   setSelectedTask,
   chatInfo,
+  tasks,
   fetchedTasks,
+  setOpenEdit
 }) => {
   const statusOptions = [
     { label: "In Progress", value: "inProgress" },
@@ -44,12 +46,11 @@ const AddTask = ({
 
   useEffect(() => {
     if (editedData) {
-      setTaskName(editedData.title || "");
-      setTaskDescription(editedData.description) || "";
-      setAssignee(editedData.assigned || "");
-      setStatus(editedData.status || "");
-      setUrgency(editedData.priority || "");
-      console.log("editedData", editedData);
+      setTaskName(editedData?.title || "");
+      setTaskDescription(editedData?.description) || "";
+      setAssignee(editedData?.assigned || "");
+      setStatus(editedData?.status || "");
+      setUrgency(editedData?.priority || "");
     }
   }, [editedData]);
 
@@ -65,8 +66,8 @@ const AddTask = ({
       assigneeUserId: Number(assignee),
       status: status,
       priority: urgency,
-      reservationId: chatInfo[0]?.reservationId || null,
-      listingMapId: chatInfo[0]?.listingMapId || null,
+      reservationId: chatInfo ? (chatInfo[0]?.reservationId || null) :editedData && editedData?.reservationId,
+      listingMapId: chatInfo ? (chatInfo[0]?.listingMapId || null) :editedData && editedData?.listingMapId,
       canStartFrom: new Date().toISOString().slice(0, 19).replace("T", " "),
     };
     let response;
@@ -126,7 +127,7 @@ const AddTask = ({
           onChange={(e) => setAssignee(e.target.value)}
           className="w-full p-1 border border-gray-300 rounded-md bg-white"
         >
-          <option value="Unassigned">Unassigned</option>
+          <option value="">Unassigned</option>
           {users?.map((user) => (
             <option key={user.id} value={user.id}>
               {user.firstName}
@@ -172,6 +173,7 @@ const AddTask = ({
         <button
           onClick={() => {
             setCreateTask(false);
+            setOpenEdit(false);
             setSelectedTask(null);
           }}
           className="w-24 p-1 border border-gray-300 bg-red-700 hover:bg-red-600 text-white rounded-md"

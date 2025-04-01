@@ -78,8 +78,8 @@ const Tasks = ({ columns, tasks }) => {
           <tbody>
             {filteredTasks.length > 0 ? (
               filteredTasks.map((task, index) => (
-                <tr key={index} className="md:py-5 lg:p-1 border-b-[1px] border-[#D1D1D1] cursor-pointer text-sm hover:bg-gray-50 active:bg-gray-100">
-                  <td onClick={() => handleClick(task.id)} className="text-center px-2 w-1/5">
+                <tr key={index} className="md:py-5 lg:p-1 border-b-[1px] border-[#D1D1D1] cursor-pointer text-sm hover:bg-gray-50 active:bg-gray-100" onClick={() => handleClick(task.id)}>
+                  <td className="text-center px-2 w-1/5">
                     <span>{task?.title}</span>
                   </td>
                   <td className="text-center px-3 w-1/5 ">{task?.address}</td>
