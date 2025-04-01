@@ -105,7 +105,12 @@ def store_chat(interaction_data):
     Store chat interaction data in a JSONL file and optionally evaluate the response.
     
     Args:
-        interaction_data (dict): Dictionary containing prompt, completion and evaluation flag
+        interaction_data (dict): Dictionary containing:
+            - prompt: The user's message
+            - completion: The assistant's response
+            - received_timestamp: When the user message was received (optional)
+            - response_timestamp: When the response was generated (optional)
+            - evaluate: Whether to evaluate the response (optional)
     """
     logger.debug(f"Storing chat interaction in: {CHAT_DATA_FILE}")
     logger.debug(f"Interaction data keys: {interaction_data.keys()}")
@@ -117,18 +122,26 @@ def store_chat(interaction_data):
             logger.debug(f"Creating data directory: {data_dir}")
             os.makedirs(data_dir, exist_ok=True)
             
-        # Get current time for response timestamp
+        # Get current time as default timestamp
         current_time = datetime.now().isoformat()
+        
+        # Get timestamps from interaction_data or use current time as fallback
+        received_timestamp = interaction_data.get("received_timestamp", current_time)
+        response_timestamp = interaction_data.get("response_timestamp", current_time)
+        
+        # Log the timestamps for debugging
+        logger.debug(f"Message received at: {received_timestamp}")
+        logger.debug(f"Response generated at: {response_timestamp}")
         
         with open(CHAT_DATA_FILE, "a") as file:
             chat_format = {
                 "messages": [
-                    {"role": "user", "content": interaction_data["prompt"], "timestamp": interaction_data.get("received_timestamp", current_time)},
-                    {"role": "assistant", "content": interaction_data["completion"], "timestamp": current_time}
+                    {"role": "user", "content": interaction_data["prompt"], "timestamp": received_timestamp},
+                    {"role": "assistant", "content": interaction_data["completion"], "timestamp": response_timestamp}
                 ],
                 "timestamp": current_time,
-                "received_timestamp": interaction_data.get("received_timestamp", current_time),
-                "response_timestamp": current_time
+                "received_timestamp": received_timestamp,
+                "response_timestamp": response_timestamp
             }
             logger.debug(f"Formatted chat data for storage with {len(chat_format['messages'])} messages")
             json.dump(chat_format, file)
@@ -546,12 +559,12 @@ def get_conversation_time_stats(days=30):
         days (int): Number of days to include in the calculation
         
     Returns:
-        dict: Statistics about conversation response time with realistic default values if needed
+        dict: Statistics about conversation response time based on actual data
     """
     try:
         if not os.path.exists(CHAT_DATA_FILE):
             logger.warning(f"Chat data file does not exist: {CHAT_DATA_FILE}")
-            return {"average_response_time": 30.0, "is_increase": False, "percentage_change": 0, "total_conversations": 0}
+            return {"average_response_time": 0, "is_increase": False, "percentage_change": 0, "total_conversations": 0}
         
         # Count total conversations
         total_conversations = sum(1 for _ in open(CHAT_DATA_FILE))
@@ -700,15 +713,13 @@ def get_conversation_time_stats(days=30):
         logger.info(f"Found {len(current_period_times)} valid conversations with timestamps in current period")
         logger.info(f"Found {len(previous_period_times)} valid conversations with timestamps in previous period")
         
-        # If no valid timestamps were found, provide realistic defaults
+        # If no valid timestamps were found, return zeros instead of default values
         if not found_timestamps or not current_period_times:
-            logger.warning("No usable timestamps found in conversations. Using default values.")
-            # Provide reasonable defaults for a chat system
-            # Average response times typically range from 15-60 seconds
+            logger.warning("No usable timestamps found in conversations. Using zero values.")
             return {
-                "average_response_time": 23.5,
-                "is_increase": True,
-                "percentage_change": 5.2,
+                "average_response_time": 0,
+                "is_increase": False,
+                "percentage_change": 0,
                 "total_conversations": total_conversations
             }
         
@@ -733,7 +744,7 @@ def get_conversation_time_stats(days=30):
         logger.info(f"Calculated average response time: {average_response_time:.2f} seconds from {len(current_period_times)} messages")
         
         return {
-            "average_response_time": round(average_response_time, 2) or 23.5,  # Fallback if zero
+            "average_response_time": round(average_response_time, 2),  # No fallback value
             "is_increase": is_increase,
             "percentage_change": round(percentage_change, 1),
             "total_conversations": len(current_period_times) or total_conversations
@@ -741,5 +752,5 @@ def get_conversation_time_stats(days=30):
     except Exception as e:
         logger.error(f"Error calculating conversation time stats: {str(e)}")
         logger.debug(f"Calculation exception traceback: {traceback.format_exc()}")
-        # Always return a useful default value
-        return {"average_response_time": 23.5, "is_increase": True, "percentage_change": 5.2, "total_conversations": 0}
+        # Return zeros instead of default values
+        return {"average_response_time": 0, "is_increase": False, "percentage_change": 0, "total_conversations": 0}

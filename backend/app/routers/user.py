@@ -165,6 +165,10 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
         token_record = True
     if token_record is None:
         raise HTTPException(status_code=404, detail="extension key not found")
+    
+    # Record the time when the message was received
+    received_timestamp = datetime.now().isoformat()
+    
     model_id = get_latest_model_id()
     prompt = request.prompt
     if request.messsages is None:
@@ -173,9 +177,15 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
     if gpt_response is None:
         raise HTTPException(status_code=400, detail="Some error occurred. Please try again.")
     logging.info(f"chat gpt response{gpt_response}")
+    
+    # Record the time when the response was generated
+    response_timestamp = datetime.now().isoformat()
+    
     interaction_data = {
             "prompt": request.messsages,
-            "completion": gpt_response
+            "completion": gpt_response,
+            "received_timestamp": received_timestamp,
+            "response_timestamp": response_timestamp
             }
     store_chat(interaction_data)
     
