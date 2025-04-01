@@ -51,9 +51,14 @@ const amenityList = async ()=>{
     const listingMapId = chatInfo[0]["listingMapId"]
     const reservationId = chatInfo[0]["reservationId"]
     const chatId = chatInfo[0]["id"]
+    const guestName = chatInfo[0]["recipientName"] || null
     const listing = listings?.find((item)=>item.id === listingMapId)
     const {systemPrompt, lastUserMessage } =  formatedMessages(messages, listing, amenity)
-    const payload = { prompt: systemPrompt, messsages: lastUserMessage}
+    const payload = { 
+      prompt: systemPrompt, 
+      messsages: lastUserMessage,
+      username: guestName
+    }
     const {response, taskId} = await openAISuggestion(payload, listingMapId, reservationId, users, setIssueStatus, dispatch)
     setIsIdTask(taskId)
     setSuggestion(false)

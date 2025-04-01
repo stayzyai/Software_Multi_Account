@@ -22,6 +22,13 @@ export const Overview = () => {
     percentage_change: 0,
   });
   
+  const [conversationTime, setConversationTime] = useState({
+    average_response_time: 0,
+    is_increase: false,
+    percentage_change: 0,
+    total_conversations: 0,
+  });
+  
   const baseURL = import.meta.env.VITE_API_HOST;
   
   useEffect(() => {
@@ -46,6 +53,17 @@ export const Overview = () => {
           total_messages: messageResponse.data.total_messages,
           is_increase: true,
           percentage_change: 0,
+        });
+        
+        // Fetch conversation time data
+        console.log("Fetching conversation time data");
+        const timeResponse = await axios.get(`${baseURL}/stats/conversation-time`);
+        console.log("Conversation time data:", timeResponse.data);
+        setConversationTime({
+          average_response_time: timeResponse.data.average_response_time || 0,
+          is_increase: timeResponse.data.is_increase || false,
+          percentage_change: timeResponse.data.percentage_change || 0,
+          total_conversations: timeResponse.data.total_conversations || 0,
         });
       } catch (error) {
         console.error("Failed to fetch dashboard data:", error);
@@ -92,9 +110,11 @@ export const Overview = () => {
             title="Conversation Time"
             icon={<Users />}
             stats={{
-              current_count: 5,
-              is_increase: true,
-              percentage_change: 12,
+              current_count: conversationTime.average_response_time,
+              is_increase: conversationTime.is_increase,
+              percentage_change: conversationTime.percentage_change,
+              unit: "sec",
+              subtitle: `From ${conversationTime.total_conversations || 0} conversations`
             }}
           />
           <StatCard

@@ -87,19 +87,29 @@ const ContentPage: React.FC = () => {
       setButtonText("Generating...");
       const {prompt, latestMessages} = await getPrompt(messagesRef.current, propertyDetailRef.current)
       const messages = Object.values(latestMessages)[0]
-      const data = { prompt: prompt, messsages: messages};
+      
+      // Get username from the conversation if available
+      const recipientNameElement = document.querySelector(".MessagesInboxConversation-title");
+      const username = recipientNameElement ? recipientNameElement.textContent?.trim() : null;
+      
+      const data = { 
+        prompt: prompt, 
+        messsages: messages,
+        username: username
+      };
+      
       try {
         const response = await postApi("/user/ai-suggestion", data, apiKey);
-      setText(response.answer);
-      setButtonText("Copy to Clipboard");
-      setButtonText("Stayzy AI");
-      setSuggestions(true)
-     }
-     catch(error){
-      console.log("Error at I suggestion: ", error)
-      setButtonText("Stayzy AI");
-      setText("Please try again..!")
-     }
+        setText(response.answer);
+        setButtonText("Copy to Clipboard");
+        setButtonText("Stayzy AI");
+        setSuggestions(true)
+      }
+      catch(error){
+        console.log("Error at I suggestion: ", error)
+        setButtonText("Stayzy AI");
+        setText("Please try again..!")
+      }
     } else if (buttonText === "Copy to Clipboard") {
       navigator.clipboard.writeText(text).then(() => {
           alert("Text copied to clipboard!");

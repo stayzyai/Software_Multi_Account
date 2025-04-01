@@ -273,7 +273,13 @@ async def post_data(request: Request, params:str, id:int, token: str = Depends(g
         account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
         if not account:
             raise HTTPException(status_code = 404, detail="Hostaway account not found")
-        response = hostaway_put_request(account.hostaway_token, f"/{params}/{id}", body)
+        
+        # Add force_overbooking parameter when updating reservations
+        force_overbooking = False
+        if params == "reservations":
+            force_overbooking = True
+            
+        response = hostaway_put_request(account.hostaway_token, f"/{params}/{id}", body, force_overbooking=force_overbooking)
         data = json.loads(response)
         if data['status'] == 'success':
             return {"detail": {"message": "data updated successfully..", "data":  data}}
@@ -312,3 +318,268 @@ def send_task_email(request: EmailRequest, db: Session = Depends(get_db), token:
     if not user:
         raise HTTPException(status_code=404, detail="Not authorized to use this feature")
     return send_email(request.userEmail, request.subject, request.body)
+
+@router.post("/check-and-send-upsells")
+async def check_and_send_upsells(debug: bool = False, token: str = Depends(get_token), db: Session = Depends(get_db)):
+    try:
+        # Convert debug string parameter to actual boolean
+        debug = str(debug).lower() == 'true'
+        print(f"----------------Debug mode: {debug}")  # Confirm debug status
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
+        print(f"----------------account: {account}")
+        if not account:
+            raise HTTPException(status_code=404, detail="Hostaway account not found")
+        
+        # Get all active upsells for this user
+        upsells = db.query(Upsell).filter(
+            Upsell.user_id == user_id,
+            Upsell.enabled == True
+        ).all()
+        print(f"----------------upsells: {upsells}")
+        
+        if not upsells:
+            return {"message": "No active upsells found"}
+        
+        # Get all listings for this user
+        listings_response = hostaway_get_request(account.hostaway_token, "listings")
+        listings_data = json.loads(listings_response)
+        if listings_data['status'] != 'success':
+            return {"message": "Failed to fetch listings", "data": listings_data}
+        
+        # Get reservations
+        reservations_response = hostaway_get_request(account.hostaway_token, "reservations")
+        reservations_data = json.loads(reservations_response)
+        if reservations_data['status'] != 'success':
+            return {"message": "Failed to fetch reservations", "data": reservations_data}
+        
+        if debug:
+            print(f"----------------Total Listings: {len(listings_data['result'])}")
+            print(f"----------------Total Reservations: {len(reservations_data['result'])}")
+            
+            # Check reservation statuses
+            status_counts = {}
+            for r in reservations_data['result']:
+                status = r.get('status', 'unknown')
+                status_counts[status] = status_counts.get(status, 0) + 1
+            print(f"----------------Reservation statuses: {status_counts}")
+        
+        # Process upsell opportunities
+        upsell_opportunities = []
+        
+        # Find the correct listing ID field name in the reservation data
+        reservation_listing_field = None
+        if reservations_data['result'] and len(reservations_data['result']) > 0:
+            sample_reservation = reservations_data['result'][0]
+            print(f"----------------sample_reservation keys: {sample_reservation.keys()}")
+            
+            # Try common field names for listing ID
+            possible_field_names = ['listingId', 'listing_id', 'listingMapId', 'propertyId', 'propertyID', 'property_id']
+            for field in possible_field_names:
+                if field in sample_reservation:
+                    reservation_listing_field = field
+                    print(f"----------------Found listing field name: {field}")
+                    break
+        
+        if not reservation_listing_field:
+            # If we can't find the field, return the first reservation for debugging
+            if reservations_data['result'] and len(reservations_data['result']) > 0:
+                return {
+                    "message": "Could not identify listing ID field in reservation data",
+                    "sample_reservation": reservations_data['result'][0]
+                }
+            else:
+                return {"message": "No reservations found"}
+        
+        # For debugging - print all reservation listing IDs and all listing IDs
+        if debug:
+            listing_ids = [str(listing['id']) for listing in listings_data['result']]
+            reservation_listing_ids = [str(r.get(reservation_listing_field, 'missing')) for r in reservations_data['result']]
+            print(f"----------------Listing IDs: {listing_ids}")
+            print(f"----------------Reservation listing IDs: {reservation_listing_ids}")
+        
+        # Debug data collection to see what's happening
+        all_gaps = []
+        
+        # FIX: Define the correct date fields
+        check_in_field = "arrivalDate"  # Changed from checkInDate
+        check_out_field = "departureDate"  # Changed from checkOutDate
+        
+        # Define valid statuses - include modified and new
+        valid_statuses = ['confirmed', 'modified', 'new']
+        
+        for listing in listings_data['result']:
+            listing_id = listing['id']
+            print(f"----------------listing_id: {listing_id}")
+            
+            # Include reservations with the right status
+            listing_reservations = [r for r in reservations_data['result'] 
+                                  if r.get(reservation_listing_field) is not None and
+                                  str(r[reservation_listing_field]) == str(listing_id) and
+                                  r.get('status', '').lower() in valid_statuses]
+            
+            if debug:
+                all_reservations = [r for r in reservations_data['result'] 
+                               if r.get(reservation_listing_field) is not None and 
+                               str(r[reservation_listing_field]) == str(listing_id)]
+                print(f"----------------All matching reservations: {len(all_reservations)}")
+                
+                if all_reservations:
+                    statuses = [r.get('status', 'unknown') for r in all_reservations]
+                    print(f"----------------Statuses for this listing: {statuses}")
+            
+            # FIX: Use the correct date fields for sorting
+            if listing_reservations:
+                try:
+                    # Sort using the correct date field
+                    listing_reservations.sort(key=lambda x: x[check_in_field])
+                    print(f"----------------listing_reservations count: {len(listing_reservations)}")
+                except Exception as e:
+                    print(f"----------------Error sorting reservations: {str(e)}")
+                    continue
+            else:
+                print(f"----------------listing_reservations count: 0")
+                continue
+            
+            # Need at least 2 reservations to find gaps
+            if len(listing_reservations) < 2:
+                print(f"----------------Not enough reservations to find gaps")
+                continue
+            
+            # Find gap nights between reservations
+            for i in range(len(listing_reservations) - 1):
+                # FIX: Use the correct date fields
+                current_checkout = listing_reservations[i][check_out_field]
+                next_checkin = listing_reservations[i+1][check_in_field]
+                
+                # Calculate gap nights
+                from datetime import datetime
+                try:
+                    current_checkout_date = datetime.strptime(current_checkout, "%Y-%m-%d")
+                    next_checkin_date = datetime.strptime(next_checkin, "%Y-%m-%d")
+                    gap_days = (next_checkin_date - current_checkout_date).days
+                    print(f"----------------Gap days: {gap_days}")
+                except Exception as e:
+                    print(f"----------------Error parsing dates: {str(e)}")
+                    continue
+                
+                # Add to debug collection
+                all_gaps.append({
+                    "listing_id": listing_id,
+                    "current_checkout": current_checkout,
+                    "next_checkin": next_checkin,
+                    "gap_days": gap_days,
+                    "current_guest": listing_reservations[i].get('guestName', 'Guest'),
+                    "status": listing_reservations[i].get('status', 'unknown')
+                })
+                
+                if gap_days > 0:
+                    # We found a gap
+                    current_guest = listing_reservations[i]
+                    
+                    # Check applicable upsells
+                    for upsell in upsells:
+                        # Calculate when to send message
+                        from datetime import timedelta
+                        
+                        # FIX: Extract numeric value from strings like "1 days" or "2 days"
+                        try:
+                            # Handle both integer values and string formats like "1 days"
+                            upsell_days = str(upsell.detect_upsell_days)
+                            if "days" in upsell_days or "day" in upsell_days:
+                                # Extract just the numeric part
+                                import re
+                                num_match = re.search(r'\d+', upsell_days)
+                                if num_match:
+                                    detect_days = int(num_match.group())
+                                else:
+                                    raise ValueError(f"Could not extract number from {upsell_days}")
+                            else:
+                                # It's already just a number
+                                detect_days = int(upsell_days)
+                                
+                            print(f"----------------Parsed upsell days: {detect_days}")
+                            trigger_date = next_checkin_date - timedelta(days=detect_days)
+                            today = datetime.now().date()
+                            
+                            # Add debug prints to understand the date comparison
+                            print(f"----------------Debug: today={today}, trigger_date={trigger_date.date()}, debug={debug}")
+                            print(f"----------------Debug: Condition result: {debug or today == trigger_date.date()}")
+                            
+                            # Modified: Force create opportunities in debug mode
+                            if debug is True or today == trigger_date.date():
+                                print(f"----------------Creating opportunity for {current_guest.get('guestName', 'Guest')}")
+                                # In debug mode or today is the day to send the message!
+                                upsell_opportunities.append({
+                                    "listing_id": listing_id,
+                                    "reservation_id": current_guest['id'],
+                                    "guest_email": current_guest.get('guestEmail', 'Guest'),
+                                    "guest_name": current_guest.get('guestName', 'Guest'),
+                                    "gap_days": gap_days,
+                                    "discount": upsell.discount,
+                                    "message": upsell.upsell_message,
+                                    "checkout_date": current_checkout,
+                                    "possible_extend_nights": gap_days,
+                                    "trigger_date": trigger_date.strftime("%Y-%m-%d"),
+                                    "upsell_days_before": detect_days
+                                })
+                        except (ValueError, TypeError) as e:
+                            print(f"----------------Error with upsell days conversion: {str(e)}")
+                            # Skip this upsell if days value is invalid
+                            continue
+        
+        # If debug mode, return helpful information
+        if debug:
+            return {
+                "message": f"Debug mode: {'No ' if not upsell_opportunities else ''}upsell opportunities found",
+                "opportunities": upsell_opportunities,
+                "gaps_found": all_gaps,
+                "upsells_configured": [{"name": u.name, "days_before": u.detect_upsell_days, "discount": u.discount} for u in upsells],
+                "today": datetime.now().date().strftime("%Y-%m-%d"),
+                "check_in_field": check_in_field,
+                "check_out_field": check_out_field
+            }
+        
+        # Send messages for each opportunity
+        messages_sent = 0
+        for opportunity in upsell_opportunities:
+            try:
+                # Prepare the message with actual details
+                print(f"----------------opportunity: {opportunity}")
+                personalized_message = opportunity["message"].format(
+                    guest_name=opportunity["guest_name"],
+                    discount=opportunity["discount"] + " % ",
+                    possible_extend_nights=opportunity["possible_extend_nights"]
+                )
+                
+                # CHANGE: Send via email instead of Hostaway messaging
+                guest_email = opportunity["guest_email"]
+                subject = f"Special Offer: Extend Your Stay with {opportunity['discount']}% Discount"
+                print(f"----------------personalized_message: {personalized_message}")
+                
+                # Only send if we have a valid email
+                if guest_email and '@' in guest_email:
+                    # Use the existing send_email function
+                    email_result = send_email(guest_email, subject, personalized_message)
+                    
+                    print(f"----------------Email sent to: {guest_email}")
+                    print(f"----------------Email result: {email_result}")
+                    
+                    if email_result.get("success", False):
+                        messages_sent += 1
+                else:
+                    print(f"----------------Invalid email for guest: {opportunity['guest_name']}")
+                    
+            except Exception as e:
+                print(f"Error sending message: {str(e)}")
+                continue
+                
+        return {
+            "message": f"{'DEBUG MODE: ' if debug else ''}Checked for upsell opportunities. Found: {len(upsell_opportunities)}, Messages sent: {messages_sent}",
+            "opportunities": upsell_opportunities
+        }
+    
+    except Exception as e:
+        logging.error(f"Error in check-and-send-upsells: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error processing upsells: {str(e)}")

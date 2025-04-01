@@ -9,7 +9,10 @@ const StatCard = ({ title, icon, stats }) => {
         {/* {icon} */}
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{stats?.current_count || 0}</div>
+        <div className="text-2xl font-bold">
+          {stats?.current_count || 0}
+          {stats?.unit && <span className="text-sm ml-1 font-normal">{stats.unit}</span>}
+        </div>
         <p
           className={`text-xs flex items-center ${
             stats?.is_increase ? "text-green-500" : "text-red-500"
@@ -21,8 +24,11 @@ const StatCard = ({ title, icon, stats }) => {
             <ArrowDownRight className="mr-1 h-4 w-4" />
           )}
           {Math.abs(stats?.percentage_change)}%{" "}
-          {stats?.is_increase ? "increase" : "decrease"} from last week
+          {stats?.is_increase ? "increase" : "decrease"} from last period
         </p>
+        {stats?.subtitle && (
+          <p className="text-xs text-gray-500 mt-1">{stats.subtitle}</p>
+        )}
       </CardContent>
     </Card>
   );

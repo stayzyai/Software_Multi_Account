@@ -9,30 +9,98 @@ import json
 load_dotenv()
 url = os.getenv('HOSTAWAY_URL')
 
-def hostaway_get_request(token, endpoint, id=None, limit=None, offset=None, includeResources=None):
-    try:
-        hostaway_url = os.getenv('HOSTAWAY_API_URL')
-        api_url = f"{hostaway_url}/{endpoint}"
-        if id:
-            api_url = f"{api_url}/{id}"
-        # querystring = {"limit": limit, "offset": offset} if limit and offset else None
-        querystring = {}
-        if limit is not None:
-            querystring['limit'] = limit
-        if offset is not None and limit is not None:
-            querystring['offset'] = offset
-        if includeResources is not None:
-            querystring['includeResources'] = includeResources
+def hostaway_get_request(token, endpoint, id=None, limit=None, offset=None, includeResources=None, max_retries=3):
+    """
+    Make a GET request to the Hostaway API with retry logic for transient errors.
+    
+    Args:
+        token: Authentication token
+        endpoint: API endpoint to call
+        id: Optional ID to append to the endpoint
+        limit: Optional limit for pagination
+        offset: Optional offset for pagination
+        includeResources: Optional parameter to include additional resources
+        max_retries: Maximum number of retry attempts (default: 3)
+        
+    Returns:
+        Response text from the API
+    """
+    retry_count = 0
+    last_exception = None
+    
+    while retry_count < max_retries:
+        try:
+            hostaway_url = os.getenv('HOSTAWAY_API_URL')
+            # Fix the endpoint path - ensure we don't have double slashes
+            if endpoint.startswith('/'):
+                api_url = f"{hostaway_url}{endpoint}"
+            else:
+                api_url = f"{hostaway_url}/{endpoint}"
+            
+            if id:
+                api_url = f"{api_url}/{id}"
+            
+            querystring = {}
+            if limit is not None:
+                querystring['limit'] = limit
+            if offset is not None and limit is not None:
+                querystring['offset'] = offset
+            if includeResources is not None:
+                querystring['includeResources'] = includeResources
 
-        headers = {
-            'Authorization': f"Bearer {token}",
-            'Cache-control': "no-cache",
+            headers = {
+                'Authorization': f"Bearer {token}",
+                'Cache-control': "no-cache",
             }
-        response = requests.request("GET", api_url, headers=headers, params=querystring)
-        return response.text
-    except Exception as e:
-        logging.error(f"Error at hostaway get request {str(e)}")
-        raise HTTPException(status_code=500, detail=f"An error occurred at hostaway get request: {str(e)}")
+            
+            # Log the request we're about to make
+            logging.info(f"Making Hostaway GET request to: {api_url}")
+            logging.debug(f"Hostaway request details - URL: {hostaway_url}, Endpoint: {endpoint}, Final URL: {api_url}")
+            
+            # Increase timeout to handle potential slow connections
+            response = requests.request(
+                "GET", 
+                api_url, 
+                headers=headers, 
+                params=querystring,
+                timeout=60,  # 60 second timeout for slow API responses
+                verify=True  # Ensure SSL verification is enabled
+            )
+            
+            # Check for HTTP errors
+            response.raise_for_status()
+            
+            # If we get here, the request succeeded
+            return response.text
+            
+        except requests.exceptions.SSLError as ssl_err:
+            # Handle SSL errors specifically
+            retry_count += 1
+            last_exception = ssl_err
+            logging.warning(f"SSL Error on attempt {retry_count}/{max_retries}: {str(ssl_err)}")
+            
+            # Wait a bit longer between retries for SSL issues
+            import time
+            time.sleep(2 * retry_count)  # Progressive backoff
+            
+        except requests.exceptions.RequestException as req_err:
+            # Handle other request errors
+            retry_count += 1
+            last_exception = req_err
+            logging.warning(f"Request Error on attempt {retry_count}/{max_retries}: {str(req_err)}")
+            
+            # Wait between retries
+            import time
+            time.sleep(1 * retry_count)  # Progressive backoff
+            
+        except Exception as e:
+            # For non-request errors, don't retry
+            logging.error(f"Error at hostaway get request: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"An error occurred at hostaway get request: {str(e)}")
+    
+    # If we've exhausted all retries
+    logging.error(f"Max retries ({max_retries}) exceeded for Hostaway GET request: {str(last_exception)}")
+    raise HTTPException(status_code=500, detail=f"An error occurred at hostaway get request after {max_retries} attempts: {str(last_exception)}")
 
 def hostaway_authentication(account_id, secret_id):
     try:
@@ -95,8 +163,9 @@ def hostaway_post_request(token, endpoint, data):
         conn = http.client.HTTPSConnection(url)
         payload = json.dumps(data)
         headers = {
-                'authorization': f'Bearer {token}',
-                'Content-Type': 'application/json'
+                'Authorization': f"Bearer {token}",
+                'Content-Type': 'application/json',
+                'Cache-control': "no-cache"
         }
         api_url = f"/v1/{endpoint}"
         conn.request("POST", api_url, payload, headers)
@@ -108,19 +177,30 @@ def hostaway_post_request(token, endpoint, data):
         logging.error(f"Error at hostaway post request {str(e)}")
         raise HTTPException(status_code=500, detail=f"An error occurred at hostaway post request: {str(e)}")
 
-def hostaway_put_request(token, endpoint, data, id=None):
+def hostaway_put_request(token, endpoint, data, id=None, force_overbooking=False):
     try:
         conn = http.client.HTTPSConnection(url)
         payload = json.dumps(data)
+        
+        # Build the API URL path correctly
         api_url = f"/v1{endpoint}"
         if id:
             api_url = f"{api_url}/{id}"
+            
+        # Add the forceOverbooking parameter if requested
+        # This needs to be part of the request path, not the connection URL
+        if force_overbooking:
+            api_url = f"{api_url}?forceOverbooking=1"
 
         headers = {
-                'authorization': f'Bearer {token}',
+                'Authorization': f"Bearer {token}",
                 'Content-Type': 'application/json',
                 'Cache-control': "no-cache"
         }
+        
+        logging.info(f"Making Hostaway PUT request to: {api_url}")
+        
+        # The critical change: conn.request passes the full path including query parameters
         conn.request("PUT", api_url, payload, headers)
         res = conn.getresponse()
         data = res.read()
@@ -139,7 +219,7 @@ def hostaway_delete_request(token, endpoint, id=None):
         api_url = api_url+"&provider=stayzy"
 
         headers = {
-                'authorization': f'Bearer {token}',
+                'Authorization': f"Bearer {token}",
                 'Content-Type': 'application/json',
                 'Cache-control': "no-cache"
         }
