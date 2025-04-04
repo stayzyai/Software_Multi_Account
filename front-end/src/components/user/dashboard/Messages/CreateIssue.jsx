@@ -102,7 +102,7 @@ const AddTask = ({
           type="text"
           value={taskName}
           onChange={(e) => setTaskName(e.target.value)}
-          className="w-full p-1 border border-gray-300 rounded-md text-md"
+          className={`w-full p-1 border border-gray-300 rounded-md text-md ${tasks && "text-base"}`}
           placeholder="Task name"
         />
       </div>
@@ -114,7 +114,7 @@ const AddTask = ({
           type="text"
           value={taskDescription}
           onChange={(e) => setTaskDescription(e.target.value)}
-          className="w-full p-1 border border-gray-300 rounded-md text-md"
+          className={`w-full p-1 border border-gray-300 rounded-md text-md ${tasks && "text-base"}`}
           placeholder="Task Description"
         />
       </div>
@@ -125,7 +125,7 @@ const AddTask = ({
         <select
           value={assignee}
           onChange={(e) => setAssignee(e.target.value)}
-          className="w-full p-1 border border-gray-300 rounded-md bg-white"
+          className={`w-full p-1 border border-gray-300 rounded-md bg-white ${tasks && "text-base"}`}
         >
           <option value="">Unassigned</option>
           {users?.map((user) => (
@@ -142,7 +142,7 @@ const AddTask = ({
         <select
           value={status}
           onChange={(e) => setStatus(e.target.value)}
-          className="w-full p-1 border border-gray-300 rounded-md bg-white"
+          className={`w-full p-1 border border-gray-300 rounded-md bg-white ${tasks && "text-base"}`}
         >
           <option value="">Select</option>
           {statusOptions.map((option) => (
@@ -159,7 +159,7 @@ const AddTask = ({
         <select
           value={urgency}
           onChange={(e) => setUrgency(parseInt(e.target.value))}
-          className="w-full p-1 border border-gray-300 rounded-md bg-white"
+          className={`w-full p-1 border border-gray-300 rounded-md bg-white ${tasks && "text-base"}`}
         >
           <option value="">Select</option>
           {urgencyOptions.map((option) => (
@@ -169,7 +169,7 @@ const AddTask = ({
           ))}
         </select>
       </div>
-      <div className="flex justify-between">
+      <div className={`flex justify-between ${tasks && "text-md gap-5"}`}>
         <button
           onClick={() => {
             setCreateTask(false);
