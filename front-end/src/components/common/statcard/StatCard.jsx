@@ -19,7 +19,7 @@ const StatCard = ({ title, stats, selectedRange }) => {
           ) : (
             <ArrowDownRight className="mr-1 h-4 w-4" />
           )}
-          {Math.abs(stats?.percentage_change)}%{" "}
+          {Math.abs(parseFloat(stats?.percentage_change))} % {" "}
           {stats?.is_increase ? "increase" : "decrease"} from last {selectedRange ? selectedRange !== "Last 30 days" ? "week": "month": "month"}
         </p>
       </CardContent>
