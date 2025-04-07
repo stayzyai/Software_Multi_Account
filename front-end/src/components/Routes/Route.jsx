@@ -9,6 +9,8 @@ import { ProtectedRoute } from "../../helpers/ProtectedRoute";
 import { UserDashboardComponent } from "../../pages/userdashboard";
 import PaymentSuccess from "../../pages/payment/paymentSuccess";
 import PaymentDeclined from "../../pages/payment/paymentDeclined";
+import ForgotPassword from "../../components/user/auth/forgot-password";
+import ResetPassword from "../../components/user/auth/reset-password";
 
 function AppRoutes() {
   const { isAuthenticated, userRole } = useAuth();
@@ -62,6 +64,14 @@ function AppRoutes() {
             <SignUp />
           )
         }
+      />
+      <Route
+      path="/user/forgot-password"
+      element={<ForgotPassword/>}
+      />
+      <Route 
+      path="/user/reset-password/:token"
+      element={<ResetPassword/>}
       />
       <Route
         path="/admin/*"
