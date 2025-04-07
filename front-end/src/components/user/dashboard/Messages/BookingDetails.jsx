@@ -15,11 +15,12 @@ const BookingDetails = ({
   const dispatch = useDispatch();
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
   const [checkoutUrl, setCheckoutUrl] = useState("");
+  const [isConfirm, setIsConfirm] = useState(false);
   const chatAIenabledList = useSelector((state) => state.user.chat_list);
 
   const isChatInList = useCallback((chat_list, chatId) => {
     return chat_list.some((chat) => chat.chat_id === chatId);
-  }, []);
+    }, []);
 
   const Switch = ({ checked, handleSwitch }) => (
     <label className="inline-flex items-center cursor-pointer">
@@ -33,25 +34,29 @@ const BookingDetails = ({
     </label>
   );
 
+
   const handleCheckOut = async () => {
     const chatId = chatInfo[0]["id"];
-    const response = await updateAIStatus(chatId);
+    const listingId = chatInfo[0]["listingMapId"];
+    const response = await updateAIStatus(chatId, listingId);
     const { firstname, lastname, email, role, ai_enable, chat_list } = response;
     dispatch(
       setUser({ firstname, lastname, email, role, ai_enable, chat_list })
     );
-    const chatExists = isChatInList(chat_list, chatId);
-    if (ai_enable) {
+    const chatExists = isChatInList(chat_list, chatId, listingId);
+    if(ai_enable){
+      setIsCheckoutModalOpen(false);
       if (!chatExists) {
         toast.info("Disabled AI for this chat");
       } else {
         toast.success("Enabled AI for this chat");
       }
     } else {
-      const checkoutResponse = await checkout(chatId);
+      const checkoutResponse = await checkout(chatId, listingId);
+      setIsCheckoutModalOpen(true);
       if (checkoutResponse?.detail?.checkout_url) {
         setCheckoutUrl(checkoutResponse.detail.checkout_url);
-        setIsCheckoutModalOpen(true);
+        setIsConfirm(false);
       }
     }
   };
@@ -108,7 +113,7 @@ const BookingDetails = ({
             <p className="text-gray-500 mb-3">{item.label}</p>
             {item.label === "AI" ? (
               <Switch
-                checked={isChatInList(chatAIenabledList, chatInfo[0]["id"])}
+                checked={isChatInList(chatAIenabledList, chatInfo[0]["id"], chatInfo[0]["listingMapId"])}
                 handleSwitch={handleCheckOut}
               />
             ) : (
@@ -119,6 +124,9 @@ const BookingDetails = ({
       </div>
       <CheckoutModal
         isOpen={isCheckoutModalOpen}
+        isConfirm={isConfirm}
+        setIsConfirm={setIsConfirm}
+        handleCheckOut={handleCheckOut}
         setIsOpen={setIsCheckoutModalOpen}
         checkoutUrl={checkoutUrl}
       />
