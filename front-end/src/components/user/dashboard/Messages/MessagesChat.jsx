@@ -2,26 +2,25 @@ import { FiChevronsLeft, FiChevronsRight } from "react-icons/fi";
 import { useEffect, useState, useRef } from "react";
 import { getAllconversation } from "../../../../helpers/Message";
 import { ScaleLoader } from 'react-spinners';
-import { openAISuggestion, formatedMessages, getAmenity } from "../../../../helpers/Message";
+import { getAmenity } from "../../../../helpers/Message";
 import { useSelector, useDispatch } from "react-redux";
-import { toast } from "sonner";
 import ButtonLoader from "./ButtonLoader"
 import DetectIssue from "./DetectIssue"
-import { setIssueStatus, setTaskId } from "../../../../store/notificationSlice"
+import {setTasks} from "../../../../store/taskSlice"
+import { getHostawayTask } from "../../../../helpers/TaskHelper"
+import useAISuggestion from "../../../../hooks/useAIsuggestion";
 
 const ChatMessages = ({ messages, handleSendMessage, setInput, input, setOpenBooking,
   openBooking, setOpenSidebarMessage, openSidebarMessage, chatInfo, setMessage, messageLoader}) => {
 
 const [isLoading, setLoading] = useState(true)
 const messagesEndRef = useRef(null);
-const [isSuggestion, setSuggestion] = useState(null)
 const [amenity, setAmenity] = useState([])
-const users = useSelector((state) => state.hostawayUser.users);
+const tasks = useSelector((state)=>state.tasks.tasks)
 const chat_id = chatInfo?.length > 0 && chatInfo[0]["id"]
 const dispatch = useDispatch();
-
-const listings = useSelector((state)=>state.listings.listings)
-const tasks = useSelector((state)=>state.tasks.tasks)
+const isSuggestion = useSelector((state)=>state.notifications.isSuggestion)
+const { handleAISuggestion } = useAISuggestion(setInput, chatInfo, amenity, tasks);
 
 const amenityList = async ()=>{
   const data = await getAmenity()
@@ -53,28 +52,6 @@ useEffect(()=> {
     fetchedTask()
   }, []);
 
-  const handleAISuggestion = async (messages, chatInfo) => {
-    // const isIncoming = chatInfo[0]["isIncoming"]
-    // if (isIncoming !== 1) {
-    //   toast.info("Since the last message was not from the guest, no response will be generated.");
-    //   return
-    // };
-    setSuggestion(true)
-    const listingMapId = chatInfo[0]["listingMapId"]
-    const reservationId = chatInfo[0]["reservationId"]
-    const chatId = chatInfo[0]["id"]
-    const listing = listings?.find((item)=>item.id === listingMapId)
-    const {systemPrompt, lastUserMessage } =  formatedMessages(messages, listing, amenity)
-    const payload = { prompt: systemPrompt, messsages: lastUserMessage}
-    const {response, taskId} = await openAISuggestion(payload, listingMapId, reservationId, users, setIssueStatus, dispatch)
-    dispatch(setTaskId(taskId))
-    setSuggestion(false)
-    if(response){
-      setInput((prev) => ({ ...prev, [chatId]: response }));
-      return
-    }
-    toast.error("Some error occurred. Please try again")
-  }
   const handleInputChange = (chatId, value) => {
     setInput((prev) => ({ ...prev, [chatId]: value }));
   };  
@@ -89,7 +66,7 @@ return (
                 <div className={`mb-4 p-4 2xl:w-[305px] lg:w-[255px] w-[200px] rounded-[10px] ${msg.isIncoming === 0 ? "bg-[#F1F1F1]" : "bg-[#F8F8F8]"}`}>
                   <div className="flex items-center gap-4">
                     <div className={`w-10 h-10 bg-green-800 text-white rounded-full flex justify-center items-center ${msg.isIncoming !== 0 ? "text-xl font-bold": "text-sm font-semibold"} `}>
-                      {msg.isIncoming !== 0 ? chatInfo[0]?.recipientName[0] : "You"}
+                      {msg?.isIncoming !== 0 ? chatInfo[0]?.recipientName?.[0] : "You"}
                     </div>
                     <div>
                       <p className="font-semibold text-base">{msg.isIncoming !== 0 ? chatInfo[0]?.recipientName : "You"}</p>
@@ -139,7 +116,7 @@ return (
               onKeyDown={(e) => e.key === "Enter" && handleSendMessage(chat_id)}
             />
             <div className="flex justify-between">
-              <button disabled={isSuggestion} onClick={()=>handleAISuggestion(messages, chatInfo)}>
+              <button disabled={isSuggestion} onClick={()=>handleAISuggestion(messages)}>
                 {!isSuggestion? <img src="/icons/stars.svg" />:
                 <ScaleLoader height={20} loading speedMultiplier={2} width={2}/>}
               </button>

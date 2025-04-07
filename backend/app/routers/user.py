@@ -2,16 +2,19 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from app.schemas.user import UserUpdate, ChangePasswordRequest, UserProfile, ChatRequest
 from app.models.user import User, ChromeExtensionToken, Subscription, ChatAIStatus
+from app.service.chat_service import get_current_user, get_user_subscription, update_ai_status, get_active_ai_chats
 from app.database.db import get_db
 from app.common.auth import verify_password, get_password_hash, decode_access_token, get_token, get_hostaway_key
 from app.common.user_query import update_user_details
 from app.schemas.user import Role
 from app.schemas.admin import UserList, UsersDetailResponse, UserResponse
+from sqlalchemy import and_
 import requests
 import logging
 from app.common.chat_query import store_chat
 from app.common.chat_gpt_assistant import get_latest_model_id
 from dotenv import load_dotenv
+from typing import Optional
 import requests
 import logging
 from app.common.open_ai import get_gpt_response, nearby_spots_gpt_response
@@ -277,44 +280,19 @@ async def get_nearby_places(request: Request, token: str = Depends(get_token), d
         raise HTTPException(status_code=500, detail=f"Error fetching nearby places: {str(e)}")
 
 
-@router.get("/update-ai", response_model=UserProfile)
-def get_user_profile(chatId: int = Query(..., description="Chat Id is for auto mode"), db: Session = Depends(get_db), token: str = Depends(get_token)):
-    try:
-        decode_token = decode_access_token(token)
-        user_id = decode_token['sub']
-        db_user = db.query(User).filter(User.id == user_id).first()
-        if not db_user:
-            raise HTTPException(status_code=404, detail={"message": "User not found"})
-        subscription = db.query(Subscription).filter(Subscription.user_id == user_id).first()
-        status_by_chatId = db.query(ChatAIStatus).filter(ChatAIStatus.chat_id == chatId).first()
 
-        is_premium_member = False
-        if subscription:
-            if subscription.is_active and subscription.expire_at > datetime.utcnow():
-                is_premium_member = subscription.is_active
-                if status_by_chatId:
-                    status_by_chatId.ai_enabled = not status_by_chatId.ai_enabled
-                    db.commit()
-                    db.refresh(status_by_chatId)
-                else:
-                    new_chat = ChatAIStatus(chat_id=chatId, ai_enabled=True, user_id=user_id)
-                    db.add(new_chat)
-                    db.commit()
-                    db.refresh(new_chat)
-            else:
-                # If subscription expired, set ai_enable to False
-                subscription.is_active = False
-                is_premium_member = False
-                if status_by_chatId:
-                    status_by_chatId.ai_enabled = False 
-                    db.commit()
-                    db.refresh(status_by_chatId)
-            db.commit()
-            db.refresh(subscription)
-        if not subscription:
-            db.query(ChatAIStatus).filter(ChatAIStatus.user_id == user_id).update({"ai_enabled": False})
-            db.commit()
-        active_ai_chats = db.query(ChatAIStatus).filter(ChatAIStatus.user_id == user_id, ChatAIStatus.ai_enabled == True).all()
+@router.get("/update-ai", response_model=UserProfile)
+def get_user_profile(
+    chatId: int = Query(..., description="Chat Id is for auto mode"),
+    listingId: int = Query(..., description="Listing Id is for auto mode"),
+    db: Session = Depends(get_db),
+    token: str = Depends(get_token)
+):
+    try:
+        db_user = get_current_user(db, token)
+        subscription = get_user_subscription(db, db_user.id, listingId)
+        is_premium_member = update_ai_status(db, db_user.id, chatId, listingId, subscription)
+        active_ai_chats = get_active_ai_chats(db, db_user.id)
 
         return UserProfile(
             id=db_user.id,
@@ -324,8 +302,9 @@ def get_user_profile(chatId: int = Query(..., description="Chat Id is for auto m
             role=db_user.role,
             created_at=db_user.created_at,
             ai_enable=is_premium_member,
-            chat_list=active_ai_chats)
+            chat_list=active_ai_chats
+        )
 
     except Exception as e:
+        print(f"Error at get user profile: {str(e)}")
         raise HTTPException(status_code=500, detail={"message": str(e)})
-

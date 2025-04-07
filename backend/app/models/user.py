@@ -39,15 +39,23 @@ class HostawayAccount(Base):
 
     def __repr__(self):
         return f"<HostawayAccount(id={self.id}, account_id={self.account_id}, user_id={self.user_id})>"
+    
+class Listings(Base):
+    __tablename__ = "listings"
+    id = Column(Integer, primary_key=True, index=True)
+    listing_id = Column(Integer, unique=True, index=True)
+    is_active = Column(Boolean, default=False, nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
 
 class Subscription(Base):
     __tablename__ = 'subscriptions'
 
     id = Column(Integer, primary_key=True, index=True, nullable=False)
-    email = Column(String, unique=True, index=True)
     stripe_subscription_id = Column(String, unique=True, nullable=False)
     stripe_customer_id = Column(String, nullable=False)
+    chat_id = Column(Integer, unique=True, index=True, nullable=False)
     is_active = Column(Boolean, default=False, nullable=False)
+    listing_id = Column(Integer, ForeignKey('listings.listing_id', ondelete="CASCADE"), nullable=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     created_at = Column(DateTime, server_default=func.now())
     payment_at = Column(DateTime, nullable=False)
@@ -59,6 +67,8 @@ class Subscription(Base):
             f"stripe_subscription_id={self.stripe_subscription_id}, "
             f"stripe_customer_id={self.stripe_customer_id}, "
             f"is_active={self.is_active}, "
+            f"chat_id={self.chat_id}, "
+            f"listing_id={self.listing_id}, "
             f"user_id={self.user_id}, "
             f"created_at={self.created_at}, "
             f"payment_at={self.payment_at}, "
@@ -77,8 +87,10 @@ class Upsell(Base):
 
 class ChatAIStatus(Base):
     __tablename__ = "chat_ai_status"
-
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
     chat_id = Column(Integer, unique=True, index=True, nullable=False)
+    listing_id = Column(Integer, ForeignKey('listings.listing_id', ondelete="CASCADE"), nullable=False)
+    is_active = Column(Boolean, default=False, nullable=False)
     ai_enabled = Column(Boolean, default=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+    

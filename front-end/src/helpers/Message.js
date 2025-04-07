@@ -296,6 +296,8 @@ const openAISuggestion = async (
             await sendEmail(email);
           }
           return { response: parsedResponse.response, taskId: task?.id };
+        } else {
+          return { response: parsedResponse.response, taskId: null };
         }
       }
       return { response: response?.data?.answer, taskId: null };
@@ -303,7 +305,7 @@ const openAISuggestion = async (
     return null;
   } catch (Error) {
     console.log("Error at get AI suggestion: ", Error);
-    return null;
+    return { response: null, taskId: null };
   }
 };
 
@@ -505,17 +507,6 @@ const formattedNewMessage = (data) => {
   };
 };
 
-const getStatusByChatId = async (chatId) => {
-  try {
-    const response = await api.get(`/hostaway/get-ai-status?chat_id=${chatId}`);
-    if (response.status === 200) {
-      return response;
-    }
-  } catch (error) {
-    console.log("Error at get chat status");
-  }
-};
-
 export {
   getAllconversation,
   sendMessages,
@@ -538,5 +529,4 @@ export {
   formattedNewMessage,
   createTicket,
   updateTask,
-  getStatusByChatId,
 };

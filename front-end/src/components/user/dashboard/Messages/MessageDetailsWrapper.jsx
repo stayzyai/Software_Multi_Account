@@ -7,13 +7,20 @@ import {
   simplifiedResult,
   getConversationsWithResources,
   formattedNewMessage,
+  sendMessages,
+  getAmenity,
 } from "../../../../helpers/Message";
 import { useNavigate } from "react-router-dom";
 import ChatShimmer from "../../../common/shimmer/ChatShimmer";
 import { io } from "socket.io-client";
 import { setUnreadChat } from "../../../../store/notificationSlice";
-import { getHostawayUser } from '../../../../helpers/TaskHelper';
-import { setHostawayUsers } from '../../../../store/hostawayUserSlice';
+import {
+  getHostawayUser,
+  getHostawayTask,
+} from "../../../../helpers/TaskHelper";
+import { setHostawayUsers } from "../../../../store/hostawayUserSlice";
+import { toast } from "sonner";
+import { setTasks } from "../../../../store/taskSlice";
 
 const MessageDetailsWrapper = () => {
   const { messageId } = useParams();
@@ -21,10 +28,34 @@ const MessageDetailsWrapper = () => {
   const [chatInfo, setChatInfo] = useState([]);
   const [fromatedConversation, setFormatedConversation] = useState([]);
   const [messages, setMessage] = useState([]);
+  const [input, setInput] = useState({});
+  const [messageLoader, setMessagesLoader] = useState(false);
   const conversation = useSelector((state) => state.conversation.conversations);
   const users = useSelector((state) => state.hostawayUser.users);
+  const tasks = useSelector((state) => state.tasks.tasks);
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const handleSendMessage = async (chat_id) => {
+    const messageBody = input[chat_id]?.trim();
+    if (messageBody) {
+      setMessagesLoader(true);
+      const payload = { body: messageBody, communicationType: "channel" };
+      const data = await sendMessages(chat_id, payload);
+      if (data?.length > 0) {
+        setMessage([...messages, data[0]]);
+        setMessagesLoader(false);
+        setInput((prev) => ({ ...prev, [chat_id]: "" }));
+      } else {
+        toast.error(
+          "An error occurred while sending messages. Please try again."
+        );
+        setMessagesLoader(false);
+        setInput((prev) => ({ ...prev, [chat_id]: "" }));
+      }
+    }
+  };
 
   const getConversationData = async (newMessage = null) => {
     const data = await getConversationsWithResources();
@@ -32,14 +63,12 @@ const MessageDetailsWrapper = () => {
     const simplifiedData = simplifiedResult(data);
     setFormatedConversation(simplifiedData);
     if (newMessage) {
-      const currentMessage = formattedNewMessage(newMessage)
-      if (messageId == newMessage?.conversationId) {
-        setMessage((prevMessages) => [
-          ...prevMessages,
-          currentMessage,
-        ]);
+      const chatId = newMessage?.conversationId
+      const currentMessage = formattedNewMessage(newMessage);
+      if (messageId == chatId) {
+        setMessage((prevMessages) => [...prevMessages, currentMessage]);
       }
-      dispatch(setUnreadChat({ chatId: newMessage?.conversationId }));
+      dispatch(setUnreadChat({ chatId: chatId}));
     }
     return simplifiedData;
   };
@@ -62,6 +91,8 @@ const MessageDetailsWrapper = () => {
       }
       const userData = users?.length === 0 ? await getHostawayUser() : users;
       if (users?.length === 0) dispatch(setHostawayUsers(userData));
+      const tasksData = tasks?.length === 0 ? await getHostawayTask() : tasks;
+      dispatch(setTasks(tasksData));
     };
     fetchData();
     return () => {
@@ -85,14 +116,17 @@ const MessageDetailsWrapper = () => {
     navigate(`/user/chat/${chatId}`);
   };
 
-  return chatInfo.length !== 0 && fromatedConversation.length !== 0 ? (
+  return chatInfo?.length !== 0 && fromatedConversation.length !== 0 ? (
     <MessageDetails
       chatInfo={chatInfo}
-      setChatInfo={setChatInfo}
       handleClickMessages={handleClickMessages}
       fromatedConversation={fromatedConversation}
       setMessage={setMessage}
       messages={messages}
+      setInput={setInput}
+      input={input}
+      messageLoader={messageLoader}
+      handleSendMessage={handleSendMessage}
     />
   ) : (
     <ChatShimmer />

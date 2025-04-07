@@ -8,11 +8,13 @@ SMTP_PORT = 587
 EMAIL = os.getenv("EMAIL")
 APP_PASSWORD = os.getenv("APP_PASSWORD")
 
-def send_email(recipient: str, subject: str, body: str):
+def send_email(recipient: str, subject: str, body: str, is_html: bool = False):
     if not EMAIL or not APP_PASSWORD:
         raise HTTPException(status_code=500, detail="Email configuration is missing")
-
     msg = MIMEText(body)
+    if is_html:
+        msg = MIMEText(body,"html")
+    msg = MIMEText(body,"html")
     msg["Subject"] = subject
     msg["From"] = EMAIL
     msg["To"] = recipient

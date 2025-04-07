@@ -17,9 +17,20 @@ class UserCreate(BaseModel):
 class ChatAIStatusModel(BaseModel):
     id: int
     chat_id: int
+    listing_id: int
+    is_active: bool
+    user_id: int
     ai_enabled: bool
     class Config:
         from_attributes = True  
+        
+class ListingModel(BaseModel):
+    id: int
+    listing_id: int
+    is_active: bool
+    user_id: int
+    class Config:
+        from_attributes = True        
 
 class UserProfile(BaseModel):
     id: int
@@ -58,6 +69,7 @@ class UserDelete(BaseModel):
     id: int
 class ResetPasswordRequest(BaseModel):
     new_password: str
+    token: str
 class TokenRefreshRequest(BaseModel):
     token: str
 

@@ -1,4 +1,5 @@
 import socketio
+from app.service.ai_enable import send_auto_ai_messages
 
 # sio_server = socketio.AsyncServer(async_mode='asgi',cors_allowed_origins='*')
 sio_server = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins="*")
@@ -14,6 +15,7 @@ async def disconnect(sid, reason):
     # print(f"Client disconnected: {sid}")
 
 async def handle_webhook(data):
+    send_auto_ai_messages(data)
     await sio_server.emit("received_message", data)
 
 @sio_server.event

@@ -5,13 +5,14 @@ import {
   Building,
   Users,
   Smile,
-  ChevronDown,
 } from "lucide-react";
-import api from "@/api/api";
 import ShimmerOverview from "../../../common/shimmer/CardShimmer";
+import { fetchResponseQuality, fetchMessageStats, fetchTaskStats } from "../../../../helpers/statHelper";
+import DateRangeDropdown from "./StateDateRange"
 
 export const Overview = () => {
   const [loading, setLoading] = useState(true);
+  const [selectedRange, setSelectedRange] = useState("Last 30 days");
   const [responseQuality, setResponseQuality] = useState({
     average_score: 0,
     is_increase: false,
@@ -32,36 +33,24 @@ export const Overview = () => {
   });
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const loadDashboardData = async () => {
       try {
-        // Fetch response quality data
-        const qualityResponse = await api.get(`/stats/response-quality`);
-        setResponseQuality({
-          average_score: qualityResponse.data.average_score,
-          is_increase: qualityResponse.data.is_increase,
-          percentage_change: qualityResponse.data.percentage_change,
-        });
+        const [qualityData, messageData, taskData] = await Promise.all([
+          fetchResponseQuality(),
+          fetchMessageStats(),
+          fetchTaskStats(),
+        ]);
 
-        const messageResponse = await api.get(`/stats/message-count`);
-        setMessageStats({
-          total_messages: messageResponse.data.total_messages,
-          is_increase: true,
-          percentage_change: 0,
-        });
-        const taskResponse = await api.get("/stats/task-count");
-        setTaskStats({
-          total_tasks: taskResponse.data.data.total_tasks,
-          recent_tasks: taskResponse.data.data.recent_tasks,
-          percentage_change: taskResponse.data.data.percentage_change,
-          is_increase: taskResponse.data.data.is_increase,
-        });
-        setLoading(false);
+        setResponseQuality(qualityData);
+        setMessageStats(messageData);
+        setTaskStats(taskData);
       } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      } finally {
         setLoading(false);
-        console.error("Failed to fetch dashboard data:", error);
       }
     };
-    fetchDashboardData();
+    loadDashboardData();
   }, []);
 
   return (
@@ -78,10 +67,11 @@ export const Overview = () => {
               Overview
             </span>
             <div className="flex gap-3 items-center bg-white rounded-[17px] p-[2px_14px] h-[34px] ">
-              <p className="text-sm text-center"> Last 30 days</p>
+              {/* <p className="text-sm text-center"> Last 30 days</p>
               <button className="p-1 hover:bg-gray-100 rounded-full">
                 <ChevronDown className="h-4 w-4 text-gray-600" />
-              </button>
+              </button> */}
+            <DateRangeDropdown selectedRange={selectedRange} setSelectedRange={setSelectedRange} />
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 md:gap-3 gap-6 mb-3 p-4 md:p-1 mt-2 lg:grid-cols-4 lg:gap-6">
@@ -93,6 +83,7 @@ export const Overview = () => {
                 is_increase: messageStats.is_increase,
                 percentage_change: messageStats.percentage_change,
               }}
+              selectedRange={selectedRange}
             />
             <StatCard
               title="Tasks"
@@ -102,6 +93,7 @@ export const Overview = () => {
                 is_increase: taskStats.is_increase,
                 percentage_change: taskStats.percentage_change,
               }}
+              selectedRange={selectedRange}
             />
             <StatCard
               title="Conversation Time"
@@ -111,6 +103,7 @@ export const Overview = () => {
                 is_increase: true,
                 percentage_change: 12,
               }}
+              selectedRange={selectedRange}
             />
             <StatCard
               title="Avg Response Quality"
@@ -120,6 +113,7 @@ export const Overview = () => {
                 is_increase: responseQuality.is_increase,
                 percentage_change: responseQuality.percentage_change,
               }}
+              selectedRange={selectedRange}
             />
           </div>
         </div>
