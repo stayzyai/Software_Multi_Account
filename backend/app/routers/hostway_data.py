@@ -7,7 +7,7 @@ from app.common.hostaway_setup import hostaway_get_request, hostaway_post_reques
 from sqlalchemy.orm import Session
 from app.common.auth import get_hostaway_key
 from app.database.db import get_db
-from app.models.user import ChromeExtensionToken, HostawayAccount, Upsell, User, ChatAIStatus
+from app.models.user import ChromeExtensionToken, HostawayAccount, Upsell, User
 from app.common.auth import get_token
 from app.common.auth import decode_access_token
 from app.websocket import handle_webhook, handle_reservation
@@ -312,20 +312,3 @@ def send_task_email(request: EmailRequest, db: Session = Depends(get_db), token:
     if not user:
         raise HTTPException(status_code=404, detail="Not authorized to use this feature")
     return send_email(request.userEmail, request.subject, request.body)
-
-
-@router.get("/get-ai-status")
-def save_or_update_chat_ai_status(chat_id: int = Query(..., description="Chat Id for status"), db: Session = Depends(get_db), token: str = Depends(get_token)):
-    try:
-        decode_token = decode_access_token(token)
-        user_id = decode_token['sub']
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="Not authorized to use this feature")
-        chat_status = db.query(ChatAIStatus).filter(ChatAIStatus.user_id == user_id, ChatAIStatus.chat_id == chat_id).first()
-        if chat_status:
-            return {"message": "AI is enable for this chat ", "data": chat_status}
-        return {"message": "AI is not enable for this chat ", "data": chat_status}
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {str(e)}")

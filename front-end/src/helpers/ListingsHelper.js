@@ -14,16 +14,29 @@ const getOccupancy = (reservations, id) => {
   return isOccupied ? "Occupied" : "Vacant";
 };
 
-const formattedListing = (data, reservations) => {
+const getListingstatus = async() =>{
+  const response = await api.get("/subscription/listing-status");
+  if (response?.data) {
+    const data = response?.data?.data;
+    return data;
+  }
+}
+
+const formattedListing = (data, reservations, listingAIStatus, issues) => {
+
   const listings = data?.map((item) => {
     const occupancy = getOccupancy(reservations, item.id);
+    const aiStatus = listingAIStatus?.find(
+      (status) => status?.listing_id === item?.id
+    );
+    const hasIssue = issues?.some((issue) => issue?.listingMapId === item?.id);
     return {
       id: item.id,
       property: item.name,
       address: item.address,
       occupancy: occupancy,
-      issues: "No Issues",
-      ai: "Not Enabled",
+      issues: hasIssue ? "Issue" : "No Issue",
+      ai: aiStatus?.ai_enabled ? "Enabled" : "Not Enabled",
     };
   });
 
@@ -237,4 +250,5 @@ export {
   formatReservations,
   formatedFAQ,
   updateListings,
+  getListingstatus,
 };
