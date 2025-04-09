@@ -302,7 +302,7 @@ const openAISuggestion = async (
       }
       return { response: response?.data?.answer, taskId: null };
     }
-    return null;
+    return { response: response?.data?.answer, taskId: null };
   } catch (Error) {
     console.log("Error at get AI suggestion: ", Error);
     return { response: null, taskId: null };

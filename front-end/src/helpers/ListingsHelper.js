@@ -17,12 +17,9 @@ const getOccupancy = (reservations, id) => {
 const getListingstatus = async () => {
   try {
     const response = await api.get("/subscription/listing-status");
-    console.log("Listing status response", response);
-
     if (response?.data) {
       return response?.data?.data;
     }
-
     return [];
   } catch (error) {
     console.log("Error at getListingstatus", error.message);

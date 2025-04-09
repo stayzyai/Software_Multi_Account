@@ -994,8 +994,10 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
             # Final debug log to confirm function is reaching the end
             print("Function completed successfully!")
             logging.info("Function completed successfully!")
-            
+
             return {"model": model_id, "answer": gpt_response}
+    else:
+        return {"model": model_id, "answer": gpt_response}
 
 @router.get("/genrate-extension-key")
 def genrate_extension_key(token: str = Depends(get_token), db: Session = Depends(get_db)):

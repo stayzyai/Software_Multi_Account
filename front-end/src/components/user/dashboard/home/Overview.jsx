@@ -55,11 +55,6 @@ export const Overview = () => {
         conversationsTimeResponse(range),
       ]);
 
-      console.log("qualityData", qualityData)
-      console.log("messageData", messageData)
-      console.log("taskData", taskData)
-      console.log("timeResponse", timeResponse)
-
       // Update state with fetched data
       setResponseQuality(qualityData);
       setMessageStats(messageData);

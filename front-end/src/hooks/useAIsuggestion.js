@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { openAISuggestion, formatedMessages } from "../helpers/Message";
 import { setIssueStatus, setTaskId, setSuggestion } from "../store/notificationSlice";
 
-const useAISuggestion = (setInput, chatInfo, amenity, tasks) => {
+const useAISuggestion = (setInput, chatInfo, amenity, tasks, setIsAISuggestion) => {
 
   const dispatch = useDispatch();
   const users = useSelector((state) => state.hostawayUser.users);
@@ -13,6 +13,7 @@ const useAISuggestion = (setInput, chatInfo, amenity, tasks) => {
     if (!chatInfo || chatInfo.length === 0) return;
 
     dispatch(setSuggestion(true));
+    setIsAISuggestion(true);
     const listingMapId = chatInfo[0]["listingMapId"];
     const reservationId = chatInfo[0]["reservationId"];
     const chatId = chatInfo[0]["id"];
@@ -33,8 +34,10 @@ const useAISuggestion = (setInput, chatInfo, amenity, tasks) => {
 
     if (response) {
       setInput((prev) => ({ ...prev, [chatId]: response }));
+      setIsAISuggestion(false);
     } else {
       toast.error("Some error occurred. Please try again");
+      setIsAISuggestion(false);
     }
   };
 

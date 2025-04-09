@@ -16,11 +16,12 @@ const ChatMessages = ({ messages, handleSendMessage, setInput, input, setOpenBoo
 const [isLoading, setLoading] = useState(true)
 const messagesEndRef = useRef(null);
 const [amenity, setAmenity] = useState([])
+const [isAISuggestion, setIsAISuggestion] = useState(false)
 const tasks = useSelector((state)=>state.tasks.tasks)
 const chat_id = chatInfo?.length > 0 && chatInfo[0]["id"]
 const dispatch = useDispatch();
-const isSuggestion = useSelector((state)=>state.notifications.isSuggestion)
-const { handleAISuggestion } = useAISuggestion(setInput, chatInfo, amenity, tasks);
+// const isSuggestion = useSelector((state)=>state.notifications.isSuggestion)
+const { handleAISuggestion } = useAISuggestion(setInput, chatInfo, amenity, tasks, setIsAISuggestion);
 
 const amenityList = async ()=>{
   const data = await getAmenity()
@@ -116,8 +117,8 @@ return (
               onKeyDown={(e) => e.key === "Enter" && handleSendMessage(chat_id)}
             />
             <div className="flex justify-between">
-              <button disabled={isSuggestion} onClick={()=>handleAISuggestion(messages)}>
-                {!isSuggestion? <img src="/icons/stars.svg" />:
+              <button disabled={isAISuggestion} onClick={()=>handleAISuggestion(messages)}>
+                {!isAISuggestion? <img src="/icons/stars.svg" />:
                 <ScaleLoader height={20} loading speedMultiplier={2} width={2}/>}
               </button>
              {!messageLoader ? <button className="rounded-md" onClick={()=>handleSendMessage(chat_id)}>
