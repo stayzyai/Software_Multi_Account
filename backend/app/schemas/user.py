@@ -1,7 +1,8 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from enum import Enum
 from typing import Optional, List
 from datetime import datetime
+import uuid
 
 class Role(str, Enum):
     user = "user"
@@ -77,9 +78,34 @@ class ForgotPasswordRequest(BaseModel):
     email: str
 
 class ChatRequest(BaseModel):
-    prompt: str
+    # New fields with defaults to maintain backward compatibility
+    text: Optional[str] = None
+    user_id: Optional[str] = None
+    thread_id: Optional[str] = None
+    
+    # Original fields
+    prompt: Optional[str] = ""
     max_tokens: int = 300
     messsages: Optional[str] = None
+    username: Optional[str] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    
+    class Config:
+        from_attributes = True
+    
+    def __init__(self, **data):
+        super().__init__(**data)
+        # If text is not provided but prompt is, use prompt as text
+        if self.text is None and self.prompt:
+            self.text = self.prompt
+        # If text is not provided and prompt is empty, set a default
+        elif self.text is None and not self.prompt:
+            self.text = ""
+        
+        # If no user_id is provided, create a default
+        if self.user_id is None:
+            self.user_id = str(uuid.uuid4())
 
 class EmailRequest(BaseModel):
     userEmail: EmailStr

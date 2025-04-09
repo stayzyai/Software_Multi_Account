@@ -1,4 +1,3 @@
-import { ChevronDown } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import { useNavigate } from "react-router-dom";
 

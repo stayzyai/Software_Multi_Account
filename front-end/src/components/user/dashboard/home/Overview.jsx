@@ -7,12 +7,13 @@ import {
   Smile,
 } from "lucide-react";
 import ShimmerOverview from "../../../common/shimmer/CardShimmer";
-import { fetchResponseQuality, fetchMessageStats, fetchTaskStats } from "../../../../helpers/statHelper";
+import { fetchResponseQuality, fetchMessageStats, fetchTaskStats, conversationsTimeResponse } from "../../../../helpers/statHelper";
 import DateRangeDropdown from "./StateDateRange"
 
 export const Overview = () => {
   const [loading, setLoading] = useState(true);
   const [selectedRange, setSelectedRange] = useState("Last 30 days");
+  const [isOpen, setIsOpen] = useState(false);
   const [responseQuality, setResponseQuality] = useState({
     average_score: 0,
     is_increase: false,
@@ -32,25 +33,48 @@ export const Overview = () => {
     is_increase: false,
   });
 
-  useEffect(() => {
-    const loadDashboardData = async () => {
-      try {
-        const [qualityData, messageData, taskData] = await Promise.all([
-          fetchResponseQuality(),
-          fetchMessageStats(),
-          fetchTaskStats(),
-        ]);
 
-        setResponseQuality(qualityData);
-        setMessageStats(messageData);
-        setTaskStats(taskData);
-      } catch (error) {
-        console.error("Error loading dashboard data:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadDashboardData();
+  const [conversationTime, setConversationTime] = useState({
+    average_response_time: 0,
+    is_increase: false,
+    percentage_change: 0,
+    total_conversations: 0,
+  });
+
+  const handleSelect = async (range) => {
+    try {
+      setSelectedRange(range);
+      setIsOpen(false);
+      setLoading(true);
+
+      // Fetch all stats in parallel
+      const [qualityData, messageData, taskData, timeResponse] = await Promise.all([
+        fetchResponseQuality(range),
+        fetchMessageStats(range),
+        fetchTaskStats(range),
+        conversationsTimeResponse(range),
+      ]);
+
+      console.log("qualityData", qualityData)
+      console.log("messageData", messageData)
+      console.log("taskData", taskData)
+      console.log("timeResponse", timeResponse)
+
+      // Update state with fetched data
+      setResponseQuality(qualityData);
+      setMessageStats(messageData);
+      setTaskStats(taskData);
+      setConversationTime(timeResponse);
+    } catch (error) {
+      console.error("Error fetching data in handleSelect:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Load initial data on mount
+  useEffect(() => {
+    handleSelect("Last 30 days"); // Default range on page load
   }, []);
 
   return (
@@ -71,10 +95,10 @@ export const Overview = () => {
               <button className="p-1 hover:bg-gray-100 rounded-full">
                 <ChevronDown className="h-4 w-4 text-gray-600" />
               </button> */}
-            <DateRangeDropdown selectedRange={selectedRange} setSelectedRange={setSelectedRange} />
+              <DateRangeDropdown selectedRange={selectedRange} setSelectedRange={setSelectedRange} isOpen={isOpen} setIsOpen={setIsOpen} handleSelect={handleSelect} />
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 md:gap-3 gap-6 mb-3 p-4 md:p-1 mt-2 lg:grid-cols-4 lg:gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 md:gap-3 gap-6 mb-3 p-4 md:p-1 mt-2 xl:grid-cols-4 xl:gap-6">
             <StatCard
               title="Total Automated Messages"
               icon={<MessageCircle />}
@@ -99,9 +123,10 @@ export const Overview = () => {
               title="Conversation Time"
               icon={<Users />}
               stats={{
-                current_count: 5,
-                is_increase: true,
-                percentage_change: 12,
+                current_count: conversationTime.average_response_time,
+                is_increase: conversationTime.is_increase,
+                percentage_change: conversationTime.percentage_change,
+                unit: "Mins"
               }}
               selectedRange={selectedRange}
             />

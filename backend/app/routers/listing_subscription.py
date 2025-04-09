@@ -21,7 +21,7 @@ def get_ai_response(db:Session = Depends(get_db), token: str = Depends(get_token
             .distinct(ChatAIStatus.listing_id).all())
 
         if not listings:
-            raise HTTPException(status_code=404, detail="No listings found for this user")
+            return JSONResponse(content={"data": [], "message": "No listings found for this user"}, status_code=404)
 
         response = [{"listing_id": listing.listing_id, "ai_enabled": listing.ai_enabled} for listing in listings]
 

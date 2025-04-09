@@ -14,15 +14,24 @@ const getOccupancy = (reservations, id) => {
   return isOccupied ? "Occupied" : "Vacant";
 };
 
-const getListingstatus = async() =>{
-  const response = await api.get("/subscription/listing-status");
-  if (response?.data) {
-    const data = response?.data?.data;
-    return data;
-  }
-}
+const getListingstatus = async () => {
+  try {
+    const response = await api.get("/subscription/listing-status");
+    console.log("Listing status response", response);
 
-const formattedListing = (data, reservations, listingAIStatus, issues) => {
+    if (response?.data) {
+      return response?.data?.data;
+    }
+
+    return [];
+  } catch (error) {
+    console.log("Error at getListingstatus", error.message);
+    console.error("Error fetching listing status:", error);
+    return [];
+  }
+};
+
+const formattedListing = (data, reservations, listingAIStatus= [], issues= []) => {
 
   const listings = data?.map((item) => {
     const occupancy = getOccupancy(reservations, item.id);

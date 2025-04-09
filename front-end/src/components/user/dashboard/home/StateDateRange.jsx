@@ -1,14 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
-const DateRangeDropdown = ({setSelectedRange, selectedRange}) => {
-  const [isOpen, setIsOpen] = useState(false);
+const DateRangeDropdown = ({setSelectedRange, selectedRange, handleSelect, isOpen, setIsOpen}) => {
+  // const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-
-  const handleSelect = (range) => {
-    setSelectedRange(range);
-    setIsOpen(false);
-  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {

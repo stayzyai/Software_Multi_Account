@@ -154,9 +154,6 @@ def create_issue_ticket(new_message):
         return {"status": "error", "message": str(e)}
 
 def send_message(new_message, gpt_response):
-    print("Send message function called")
-    print("New message:", new_message)
-    # print("GPT response:", gpt_response)
     try:
         db = next(get_db())
         accountId = new_message.get("accountId")

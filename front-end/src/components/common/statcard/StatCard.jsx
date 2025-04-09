@@ -8,7 +8,10 @@ const StatCard = ({ title, stats, selectedRange }) => {
         <CardTitle className="text-sm text-gray-500 font-medium">{title}</CardTitle>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{stats?.current_count || 0}</div>
+        <div className="text-2xl font-bold">
+          {stats?.current_count || 0}
+          {stats?.unit && <span className="text-sm ml-1 font-normal">{stats?.unit}</span>}
+        </div>
         <p
           className={`text-xs flex items-center text-nowrap ${
             stats?.is_increase ? "text-green-500" : "text-red-500"
@@ -22,6 +25,9 @@ const StatCard = ({ title, stats, selectedRange }) => {
           {Math.abs(parseFloat(stats?.percentage_change))} % {" "}
           {stats?.is_increase ? "increase" : "decrease"} from last {selectedRange ? selectedRange !== "Last 30 days" ? "week": "month": "month"}
         </p>
+        {stats?.subtitle && (
+          <p className="text-xs text-gray-500 mt-1">{stats?.subtitle}</p>
+        )}
       </CardContent>
     </Card>
   );
