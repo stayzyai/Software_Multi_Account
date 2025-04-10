@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 from app.common.chat_gpt_assistant import train_chat_gpt
 from apscheduler.schedulers.background import BackgroundScheduler
+from app.service.send_upshell_opportunity import check_and_send_upsells
 from app.websocket import sio_app
 
 Base.metadata.create_all(bind=engine)
@@ -26,13 +27,12 @@ app.include_router(main_router)
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(train_chat_gpt, 'cron', hour=00, minute=00)
+    scheduler.add_job(check_and_send_upsells, 'cron', hour=11, minute=55)
     scheduler.start()
 
 @app.on_event("startup")
 async def startup_event():
-    pass
-    # start_scheduler()
+    start_scheduler()
 
 app.mount("/", sio_app)
 
