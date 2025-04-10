@@ -31,7 +31,8 @@ def start_scheduler():
 
 @app.on_event("startup")
 async def startup_event():
-    start_scheduler()
+    pass
+    # start_scheduler()
 
 app.mount("/", sio_app)
 

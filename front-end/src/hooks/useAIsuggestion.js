@@ -18,8 +18,9 @@ const useAISuggestion = (setInput, chatInfo, amenity, tasks, setIsAISuggestion) 
     const reservationId = chatInfo[0]["reservationId"];
     const chatId = chatInfo[0]["id"];
     const listing = listings?.find((item) => item.id === listingMapId);
+    const listingsName = listing?.name;
     const { systemPrompt, lastUserMessage } = formatedMessages(messages, listing, amenity);
-    const payload = { prompt: systemPrompt, messsages: lastUserMessage };
+    const payload = { prompt: systemPrompt, messsages: lastUserMessage, listingMapId: listingMapId, listingsName: listingsName };
     const { response, taskId } = await openAISuggestion(
       payload,
       listingMapId,

@@ -82,7 +82,9 @@ class ChatRequest(BaseModel):
     text: Optional[str] = None
     user_id: Optional[str] = None
     thread_id: Optional[str] = None
-    
+    listingName: Optional[str] = None
+    listingMapId: Optional[int] = None
+
     # Original fields
     prompt: Optional[str] = ""
     max_tokens: int = 300

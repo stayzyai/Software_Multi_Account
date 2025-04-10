@@ -183,7 +183,7 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
     gpt_response = get_gpt_response(model_id, prompt, request.messsages)
     if gpt_response is None:
         raise HTTPException(status_code=400, detail="Some error occurred. Please try again.")
-    logging.info(f"chat gpt response{gpt_response}")
+    # logging.info(f"chat gpt response{gpt_response}")
     
     # Record the time when the response was generated
     response_timestamp = datetime.now().isoformat()
@@ -205,13 +205,9 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
     dates_specified = gpt_dates_specified
     
     print(f"GPT detected - dates_specified: {dates_specified}, extension_request: {is_extension_request}")
-    print(f"User message: {request.messsages}")
-    
-    # Check if a specific listing ID or name is mentioned in the response
-    listing_id_match = re.search(r'listing[_\s]id[:\s]*([0-9]+)', gpt_response.lower())
-    listing_name_match = re.search(r'listing[_\s]name[:\s]*["\']?([^"\']+)["\']?', gpt_response.lower())
-    mentioned_listing_id = listing_id_match.group(1) if listing_id_match else None
-    mentioned_listing_name = listing_name_match.group(1) if listing_name_match else None
+
+    mentioned_listing_name = request.listingName
+    mentioned_listing_id = request.listingMapId
     
     # Also check the user message directly for date mentions
     # This is a simpler and more direct approach that doesn't rely on the GPT response
@@ -326,12 +322,7 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
         requested_dates.sort()
         latest_requested_date = requested_dates[-1]
         logging.info(f"Latest requested extension date: {latest_requested_date}")
-    
-    if mentioned_listing_id:
-        logging.info(f"User query mentions specific listing ID: {mentioned_listing_id}")
-    if mentioned_listing_name:
-        logging.info(f"User query mentions specific listing name: {mentioned_listing_name}")
-    
+
     if is_extension_request:
         # try:
             # Get hostaway account for this user
@@ -370,16 +361,9 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                     reservations_response = hostaway_get_request(hostaway_account.hostaway_token, "/reservations")
                     if reservations_response:
                         reservations_data = json.loads(reservations_response)
-                        all_reservations = reservations_data.get('result', [])
+                        all_reservations = reservations_data
                         logging.info(f"Successfully retrieved reservations data with {len(all_reservations)} reservations")
                         print(f"DEBUG: Retrieved {len(all_reservations)} total reservations")
-                        
-                        # Detailed debugging of all reservations
-                        for i, res in enumerate(all_reservations[:5]):  # Log first 5 for debugging
-                            print(f"DEBUG: Reservation {i+1}: ID={res.get('id')}, Guest={res.get('guestName')}, " 
-                                    f"ListingID={res.get(reservation_listing_field)}, "
-                                    f"Dates={res.get(check_in_field)} to {res.get(check_out_field)}, "
-                                    f"Status={res.get('status')}")
                         
                         # Filter reservations by username if provided
                         if username_filter:
@@ -387,7 +371,7 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                             logging.info(f"Username filter: '{username_filter}', Reservations before filter: {original_count}")
                             
                             # Debug: Check each reservation's guest name
-                            for i, res in enumerate(all_reservations[:10]):  # Check first 10
+                            for i, res in enumerate(all_reservations):  # Check first 10
                                 guest_name = res.get('guestName', '')
                                 print(f"DEBUG: Reservation {i+1} guest: '{guest_name!r}' vs filter: '{username_filter!r}'")
                                 match = guest_name.lower() == username_filter.lower() or username_filter.lower() in guest_name.lower() 
@@ -399,7 +383,7 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                                 if r.get('guestName', '').lower() == username_filter.lower() or 
                                     username_filter.lower() in r.get('guestName', '').lower()
                             ]
-                            filtered_count = len(reservations_data.get('result', []))
+                            filtered_count = len(reservations_data)
                             logging.info(f"Filtered reservations by username '{username_filter}': {filtered_count} out of {original_count}")
                             print(f"Filtered reservations by username '{username_filter}': {filtered_count} out of {original_count}")
                             
@@ -419,7 +403,8 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                         user_reservations = []
                         
                         # try:
-                        for reservation in reservations_data.get('result', []):
+                        reservations_data = [reservation for reservation in reservations_data.get('result', []) if reservation.get('listingMapId') == mentioned_listing_id]
+                        for reservation in reservations_data:
                             # Check if required fields exist
                             if check_in_field not in reservation or check_out_field not in reservation:
                                 logging.warning(f"Reservation missing required date fields: {reservation.get('id', 'unknown')}")
@@ -467,7 +452,6 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                                 0 if x.get(check_in_field) <= current_date and x.get(check_out_field) >= current_date else 1,
                                 x.get(check_in_field)
                             ))
-                            
                             current_reservation = user_reservations[0]
                             current_listing_id = str(current_reservation.get(reservation_listing_field))
                             logging.info(f"Found user's reservation in listing ID: {current_listing_id}")
@@ -477,7 +461,7 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                         else:
                             # Debug why no active reservations were found
                             print(f"DEBUG: No active or upcoming reservations found. Current date: {current_date}")
-                            for i, res in enumerate(reservations_data.get('result', [])[:5]):
+                            for i, res in enumerate(reservations_data):
                                 check_in = res.get(check_in_field)
                                 check_out = res.get(check_out_field)
                                 status = res.get('status', '').lower()
@@ -516,7 +500,7 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                                     if (listing.get('name') and 
                                         mentioned_listing_name.lower() in listing.get('name', '').lower()):
                                         mentioned_listing_found = True
-                                        current_listing_id = str(listing['id'])
+                                        current_listing_id = mentioned_listing_id
                                         processed_listings.append(listing)
                                         logging.info(f"Found mentioned listing by name: {listing.get('name')} (ID: {current_listing_id})")
                                         break
@@ -552,7 +536,7 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                                 listing_id = listing['id']
                                 
                                 # Get reservations for this listing with valid statuses
-                                listing_reservations = [r for r in reservations_data.get('result', []) 
+                                listing_reservations = [r for r in reservations_data 
                                                         if r.get(reservation_listing_field) is not None and
                                                         str(r[reservation_listing_field]) == str(listing_id) and
                                                         r.get('status', '').lower() in valid_statuses]
@@ -688,8 +672,7 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                             
                             # Check for direct extension
                             for gap in all_gaps:
-                                if (gap['is_current_listing'] and 
-                                    gap['current_checkout'] == check_out_date):
+                                if (gap['is_current_listing'] and  gap['current_checkout'] == check_out_date):
                                     direct_extension = gap
                                     print(f"DEBUG: Found direct extension opportunity: ListingID={gap['listing_id']}, " 
                                             f"From={gap['current_checkout']} to {gap['next_checkin']}, Days={gap['gap_days']}")
@@ -761,15 +744,17 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                                         # If there's a specific requested date and this is a simulated gap,
                                         # use the requested date instead of the full gap
                                         if latest_requested_date and gap.get('is_simulated', False):
+                                            print(f"DEBUG: Using requested date for extension instead of full simulated gap---> {latest_requested_date}")
                                             # Add one day to the requested date for checkout
-                                            requested_checkout_obj = requested_date_obj + timedelta(days=1)
+                                            # requested_checkout_obj = requested_date_obj + timedelta(days=1)
+                                            requested_checkout_obj = requested_date_obj
                                             new_checkout_date = requested_checkout_obj.strftime("%Y-%m-%d")
+                                            print(f"DEBUG: Using requested date for extension instead of full simulated gap: {new_checkout_date}")
                                             logging.info(f"Using requested date for extension instead of full simulated gap: {new_checkout_date}")
                                             print(f"DEBUG: Using requested date for extension instead of full simulated gap: {new_checkout_date}")
                                         else:
                                             # Otherwise use the gap's end date
                                             new_checkout_date = direct_extension['next_checkin']
-                                        
                                         print(f"DEBUG: Extension details - Reservation ID: {reservation_id}, Old checkout: {check_out_date}, New checkout: {new_checkout_date}")
                                         logging.info(f"Extension details - Reservation ID: {reservation_id}, Old checkout: {check_out_date}, New checkout: {new_checkout_date}")
                                         
@@ -778,7 +763,6 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                                             logging.error(f"Missing hostaway account or token for user ID: {user_id}")
                                             raise Exception("Missing Hostaway authentication")
                                         
-                                        print(f"DEBUG: Using Hostaway token: {hostaway_account.hostaway_token[:10]}...")
                                         
                                         # First get the current reservation details to use as the base for our update
                                         logging.info(f"Getting full reservation details before update")
@@ -791,8 +775,6 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                                         # Just update the departure date field
                                         update_payload['departureDate'] = new_checkout_date
                                         
-                                        print(f"DEBUG: Using full reservation data for update with modified departureDate")
-                                        print(f"DEBUG: Extension payload: {json.dumps(update_payload)}")
                                         
                                         # Call the API to update the reservation
                                         logging.info(f"Automatically extending reservation {reservation_id} to {new_checkout_date}")
@@ -803,7 +785,6 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                                         # Use the hostaway token instead of the key for authentication
                                         # Pass force_overbooking=True to enable overbooking for the extension
                                         extension_response = hostaway_put_request(hostaway_account.hostaway_token, f"/reservations/{reservation_id}", update_payload, force_overbooking=True)
-                                        print(f"DEBUG: Called extension API with URL: /reservations/{reservation_id}?forceOverbooking=1 and hostaway token: {hostaway_account.hostaway_token[:5]}...")
                                         
                                         # Add extensive logging for the response
                                         logging.info(f"DETAILED - Raw extension response: {extension_response}")

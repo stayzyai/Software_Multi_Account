@@ -13,14 +13,16 @@ const StatCard = ({ title, stats, selectedRange }) => {
           {stats?.unit && <span className="text-sm ml-1 font-normal">{stats?.unit}</span>}
         </div>
         <p
-          className={`text-xs flex items-center text-nowrap ${
-            stats?.is_increase ? "text-green-500" : "text-red-500"
-          }`}
+          className={`text-xs flex items-center text-nowrap`}
         >
           {stats?.is_increase ? (
-            <ArrowUpRight className="mr-1 h-4 w-4" />
+            <ArrowUpRight className={`mr-1 h-4 w-4 ${
+              stats?.is_increase ? "text-green-500" : "text-red-500"
+            }`} />
           ) : (
-            <ArrowDownRight className="mr-1 h-4 w-4" />
+            <ArrowDownRight className={`mr-1 h-4 w-4 ${
+              stats?.is_increase ? "text-green-500" : "text-red-500"
+            }`} />
           )}
           {Math.abs(parseFloat(stats?.percentage_change))} % {" "}
           {stats?.is_increase ? "increase" : "decrease"} from last {selectedRange ? selectedRange !== "Last 30 days" ? "week": "month": "month"}
