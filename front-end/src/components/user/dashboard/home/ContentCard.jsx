@@ -78,7 +78,7 @@ const ContentCard = () => {
           className="xl:w-[570px] lg:w-[320px] 2xl:w-[800px] w-full"
           badgeColumn="status"
           badgeType="status"
-        />:<ListingShimmer />}
+        />:<ListingShimmer title="tasks"/>}
       </div>
       {!loading ? (
         <DataTable
@@ -88,7 +88,7 @@ const ContentCard = () => {
           badgeType="occupancy"
         />
       ) : (
-        <ListingShimmer />
+        <ListingShimmer title="listings" />
       )}
     </div>
   );
