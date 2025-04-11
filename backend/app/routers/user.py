@@ -29,7 +29,8 @@ import threading
 from datetime import datetime, timedelta
 import json
 import re
-from app.common.hostaway_setup import hostaway_put_request, hostaway_get_request, hostaway_post_request
+from app.common.hostaway_setup import hostaway_put_request, hostaway_get_request
+from app.websocket import update_checkout_date
 import time
 
 load_dotenv()
@@ -162,7 +163,7 @@ def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_tok
 
 
 @router.post("/ai-suggestion")
-def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str = Depends(get_hostaway_key)):
+async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str = Depends(get_hostaway_key)):
     token_record = db.query(ChromeExtensionToken).filter(ChromeExtensionToken.key == key).first()
     if token_record is None:
         decode_token = decode_access_token(key)
@@ -899,7 +900,8 @@ def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str 
                                             # Now update the message based on whether verification succeeded
                                             if extension_verified:
                                                 logging.info(f"Successfully extended reservation {reservation_id} to {new_checkout_date}")
-                                                
+                                                new_updated_data = {"reservation_id": reservation_id, "new_checkout_date": new_checkout_date}
+                                                await update_checkout_date(new_updated_data)
                                                 # Format the new checkout date for display
                                                 new_checkout_date_obj = datetime.strptime(new_checkout_date, "%Y-%m-%d")
                                                 new_checkout_formatted = new_checkout_date_obj.strftime("%B %d, %Y")

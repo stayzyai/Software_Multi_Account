@@ -7,6 +7,7 @@ import { setReservations } from "../../../../store/reservationSlice";
 import MessageRightSidebar from "../../../common/shimmer/MessageRightSidebr";
 import BookingDetails from "./BookingDetails";
 import BookingIssue from "./BookingIssue";
+import { io } from "socket.io-client";
 
 const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
   const [activeSession, setActiveSession] = useState("booking");
@@ -23,6 +24,19 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
     return data;
   };
 
+  const fetchReservations = async () => {
+    const reservationId = chatInfo[0]["reservationId"];
+    const NewReservation = await getReservations();
+    const reservationData = NewReservation?.find(
+      (item) => item.id == reservationId
+    );
+    const timeData = getTimeDetails(reservationData);
+    const bookingdata = getBookingdetails(reservationData);
+    setbookingDetails(bookingdata);
+    setTimeDetails(timeData);
+    setLoading(false);
+  };
+
   useEffect(() => {
     if (reservation?.length !== 0) {
       const reservationId = chatInfo[0]["reservationId"];
@@ -36,20 +50,26 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
       setLoading(false);
       return;
     }
-    const fetchReservations = async () => {
-      const reservationId = chatInfo[0]["reservationId"];
-      const NewReservation = await getReservations();
-      const reservationData = NewReservation?.find(
-        (item) => item.id == reservationId
-      );
-      const timeData = getTimeDetails(reservationData);
-      const bookingdata = getBookingdetails(reservationData);
-      setbookingDetails(bookingdata);
-      setTimeDetails(timeData);
-      setLoading(false);
-    };
     fetchReservations();
   }, [chatInfo]);
+
+  useEffect(() => {
+    const newSocket = io(import.meta.env.VITE_SOCKET_HOST, {
+      transports: ["websocket"],
+    });
+    newSocket.on("connect", () => {
+      console.log("Connected to WebSocket server on booking details");
+    });
+    const handleCheckoutUpdate = async (payload) => {
+      console.log("Checkout date updated:", payload);
+      await fetchReservations();
+    };
+    newSocket.on("checkout_date_updated", handleCheckoutUpdate);
+
+    return () => {
+      newSocket.disconnect();
+    };
+  }, []);
 
   if (loading)
     return (

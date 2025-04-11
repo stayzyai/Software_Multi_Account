@@ -27,3 +27,7 @@ async def send_message(sid, message):
 async def handle_reservation(reservation):
     print(f"Message reservation received from: {reservation}")
     await sio_server.emit("new_reservation", {"reservation": reservation})
+
+async def update_checkout_date(data):
+    print(f"Checkout date updated : {data}")
+    await sio_server.emit("checkout_date_updated", {"data": data})
