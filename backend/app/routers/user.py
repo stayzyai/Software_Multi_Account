@@ -193,10 +193,13 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
             "prompt": request.messsages,
             "completion": gpt_response,
             "received_timestamp": received_timestamp,
-            "response_timestamp": response_timestamp
+            "response_timestamp": response_timestamp,
+            "user_id": user_id if user_id else None,
             }
-    store_chat(interaction_data)
     
+    # store_chat(interaction_data)
+    threading.Thread(target=store_chat, args=(interaction_data,), daemon=True).start()
+
     # First check GPT response for extension request flags
     gpt_extension_request = bool(re.search(r'extension[_\s]request.*?yes', gpt_response.lower(), re.IGNORECASE))
     gpt_dates_specified = bool(re.search(r'dates[_\s]specified.*?true', gpt_response.lower(), re.IGNORECASE))

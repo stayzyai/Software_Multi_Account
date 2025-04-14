@@ -102,6 +102,7 @@ def store_chat(interaction_data):
         # Get timestamps from interaction_data or use current time as fallback
         received_timestamp = interaction_data.get("received_timestamp", current_time)
         response_timestamp = interaction_data.get("response_timestamp", current_time)
+        user_id = interaction_data.get("user_id", None)
 
         # Log the timestamps for debugging
         logger.debug(f"Message received at: {received_timestamp}")
@@ -115,7 +116,8 @@ def store_chat(interaction_data):
                 ],
                 "timestamp": current_time,
                 "received_timestamp": received_timestamp,
-                "response_timestamp": response_timestamp
+                "response_timestamp": response_timestamp,
+                "user_id": user_id
             }
             logger.debug(f"Formatted chat data for storage with {len(chat_format['messages'])} messages")
             json.dump(chat_format, file)
@@ -127,18 +129,18 @@ def store_chat(interaction_data):
         # Run evaluation after storing the chat
         if interaction_data.get("evaluate", False):
             logger.debug("Evaluation flag is True, proceeding with evaluation")
-            evaluate_chat_response(interaction_data["prompt"], interaction_data["completion"])
+            evaluate_chat_response(interaction_data["prompt"], interaction_data["completion"], user_id=user_id)
         else:
             logger.debug("Evaluation flag not set, skipping evaluation")
-            evaluate_chat_response(interaction_data["prompt"], interaction_data["completion"])
+            evaluate_chat_response(interaction_data["prompt"], interaction_data["completion"], user_id=user_id)
     except Exception as e:
         logger.error(f"Error storing chat data: {str(e)}")
         logger.debug(f"Store chat exception traceback: {traceback.format_exc()}")
 
-def evaluate_chat_response(prompt, completion, reference_answer=None, context=None, retrieval_context=None):
+def evaluate_chat_response(prompt, completion, reference_answer=None, context=None, retrieval_context=None, user_id=None):
 
     if not DEEPEVAL_AVAILABLE:
-        store_evaluation_results(prompt, completion, results)
+        store_evaluation_results(prompt, completion, results, user_id)
         return results
 
     try:
@@ -213,7 +215,7 @@ def evaluate_chat_response(prompt, completion, reference_answer=None, context=No
             results = {
                 "error": "No metrics could be initialized. Check DeepEval version compatibility."
             }
-            store_evaluation_results(prompt, completion, results)
+            store_evaluation_results(prompt, completion, results, user_id)
             return results
 
         # Run evaluation
@@ -294,18 +296,19 @@ def evaluate_chat_response(prompt, completion, reference_answer=None, context=No
     else:
         logger.info(f"Evaluation summary: {passed_metrics}/{total_metrics} metrics passed, but no metrics with scores")
 
-    store_evaluation_results(prompt, completion, results)
+    store_evaluation_results(prompt, completion, results, user_id)
 
     return results
 
-def store_evaluation_results(prompt, completion, results):
+def store_evaluation_results(prompt, completion, results, user_id=None):
     try:
         logger.debug(f"Preparing to store evaluation results in: {EVAL_RESULTS_FILE}")
         eval_data = {
             "prompt": prompt,
             "completion": completion,
             "evaluation": results,
-            "timestamp": get_current_time()
+            "timestamp": get_current_time(),
+            "user_id": user_id
         }
         logger.debug(f"Serializing evaluation data with timestamp: {eval_data['timestamp']}")
         
@@ -364,7 +367,7 @@ def calculate_percentage_change(previous_avg, recent_avg):
     change = round(((recent_avg - previous_avg) / previous_avg) * 100, 2)
     return change, change > 0
 
-def get_average_response_quality(days=30):
+def get_average_response_quality(days=30, user_id=None):
     """
     Calculate the average response quality and percentage change.
     
@@ -390,6 +393,8 @@ def get_average_response_quality(days=30):
             for line in file:
                 try:
                     result = json.loads(line.strip())
+                    if user_id is not None and str(result.get("user_id")) != str(user_id):
+                        continue
                     timestamp = result.get("timestamp", "")
                     if not timestamp:
                         continue
@@ -460,7 +465,7 @@ def get_average_response_quality(days=30):
         logger.debug(f"Calculation exception traceback: {traceback.format_exc()}")
         return {"average_score": 0, "total_evaluations": 0, "error": str(e), "percentage_change": 0, "is_increase": False}
 
-def get_message_stats(days=30):
+def get_message_stats(days=30, user_id=None):
     """
     Calculate statistics about automated messages.
     
@@ -488,6 +493,8 @@ def get_message_stats(days=30):
             for line in file:
                 try:
                     chat_data = json.loads(line.strip())
+                    if user_id is not None and chat_data.get("user_id") != str(user_id):
+                        continue
                     timestamp = chat_data.get("timestamp", "")
                     
                     if timestamp:
@@ -542,7 +549,7 @@ def count_task(days, tasks):
         "is_increase": recent_tasks > prev_total_tasks
     }
 
-def get_conversation_time_stats(days=30):
+def get_conversation_time_stats(days=30, user_id=None):
     """
     Calculate statistics about conversation response time (time between receiving a message and sending a response).
     For each conversation, calculate time of response - time of user message.
@@ -581,6 +588,8 @@ def get_conversation_time_stats(days=30):
             for line in file:
                 try:
                     chat_data = json.loads(line.strip())
+                    if user_id is not None and str(chat_data.get("user_id")) != str(user_id):
+                        continue
                     timestamp = chat_data.get("timestamp", "")
 
                     logger.debug(f"Processing conversation with timestamp: {timestamp}")

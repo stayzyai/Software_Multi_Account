@@ -19,7 +19,9 @@ async def get_response_quality(days: int = 30, db: Session = Depends(get_db), to
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        return get_average_response_quality(days)
+        is_admin = str(user.role).lower() == "admin"
+        return get_average_response_quality(days, None if is_admin else user_id)
+        # return get_average_response_quality(days, user_id)
 
     except Exception as e:
         logging.error(f"Error at issue detection {e}")
@@ -34,7 +36,9 @@ async def get_message_count(days: int = 30, db: Session = Depends(get_db), token
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        return get_message_stats(days)
+        is_admin = user.role.value.lower() == "admin"
+        total_stats = get_message_stats(days, None if is_admin else user_id)
+        return total_stats
 
     except Exception as e:
         logging.error(f"Error at issue detection {e}")
@@ -71,7 +75,8 @@ async def get_conversation_time(days: int = 30, db: Session = Depends(get_db), t
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        return get_conversation_time_stats(days)
+        is_admin = str(user.role).lower() == "admin"
+        return get_conversation_time_stats(days, None if is_admin else user_id)
     except Exception as e:
         logging.error(f"Error at conversation-time {e}")
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")

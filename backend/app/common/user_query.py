@@ -7,6 +7,8 @@ from app.schemas.admin import UserUpdateSchema
 from datetime import datetime, timedelta
 from sqlalchemy import func
 from sqlalchemy import and_
+from app.common.hostaway_setup import hostaway_get_request
+import json
 
 def update_user_details(current_user: User, user_update: UserUpdate, db: Session):
     try:
@@ -135,3 +137,65 @@ def get_user_id_by_email(email: str, db: Session):
             status_code=500,
             detail=f"An error occurred while fetching user id: {str(e)}"
         )
+
+def calculate_percentage_change(old, new):
+    if old == 0 and new == 0:
+        return 0, False
+    if old == 0:
+        return 100, True
+    change = ((new - old) / old) * 100
+    return round(change, 2), new > old
+
+
+def get_all_tasks(all_accounts):
+    total_tasks = 0
+    previous_count = 0
+    recent_count = 0
+
+    try:
+        for account in all_accounts:
+            token = account.hostaway_token
+            user_id = account.user_id
+            tasks = []
+            try:
+                response = hostaway_get_request(token, endpoint="tasks")
+                data = json.loads(response)
+                if data['status'] == 'success':
+                    tasks = data.get("result", [])
+                total_tasks += len(tasks)
+
+                now = datetime.now()
+                cutoff = now - timedelta(days=30)
+                mid_point = cutoff + timedelta(days=15)
+
+                for task in tasks:
+                    task_time = task.get("canStartFrom", None)
+                    if not task_time:
+                        continue
+                    try:
+                        task_date = datetime.strptime(task_time, "%Y-%m-%d %H:%M:%S")
+                    except ValueError:
+                        print(f"Invalid datetime format: {task_time}")
+                        continue
+
+                    if cutoff <= task_date < mid_point:
+                        previous_count += 1
+                    elif task_date >= mid_point:
+                        recent_count += 1
+
+            except Exception as e:
+                print(f"Error fetching tasks for user {user_id}: {e}")
+                continue
+
+        percentage_change, is_increase = calculate_percentage_change(previous_count, recent_count)
+
+        return {
+            "total_tasks": total_tasks,
+            "previous_tasks": previous_count,
+            "recent_tasks": recent_count,
+            "is_increase": is_increase,
+            "percentage_change": f"{round(percentage_change, 1)}%" if percentage_change != "N/A" else "N/A"
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error calculating task stats: {str(e)}")

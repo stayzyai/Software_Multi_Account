@@ -13,41 +13,46 @@ import {
 import StatCard from "../../common/statcard/StatCard";
 import Pagination from "../../ui/pagination";
 import Shimmer from "../../common/shimmer/userShimmer";
-import api from "@/api/api";
+import { fetchMessageStats } from "../../../helpers/statHelper";
+import {
+  getUserData,
+  getTicketStat,
+  getUserStat,
+} from "../../../helpers/adminStat";
 
 const Home = ({ setOpenModal }) => {
   const [userData, setUserData] = useState(null);
   const [userError, setUserError] = useState(null);
   const [userLoading, setUserLoading] = useState(true);
-  const [statsData, setStatsData] = useState(null);
+  const [ticketStatsData, setTicketStatsData] = useState(null);
+  const [automatedMessages, setAutomatedMessage] = useState(null);
+  const [userStat, setUserStat] = useState(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
 
   const fetchUserData = useCallback(async () => {
     setUserLoading(true);
-    try {
-      const response = await api.get(
-        `/user/all-users?page=${currentPage}&page_size=${pageSize}`
-      );
+    const response = await getUserData(currentPage, pageSize);
+    if (response.status == 200) {
       setUserData(response.data);
-    } catch (error) {
-      setUserError(error.message);
-    } finally {
       setUserLoading(false);
+      return;
     }
+    setUserError(error.message);
   }, [currentPage, pageSize]);
 
   const fetchStatsData = async () => {
     setStatsLoading(true);
-    try {
-      const response = await api.get("/admin/get-statistics");
-      setStatsData(response.data);
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    } finally {
-      setStatsLoading(false);
+    const response = await getTicketStat();
+    if (response.status == 200) {
+      setTicketStatsData(response?.data.task_status);
     }
+    const messageResponse = await fetchMessageStats();
+    setAutomatedMessage(messageResponse);
+    setStatsLoading(false);
+    const userResponse = await getUserStat();
+      setUserStat(userResponse);
   };
 
   useEffect(() => {
@@ -71,24 +76,32 @@ const Home = ({ setOpenModal }) => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               {statsLoading ? (
                 <div>Loading statistics...</div>
-              ) : statsData ? (
+              ) : ticketStatsData ? (
                 <>
                   <StatCard
                     title="Total Automated Messages"
                     icon={
                       <BarChart className="h-4 w-4 text-muted-foreground" />
                     }
-                    stats={statsData.DashboardStats.automatedMessages}
+                    stats={{
+                      current_count: automatedMessages?.total_messages,
+                      is_increase: automatedMessages?.is_increase,
+                      percentage_change: automatedMessages?.percentage_change,
+                    }}
                   />
                   <StatCard
                     title="Total Users"
                     icon={<Users className="h-4 w-4 text-muted-foreground" />}
-                    stats={statsData.DashboardStats.users}
+                    stats={{current_count : userStat?.current_count, is_increase: userStat?.is_increase, percentage_change: userStat?.percentage_change }}
                   />
                   <StatCard
                     title="Total Tickets Generated"
                     icon={<Ticket className="h-4 w-4 text-muted-foreground" />}
-                    stats={statsData.DashboardStats.tickets}
+                    stats={{
+                      current_count: ticketStatsData?.total_tasks,
+                      is_increase: ticketStatsData?.is_increase,
+                      percentage_change: ticketStatsData?.percentage_change,
+                    }}
                   />
                 </>
               ) : (
