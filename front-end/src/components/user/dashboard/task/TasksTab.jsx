@@ -56,17 +56,15 @@ const TasksTab = () => {
     fetchData();
   }, []);
 
-  const columns = ["Issue", "Address", "Urgency", "Assigned", "Date"];
-
   return (
     <>
       <div className="pt-[74px]">
         <Header title={"Tasks"} />
         {!loading ? (
           <>
-            <Tasks columns={columns} tasks={formatedTask} />
+            <Tasks tasks={formatedTask} />
             {showCompeltedTask && (
-              <Tasks columns={columns} tasks={completedTask} />
+              <Tasks tasks={completedTask} />
             )}
             <div className="flex text-base w-full justify-center py-4 cursor-pointer">
               <button

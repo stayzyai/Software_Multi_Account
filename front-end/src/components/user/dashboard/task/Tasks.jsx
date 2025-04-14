@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 
-const Tasks = ({ columns, tasks }) => {
+const Tasks = ({ tasks }) => {
   const navigate = useNavigate();
   const [urgencyFilter, setUrgencyFilter] = useState("All");
   const [assignedFilter, setAssignedFilter] = useState("All");
@@ -82,7 +82,7 @@ const Tasks = ({ columns, tasks }) => {
                   <td className="text-center px-2 w-1/5">
                     <span>{task?.title}</span>
                   </td>
-                  <td className="text-center px-3 w-1/5 ">{task?.address}</td>
+                  <td className="text-center px-3 w-1/5 py-2">{task?.address}</td>
                   <td className="text-center w-1/6  ">
                     <span className={`px-3 py-1 rounded-3xl ${task.urgency === "Normal" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"}`}>
                       {task.urgency}

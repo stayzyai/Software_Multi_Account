@@ -15,14 +15,14 @@ import { getConversations } from "../../../../helpers/Message"
 import { setConversations } from "../../../../store/conversationSlice"
 import { useNavigate } from "react-router-dom";
 import AddTask from "../Messages/CreateIssue";
+import { Pencil } from "lucide-react";
 
-const TaskDetail = ({ setOpenTaskChat, openTaskChat }) => {
+const TaskDetail = ({ setOpenTaskChat, openTaskChat, fetchData }) => {
   const dispatch = useDispatch();
   const [task, setTask] = useState([]);
   const [loading, setLoading] = useState(true);
   const [openEdit, setOpenEdit] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
-  const [createTask, setCreateTask] = useState(false)
   const listings = useSelector((state) => state.listings.listings);
   const tasks = useSelector((state) => state.tasks.tasks);
   const users = useSelector((state) => state.hostawayUser.users);
@@ -50,13 +50,17 @@ const TaskDetail = ({ setOpenTaskChat, openTaskChat }) => {
     return data;
   };
 
+  const fetchedData = async () => {
+    setLoading(true);
+    const data = await fetchDataIfEmpty();
+    setTask(data);
+    setLoading(false);
+    console.log
+    setSelectedTask(data);
+    fetchData()
+  };
+
   useEffect(() => {
-    const fetchedData = async () => {
-      setLoading(true);
-      const data = await fetchDataIfEmpty();
-      setTask(data);
-      setLoading(false);
-    };
     fetchedData();
   }, [taskId]);
 
@@ -94,13 +98,13 @@ const TaskDetail = ({ setOpenTaskChat, openTaskChat }) => {
         </ul>
         <div>
           <div>
-            <button className={`px-3 py-1 bg-green-800 text-white rounded-md hover:bg-green-700 outline-none ${openEdit ? "hidden" : ""}`} onClick={() => handleOpen(task)}>Edit</button>
+            <button className={`p-1 bg-green-700 text-white rounded-lg hover:bg-green-600 outline-none ${openEdit ? "hidden" : ""}`} onClick={() => handleOpen(task)}><Pencil/></button>
             {openEdit && <AddTask
-            setCreateTask={setCreateTask}
             editedData={selectedTask}
             tasks={tasks}
             setSelectedTask={setSelectedTask}
             setOpenEdit={setOpenEdit}
+            fetchedTasks={fetchedData}
             />}
           </div>
         </div>

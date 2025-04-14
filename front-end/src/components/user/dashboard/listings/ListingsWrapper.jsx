@@ -67,7 +67,6 @@ const ListingsWraper = () => {
   return properties?.length !== 0 ? (
     <ListingDetails
       openListingName={openListingName}
-      // listingId={listingId}
       properties={properties}
       openListingDetails={openListingDetails}
       setOpenListingDetails={setOpenListingDetails}

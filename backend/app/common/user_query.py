@@ -95,32 +95,6 @@ def get_user_statics(db: Session):
             detail=f"An error occurred while fetching user statics: {str(e)}"
         )
 
-def get_ticket_statics(db: Session):
-    try:
-        return {
-        "current_count": 786,
-        "percentage_change": 12,
-        "is_increase": True,
-    }
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"An error occurred while fetching ticket statics: {str(e)}"
-        )
-
-def get_automated_message_statics(db: Session):
-    try:
-        return {
-        "current_count": 786,
-        "percentage_change": 12,
-        "is_increase": False,
-        }
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"An error occurred while fetching message statics: {str(e)}"
-        )
-
 def get_user_id_by_email(email: str, db: Session):
     try:
         user = db.query(User).filter(User.email == email).first()

@@ -5,7 +5,7 @@ from app.common.auth import get_token, decode_access_token
 from app.models.user import User, HostawayAccount
 from app.schemas.user import Role
 from app.schemas.admin import UserUpdateSchema
-from app.common.user_query import admin_update_user, get_user_statics, get_automated_message_statics, get_ticket_statics, get_all_tasks
+from app.common.user_query import admin_update_user, get_user_statics, get_all_tasks
 from app.schemas.user import UserDelete
 import logging
 
@@ -97,8 +97,6 @@ def get_statistics(db: Session = Depends(get_db),token: str = Depends(get_token)
                 detail="You must be an admin to update user"
             )
         user_statics = get_user_statics(db)
-        # ticket_statics = get_ticket_statics(db)
-        # message_statics = get_automated_message_statics(db)
 
         return {"user_statics" : user_statics }
 

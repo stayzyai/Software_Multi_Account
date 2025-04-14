@@ -94,7 +94,6 @@ const getNonCompletedTasks = (tasks, listings, users) => {
         (listing) => listing.id === task.listingMapId
       );
       const user = users?.find((item) => item.id === task?.assigneeUserId);
-
       return {
         id: task.id,
         title: task?.title,
@@ -165,17 +164,17 @@ const formatedTaskDetails = async (
   );
 
   return {
-    id: task.id,
-    title: task.title,
-    status: task.status === "inProgress" ? "In Progress" : task.status,
+    id: task?.id,
+    title: task?.title,
+    status: task?.status === "inProgress" ? "In Progress" : task.status,
     startTime: formatDate(date),
-    priority: task.priority || "Normal",
+    priority: task?.priority || "Normal",
     listingName: listing ? listing.name : "Unknown Listing",
-    listingAddress: listing.address,
-    reservationId: task.reservationId,
-    description: task.description,
-    assignedName: user ? user.firstName : "Unassigned",
-    assigned: task && task.assigneeUserId ? task.assigneeUserId : user && user.firstName,
+    listingAddress: listing?.address,
+    reservationId: task?.reservationId,
+    description: task?.description,
+    assignedName: user ? user?.firstName : "Unassigned",
+    assigned: task && task?.assigneeUserId ? task?.assigneeUserId : user && user?.firstName,
     chatId: conversation?.id,
   };
 };

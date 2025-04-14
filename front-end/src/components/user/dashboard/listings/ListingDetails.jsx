@@ -70,7 +70,6 @@ const ListingDetails = ({
         title={"Listings"}
         openListingDetails={openListingDetails}
         openListingName={openListingName}
-        // setOpenListingDetails={setOpenListingDetails}
         setOpenListingDetails={setOpenListingDetails}
       />
       <div className="flex pt-[54px]">

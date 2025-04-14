@@ -81,11 +81,12 @@ const AddTask = ({
       toast.success(
         editedData ? "Task updated successfully." : "Task created successfully."
       );
+      await updateTasks();
       setLoading(false);
-      updateTasks();
-      setCreateTask(false);
+      setCreateTask && setCreateTask(false);
       setSelectedTask(null);
-      fetchedTasks();
+      setOpenEdit && setOpenEdit(false)
+      await fetchedTasks();
       return;
     }
     toast.error("An error occurred while creating task. Please try again.");
@@ -170,19 +171,19 @@ const AddTask = ({
         </select>
       </div>
       <div className={`flex justify-between ${tasks && "text-md gap-5"}`}>
-        <button
+        <button disabled={loading}
           onClick={() => {
-            setCreateTask(false);
-            setOpenEdit(false);
+            setCreateTask && setCreateTask(false);
+            setOpenEdit && setOpenEdit(false);
             setSelectedTask(null);
           }}
-          className="w-24 p-1 border border-gray-300 bg-red-700 hover:bg-red-600 text-white rounded-md"
+          className="w-20 p-1 border border-gray-300 bg-red-700 hover:bg-red-600 text-white rounded-md text-base"
         >
           Cancel
         </button>
-        <button
+        <button disabled={loading}
           onClick={handleSave}
-          className="w-24 p-1 bg-green-800 hover:bg-green-700 text-white rounded-md"
+          className="w-20 p-1 bg-green-800 hover:bg-green-700 text-white rounded-md text-base"
         >
           {loading ? "Saving..." : editedData ? "Update" : "Save"}
         </button>

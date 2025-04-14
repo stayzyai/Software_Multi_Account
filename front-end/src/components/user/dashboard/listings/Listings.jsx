@@ -50,10 +50,6 @@ const Listings = () => {
     getListings();
   }, []);
 
-  // useEffect(() => {
-  //   setProperties(formattedListing(listings, reservation, listingStatus));
-  // }, [reservation, listings]);
-
   return (
     <>
       {!loading ? <Properties properties={properties} /> : <ListingShimmer />}

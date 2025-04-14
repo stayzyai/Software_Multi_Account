@@ -4,9 +4,8 @@ import { useNavigate } from "react-router-dom";
 import TaskDetail from "./TaskDetails";
 import { useState } from "react";
 
-const TaskInformation = ({ taskInfo, taskList }) => {
+const TaskInformation = ({ taskInfo, taskList, fetchData }) => {
   const [openTaskChat, setOpenTaskChat] = useState(false);
-  const [isChatSection, setChatSection] = useState(false);
   const navigate = useNavigate();
 
   return (
@@ -78,8 +77,7 @@ const TaskInformation = ({ taskInfo, taskList }) => {
             <TaskDetail
               setOpenTaskChat={setOpenTaskChat}
               openTaskChat={openTaskChat}
-              isChatSection={isChatSection}
-              setChatSection={setChatSection}
+              fetchData={fetchData}
             />
           </div>
         </div>

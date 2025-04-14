@@ -35,7 +35,6 @@ const TaskDetailsWrapper = () => {
 
     const allTask = getAllTask(taskData, listingData, userData);
     const task = allTask?.filter((item) => item.id == taskId);
-
     setTaskInfo(task);
     setTaskList(allTask);
   };
@@ -44,8 +43,17 @@ const TaskDetailsWrapper = () => {
     fetchData();
   }, [taskId]);
 
+  useEffect(() => {
+    if (tasks.length && listings.length && users.length) {
+      const allTask = getAllTask(tasks, listings, users);
+      const task = allTask?.filter((item) => item.id == taskId);
+      setTaskInfo(task);
+      setTaskList(allTask);
+    }
+  }, [tasks, listings, users]);
+
   return taskInfo?.length !== 0 && taskList.length !== 0 ? (
-    <TaskInformation taskInfo={taskInfo} taskList={taskList} taskId={taskId} />
+    <TaskInformation taskInfo={taskInfo} taskList={taskList} taskId={taskId} fetchData={fetchData} />
   ) : (
     <TaskDetailsShimmer />
   );
