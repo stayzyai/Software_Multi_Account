@@ -20,6 +20,11 @@ const useAISuggestion = (setInput, chatInfo, amenity, tasks, setIsAISuggestion) 
     const listing = listings?.find((item) => item.id === listingMapId);
     const listingsName = listing?.name;
     const { systemPrompt, lastUserMessage } = formatedMessages(messages, listing, amenity);
+    if(lastUserMessage === undefined) {
+      toast.info("A response can only be generated after the guest has sent at least one message.");
+      setIsAISuggestion(false);
+      return;
+    }
     const payload = { prompt: systemPrompt, messsages: lastUserMessage, listingMapId: listingMapId, listingsName: listingsName };
     const { response, taskId } = await openAISuggestion(
       payload,
