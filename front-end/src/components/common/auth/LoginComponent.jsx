@@ -92,11 +92,11 @@ export function LoginComponent({ role = "user", redirectPath = "/dashboard" }) {
                 value={password}
                 onChange={handleInputChange(setPassword)}
               />
-              <div className="mt-2 text-right">
+              {role === "user" && <div className="mt-2 text-right">
                 <Link to="/user/forgot-password" className="text-blue-500 hover:underline text-sm">
                   Forgot Password?
                 </Link>
-              </div>
+              </div>}
             </div>
             <Button className="w-full bg-green-800 hover:bg-green-700">
               {loading ? "Logging in..." : "Log in"}
