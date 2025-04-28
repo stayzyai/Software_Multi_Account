@@ -42,7 +42,7 @@ useEffect(()=> {
       setLoading(false)
     };
     getAllMessages();
-  },[chatInfo])
+  },[chat_id])
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

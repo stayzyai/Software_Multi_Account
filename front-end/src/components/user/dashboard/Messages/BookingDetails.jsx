@@ -20,7 +20,7 @@ const BookingDetails = ({
 
   const isChatInList = useCallback((chat_list, chatId) => {
     return chat_list.some((chat) => chat.chat_id === chatId);
-    }, []);
+  }, []);
 
   const Switch = ({ checked, handleSwitch }) => (
     <label className="inline-flex items-center cursor-pointer">
@@ -34,7 +34,6 @@ const BookingDetails = ({
     </label>
   );
 
-
   const handleCheckOut = async () => {
     const chatId = chatInfo[0]["id"];
     const listingId = chatInfo[0]["listingMapId"];
@@ -44,7 +43,7 @@ const BookingDetails = ({
       setUser({ firstname, lastname, email, role, ai_enable, chat_list })
     );
     const chatExists = isChatInList(chat_list, chatId, listingId);
-    if(ai_enable){
+    if (ai_enable) {
       setIsCheckoutModalOpen(false);
       if (!chatExists) {
         toast.info("Disabled AI for this chat");
@@ -113,7 +112,11 @@ const BookingDetails = ({
             <p className="text-gray-500 mb-3">{item.label}</p>
             {item.label === "AI" ? (
               <Switch
-                checked={isChatInList(chatAIenabledList, chatInfo[0]["id"], chatInfo[0]["listingMapId"])}
+                checked={isChatInList(
+                  chatAIenabledList,
+                  chatInfo[0]["id"],
+                  chatInfo[0]["listingMapId"]
+                )}
                 handleSwitch={handleCheckOut}
               />
             ) : (
@@ -122,6 +125,34 @@ const BookingDetails = ({
           </div>
         ))}
       </div>
+      <p className="text-gray-500 ml-4 mt-10">Sentiment</p>
+      {chatInfo && chatInfo.length > 0 ? (
+        chatInfo[0]["icon"] && chatInfo[0]["summary"] ? (
+          <div>
+            <img
+              src={chatInfo[0]["icon"]}
+              width={30}
+              height={30}
+              alt="sentiment emoji"
+              className="text-xs ml-4 my-1"
+            />
+            <p className="text-md text-wrap ml-4 mt-1">
+              {chatInfo[0]["summary"] || "No summary available"}
+            </p>
+          </div>
+        ) : (
+          <div>
+            <p className="m-4 bg-gray-200 font-semibold border-2 w-10 h-10 justify-center flex items-center rounded-full p-1"></p>
+            <p className="text-md text-wrap ml-4 mt-1">No summary available</p>
+          </div>
+        )
+      ) : (
+        <div className="animate-pulse space-y-2 pt-2 ml-4">
+          <div className="h-11 w-11 bg-gray-300 rounded-full" />
+          <div className="h-7 w-11/12 bg-gray-300 px-4 rounded" />
+        </div>
+      )}
+
       <CheckoutModal
         isOpen={isCheckoutModalOpen}
         isConfirm={isConfirm}

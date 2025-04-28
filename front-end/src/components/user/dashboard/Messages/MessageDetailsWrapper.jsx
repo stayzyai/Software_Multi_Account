@@ -8,7 +8,10 @@ import {
   getConversationsWithResources,
   formattedNewMessage,
   sendMessages,
-  getAmenity,
+  getAllconversation,
+  formatMessages,
+  getSentiment,
+  assignSentiment,
 } from "../../../../helpers/Message";
 import { useNavigate } from "react-router-dom";
 import ChatShimmer from "../../../common/shimmer/ChatShimmer";
@@ -63,14 +66,58 @@ const MessageDetailsWrapper = () => {
     const simplifiedData = simplifiedResult(data);
     setFormatedConversation(simplifiedData);
     if (newMessage) {
-      const chatId = newMessage?.conversationId
+      const chatId = newMessage?.conversationId;
       const currentMessage = formattedNewMessage(newMessage);
       if (messageId == chatId) {
         setMessage((prevMessages) => [...prevMessages, currentMessage]);
       }
-      dispatch(setUnreadChat({ chatId: chatId}));
+      dispatch(setUnreadChat({ chatId: chatId }));
     }
     return simplifiedData;
+  };
+
+  const getSentimentSummary = async (messageId) => {
+    const response = await getAllconversation(messageId);
+    const guestMessages = formatMessages(response);
+    const sentimentSummary = await getSentiment(guestMessages);
+    
+    const cleanedResponse = sentimentSummary?.replace(/```json|```/g, "").trim();
+    if(!cleanedResponse){
+      setChatInfo((prevChatInfo) => {
+        const updatedChatInfo = prevChatInfo.map((chat) => {
+          if (chat.id == messageId) {
+            return { ...chat, summary:"", icon:"" };
+          }
+          return chat;
+        });
+        return updatedChatInfo;
+      });
+      return
+    }
+    let sentimentData;
+    sentimentData = JSON.parse(cleanedResponse);
+    if (sentimentData?.sentiment && sentimentData?.summary) {
+      const { icon, summary } = assignSentiment(sentimentData);
+      setChatInfo((prevChatInfo) => {
+        const updatedChatInfo = prevChatInfo.map((chat) => {
+          if (chat.id == messageId) {
+            return { ...chat, summary, icon };
+          }
+          return chat;
+        });
+        return updatedChatInfo;
+      });
+    } else {
+      setChatInfo((prevChatInfo) => {
+        const updatedChatInfo = prevChatInfo.map((chat) => {
+          if (chat.id == messageId) {
+            return { ...chat, summary, icon };
+          }
+          return chat;
+        });
+        return updatedChatInfo;
+      });
+    }
   };
 
   useEffect(() => {
@@ -108,6 +155,7 @@ const MessageDetailsWrapper = () => {
     if (messageId && conversation.length !== 0) {
       fetchChatInfo();
     }
+    getSentimentSummary(messageId);
   }, [messageId]);
 
   const handleClickMessages = (chatId, messages) => {

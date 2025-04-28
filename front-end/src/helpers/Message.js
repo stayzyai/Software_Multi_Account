@@ -23,6 +23,46 @@ const filteredResult = (result) =>
     })
     .reverse();
 
+const formatMessages = (messages) => {
+  const formattedMessages = messages?.map((msg) => ({
+    role: msg.isIncoming == 0 ? "assistant" : "guest",
+    content: msg.body,
+  }));
+  return formattedMessages;
+};
+
+const getSentiment = async (chatData) => {
+  try {
+    const payload = { chatData: chatData };
+    const response = await api.post(`/sentiment/get-sentiment`, payload);
+    if (response?.status == 200) {
+      return response?.data;
+    }
+    return null;
+  } catch (Error) {
+    console.log("Error at get sentiment: ", Error);
+  }
+};
+
+const assignSentiment = (sentimentData) => {
+  console.log("Sentiment data: ", sentimentData["sentiment"]);
+    const icons = {
+    "Angry": "/icons/Angry_Face.svg",
+    "Frowning": "/icons/Frowning_Face.svg",
+    "Grinning": "/icons/Grinning_Face.svg",
+    "Neutral": "/icons/Neutral_Face.svg",
+    "Slightly Smiling": "/icons/Slightly_Smiling_Face.svg",
+  };
+
+  const icon = icons[sentimentData["sentiment"]] || null;
+  const summary = sentimentData["summary"] || null;
+  if (!icon || !summary) {
+    return { icon: null, summary: null };
+  }
+
+  return { icon: icon, summary: summary };  // Return icon and summary as an object
+};
+
 const getAllconversation = async (chat_id) => {
   try {
     const response = await api.get(
@@ -529,4 +569,7 @@ export {
   formattedNewMessage,
   createTicket,
   updateTask,
+  formatMessages,
+  getSentiment,
+  assignSentiment
 };

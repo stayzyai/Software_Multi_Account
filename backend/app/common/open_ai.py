@@ -48,3 +48,16 @@ def gpt_taskCreation(prompt, max_tokens=300):
     except Exception as e:
         logging.error(f"Error in get_gpt_response: {e}")
         return None
+
+def sentiment_analysis_gpt_response(prompt, max_tokens=50):
+    try:
+        chat_completion = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens = max_tokens
+        )
+        response = chat_completion.choices[0].message.content
+        return response
+    except Exception as e:
+        logging.error(f"Error in get_gpt_response: {e}")
+        return None
