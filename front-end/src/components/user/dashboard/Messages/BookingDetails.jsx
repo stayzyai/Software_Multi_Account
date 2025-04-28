@@ -11,6 +11,7 @@ const BookingDetails = ({
   bookingDetails,
   setTimeDetails,
   chatInfo,
+  sentimentLoading
 }) => {
   const dispatch = useDispatch();
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
@@ -126,7 +127,7 @@ const BookingDetails = ({
         ))}
       </div>
       <p className="text-gray-500 ml-4 mt-10">Sentiment</p>
-      {chatInfo && chatInfo.length > 0 ? (
+      {!sentimentLoading ? (
         chatInfo[0]["icon"] && chatInfo[0]["summary"] ? (
           <div>
             <img

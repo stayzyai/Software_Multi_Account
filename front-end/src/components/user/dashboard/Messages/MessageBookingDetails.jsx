@@ -9,7 +9,7 @@ import BookingDetails from "./BookingDetails";
 import BookingIssue from "./BookingIssue";
 import { io } from "socket.io-client";
 
-const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
+const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo, sentimentLoading }) => {
   const [activeSession, setActiveSession] = useState("booking");
   const reservation = useSelector((state) => state.reservations.reservations);
   const [timeDetails, setTimeDetails] = useState([]);
@@ -133,6 +133,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo }) => {
             timeDetails={timeDetails}
             setTimeDetails={setTimeDetails}
             chatInfo={chatInfo}
+            sentimentLoading={sentimentLoading}
           />
         )}
         {activeSession == "issue" && <BookingIssue chatInfo={chatInfo} />}

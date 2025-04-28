@@ -25,6 +25,7 @@ const MessageDetails = ({
   input,
   messageLoader,
   handleSendMessage,
+  sentimentLoading,
 }) => {
   const conversation = useSelector((state) => state.conversation.conversations);
   const reservation = useSelector((state) => state.reservations.reservations);
@@ -144,6 +145,7 @@ const MessageDetails = ({
         openSidebarMessage={openSidebarMessage}
         chatInfo={chatInfo}
         messageLoader={messageLoader}
+        sentimentLoading={sentimentLoading}
       />
     </div>
   );

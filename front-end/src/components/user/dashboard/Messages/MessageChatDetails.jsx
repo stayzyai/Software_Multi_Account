@@ -14,6 +14,7 @@ const MessageChatDetails = ({
   openSidebarMessage,
   chatInfo,
   messageLoader,
+  sentimentLoading,
 }) => {
   return (
     <>
@@ -68,6 +69,7 @@ const MessageChatDetails = ({
             setOpenBooking={setOpenBooking}
             openBooking={openBooking}
             chatInfo={chatInfo}
+            sentimentLoading={sentimentLoading}
           />
         </div>
       </div>

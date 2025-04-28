@@ -33,6 +33,7 @@ const MessageDetailsWrapper = () => {
   const [messages, setMessage] = useState([]);
   const [input, setInput] = useState({});
   const [messageLoader, setMessagesLoader] = useState(false);
+  const [sentimentLoading, setLoading] = useState(false);
   const conversation = useSelector((state) => state.conversation.conversations);
   const users = useSelector((state) => state.hostawayUser.users);
   const tasks = useSelector((state) => state.tasks.tasks);
@@ -77,6 +78,7 @@ const MessageDetailsWrapper = () => {
   };
 
   const getSentimentSummary = async (messageId) => {
+    setLoading(true);
     const response = await getAllconversation(messageId);
     const guestMessages = formatMessages(response);
     const sentimentSummary = await getSentiment(guestMessages);
@@ -92,6 +94,7 @@ const MessageDetailsWrapper = () => {
         });
         return updatedChatInfo;
       });
+      setLoading(false);
       return
     }
     let sentimentData;
@@ -107,6 +110,7 @@ const MessageDetailsWrapper = () => {
         });
         return updatedChatInfo;
       });
+      setLoading(false);
     } else {
       setChatInfo((prevChatInfo) => {
         const updatedChatInfo = prevChatInfo.map((chat) => {
@@ -117,6 +121,7 @@ const MessageDetailsWrapper = () => {
         });
         return updatedChatInfo;
       });
+      setLoading(false);
     }
   };
 
@@ -163,6 +168,7 @@ const MessageDetailsWrapper = () => {
     setChatInfo(messages.filter((msg) => msg.id == chatId));
     navigate(`/user/chat/${chatId}`);
   };
+  console.log("sentimentLoading", sentimentLoading);
 
   return chatInfo?.length !== 0 && fromatedConversation.length !== 0 ? (
     <MessageDetails
@@ -175,6 +181,7 @@ const MessageDetailsWrapper = () => {
       input={input}
       messageLoader={messageLoader}
       handleSendMessage={handleSendMessage}
+      sentimentLoading={sentimentLoading}
     />
   ) : (
     <ChatShimmer />
