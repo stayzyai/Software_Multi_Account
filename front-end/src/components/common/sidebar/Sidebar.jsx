@@ -2,6 +2,8 @@ import { Home, Users, Settings, X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { setIconToggle, setOpenModal } from "../../../store/sidebarSlice";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import ReportIssuePopup from "../../user/dashboard/common/ReportIssue";
 
 const navigationConfig = {
   admin: [
@@ -15,7 +17,6 @@ const navigationConfig = {
     { id: "listings", label: "Listings", icon: "/icons/Outline.svg", route: "/user/listings" },
     { id: "tasks", label: "Tasks", icon: "/icons/task.svg", route: "/user/tasks" },
     { id: "upsell", label: "Upsells", icon: "/icons/upsell.svg", route: "/user/upsell" },
-    // { id: "staff", label: "Staff", icon: "/icons/people.svg", route: "/user/staff" },
     { id: "integrations", label: "Integrations", icon: "/icons/plug-01.svg", route: "/user/integrations",},
     { id: "settings", label: "Settings", icon: Settings, route: "/user/settings" },
   ],
@@ -23,7 +24,7 @@ const navigationConfig = {
 
 const Sidebar = ({ role = "admin" }) => {
   const { iconToggle, isOpen } = useSelector((state) => state.sidebar);
-  // const [activeTab, setActiveTab] = useState("home");
+  const [showPopup, setShowPopup] = useState(false)
   const navItems = navigationConfig[role];
   const dispatch = useDispatch()
   const navigate = useNavigate();
@@ -102,12 +103,13 @@ const Sidebar = ({ role = "admin" }) => {
           </div>
         </nav>
         {role === "user" && (
-          <div
-            className={`flex items-center justify-center bg-[#E8E8E8] rounded-full w-12 h-12 absolute bottom-10 ml-6`}
+          <div onClick={() => setShowPopup(true)}
+            className={`flex items-center justify-center bg-[#E8E8E8] rounded-full w-12 h-12 absolute bottom-10 ml-6 cursor-pointer`}
           >
             <img src="/icons/questions.svg" alt="Question Icon" />
           </div>
         )}
+        {showPopup && <ReportIssuePopup onClose={() => setShowPopup(false)} />}
     </aside>
   );
 };

@@ -48,7 +48,7 @@ const MessageDetails = ({
     dispatch(setListings(data));
   };
   useEffect(() => {
-    if (reservation?.length !== 0) {
+    if (reservation?.length == 0 || listings?.length == 0) {
       getListings();
     }
   }, []);

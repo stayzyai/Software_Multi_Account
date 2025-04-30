@@ -49,12 +49,14 @@ const MultipleSelectCheckmarks = ({ listings, onChange, value }) => {
           sx={{ height: 36, fontSize: "15px",  fontFamily: "DM Sans", fontWeight: 500 }}
           renderValue={getSelectedNames}
         >
+        <div className="max-h-80 scrollbar-hide">
           {listings?.map((item) => (
             <MenuItem key={item.id} value={item.id} >
               <Checkbox checked={selectedIds.includes(item.id)} sx={{ padding: 1.5 }} className="w-1 h-8" />
               <ListItemText primary={item.name} />
             </MenuItem>
           ))}
+        </div>
         </Select>
       </FormControl>
     </div>

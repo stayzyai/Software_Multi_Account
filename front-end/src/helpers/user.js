@@ -11,4 +11,16 @@ const getProfile = async () => {
   }
 };
 
-export { getProfile };
+const reportIssues = async (data) => {
+  try {
+    const response = await api.post("/admin/report-issue", data);
+    if (response?.status === 200 && response?.data) {
+      return response.data;
+    }
+  } catch (error) {
+    console.error("Error reporting issues:", error);
+    return null;
+  }
+};
+
+export { getProfile, reportIssues };

@@ -34,6 +34,7 @@ const MessageDetailsWrapper = () => {
   const [input, setInput] = useState({});
   const [messageLoader, setMessagesLoader] = useState(false);
   const [sentimentLoading, setLoading] = useState(false);
+  const [sentimentsummary, setSentimentSummary] = useState({});
   const conversation = useSelector((state) => state.conversation.conversations);
   const users = useSelector((state) => state.hostawayUser.users);
   const tasks = useSelector((state) => state.tasks.tasks);
@@ -79,12 +80,26 @@ const MessageDetailsWrapper = () => {
 
   const getSentimentSummary = async (messageId) => {
     setLoading(true);
+    if(sentimentsummary?.messageId == messageId){
+      const { icon, summary } = sentimentsummary;
+      setChatInfo((prevChatInfo) => {
+        const updatedChatInfo = prevChatInfo.map((chat) => {
+          if (chat.id == messageId) {
+            return { ...chat, summary, icon};
+          }
+          return chat;
+        });
+        return updatedChatInfo;
+      });
+      setLoading(false);
+      return
+    }
     const response = await getAllconversation(messageId);
     const guestMessages = formatMessages(response);
     const sentimentSummary = await getSentiment(guestMessages);
-
     const cleanedResponse = sentimentSummary?.replace(/```json|```/g, "").trim();
     if(!cleanedResponse){
+      setSentimentSummary({summary:"", icon:"", messageId: messageId})
       setChatInfo((prevChatInfo) => {
         const updatedChatInfo = prevChatInfo.map((chat) => {
           if (chat.id == messageId) {
@@ -111,6 +126,7 @@ const MessageDetailsWrapper = () => {
         });
         return updatedChatInfo;
       });
+      setSentimentSummary({summary, icon, messageId: messageId})
     }
     setLoading(false);
   };
@@ -130,6 +146,7 @@ const MessageDetailsWrapper = () => {
       if (fromatedConversation.length == 0 && chatInfo.length == 0) {
         const data = await getConversationData();
         setChatInfo(data?.filter((msg) => msg.id == messageId));
+        getSentimentSummary(messageId);
       }
       const userData = users?.length === 0 ? await getHostawayUser() : users;
       if (users?.length === 0) dispatch(setHostawayUsers(userData));
@@ -146,11 +163,11 @@ const MessageDetailsWrapper = () => {
     const fetchChatInfo = () => {
       const data = simplifiedResult(conversation);
       setChatInfo(data?.filter((msg) => msg.id == messageId));
+      getSentimentSummary(messageId);
     };
     if (messageId && conversation?.length !== 0) {
       fetchChatInfo();
     }
-    getSentimentSummary(messageId);
   }, [messageId]);
 
   const handleClickMessages = (chatId, messages) => {

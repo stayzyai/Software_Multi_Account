@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+import os
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.database.db import get_db
 from app.common.auth import get_token, decode_access_token
@@ -8,6 +9,9 @@ from app.schemas.admin import UserUpdateSchema
 from app.common.user_query import admin_update_user, get_user_statics, get_all_tasks
 from app.schemas.user import UserDelete
 import logging
+from app.common.send_email import send_email
+from dotenv import load_dotenv
+load_dotenv()
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 
@@ -142,3 +146,20 @@ def get_all_tickets(db: Session = Depends(get_db), token: str = Depends(get_toke
             status_code=500,
             detail=f"Error updating user: {str(e)}"
         )
+
+@router.post("/report-issue")
+async def report_issue(report: Request, db: Session = Depends(get_db),token: str = Depends(get_token)):
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        report_data = await report.json()
+        subject = report_data.get("subject", "No Subject")
+        message = report_data.get("message", "No Message")
+        email=os.getenv("REPORT_EMAIL")
+        return send_email(email, subject, message)
+    except HTTPException as exc:
+        logging.error(f"HTTPException: {exc.detail}")
+        raise HTTPException(status_code=500, detail="Something went wrong")
