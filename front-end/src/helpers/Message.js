@@ -45,7 +45,6 @@ const getSentiment = async (chatData) => {
 };
 
 const assignSentiment = (sentimentData) => {
-  console.log("Sentiment data: ", sentimentData["sentiment"]);
     const icons = {
     "Angry": "/icons/Angry_Face.svg",
     "Frowning": "/icons/Frowning_Face.svg",

@@ -82,7 +82,7 @@ const MessageDetailsWrapper = () => {
     const response = await getAllconversation(messageId);
     const guestMessages = formatMessages(response);
     const sentimentSummary = await getSentiment(guestMessages);
-    
+
     const cleanedResponse = sentimentSummary?.replace(/```json|```/g, "").trim();
     if(!cleanedResponse){
       setChatInfo((prevChatInfo) => {
@@ -99,6 +99,7 @@ const MessageDetailsWrapper = () => {
     }
     let sentimentData;
     sentimentData = JSON.parse(cleanedResponse);
+
     if (sentimentData?.sentiment && sentimentData?.summary) {
       const { icon, summary } = assignSentiment(sentimentData);
       setChatInfo((prevChatInfo) => {
@@ -110,19 +111,8 @@ const MessageDetailsWrapper = () => {
         });
         return updatedChatInfo;
       });
-      setLoading(false);
-    } else {
-      setChatInfo((prevChatInfo) => {
-        const updatedChatInfo = prevChatInfo.map((chat) => {
-          if (chat.id == messageId) {
-            return { ...chat, summary, icon };
-          }
-          return chat;
-        });
-        return updatedChatInfo;
-      });
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -157,7 +147,7 @@ const MessageDetailsWrapper = () => {
       const data = simplifiedResult(conversation);
       setChatInfo(data?.filter((msg) => msg.id == messageId));
     };
-    if (messageId && conversation.length !== 0) {
+    if (messageId && conversation?.length !== 0) {
       fetchChatInfo();
     }
     getSentimentSummary(messageId);
@@ -168,7 +158,6 @@ const MessageDetailsWrapper = () => {
     setChatInfo(messages.filter((msg) => msg.id == chatId));
     navigate(`/user/chat/${chatId}`);
   };
-  console.log("sentimentLoading", sentimentLoading);
 
   return chatInfo?.length !== 0 && fromatedConversation.length !== 0 ? (
     <MessageDetails
