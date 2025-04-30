@@ -16,9 +16,12 @@ import ListingsWraper from "../components/user/dashboard/listings/ListingsWrappe
 import TasksTab from "../components/user/dashboard/task/TasksTab";
 import TaskDetailsWrapper from "../components/user/dashboard/task/TaskDetailsWrapper"
 import UpsellTab from "../components/user/dashboard/upsell/UpsellTab"
+import ReportIssuePopup from "../components/user/dashboard/common/ReportIssue";
+
 
 export function UserDashboardComponent({ role = "user" }) {
   const [isOpen, setOpenModal] = useState(false);
+  const [showPopup, setShowPopup] = useState(false)
   const location = useLocation();
 
   useEffect(() => {
@@ -42,10 +45,11 @@ export function UserDashboardComponent({ role = "user" }) {
 
   return (
     <div className="flex h-screen bg-[#FCFDFC]">
-      <Sidebar role={role} />
+      <Sidebar role={role} setShowPopup={setShowPopup} />
       <main className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-x-hidden md:overflow-auto md:overflow-x-auto">
           <HostawayConnectModal />
+          {showPopup && <ReportIssuePopup onClose={() => setShowPopup(false)} />}
           <Routes>
             <Route path="dashboard" element={<HomePage role={role} />} />
             <Route path="messages" element={<MessageTab  />} />

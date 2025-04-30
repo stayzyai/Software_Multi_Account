@@ -24,7 +24,7 @@ const StatCard = ({ title, stats, selectedRange }) => {
               stats?.is_increase ? "text-green-500" : "text-red-500"
             }`} />
           )}
-          {Math.abs(parseFloat(stats?.percentage_change))} % {" "}
+          {Math.abs(parseFloat(stats?.percentage_change)).toFixed(2)} % {" "}
           {stats?.is_increase ? "increase" : "decrease"} from last {selectedRange ? selectedRange !== "Last 30 days" ? "week": "month": "month"}
         </p>
         {stats?.subtitle && (

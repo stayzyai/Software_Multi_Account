@@ -2,8 +2,6 @@ import { Home, Users, Settings, X } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { setIconToggle, setOpenModal } from "../../../store/sidebarSlice";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useState } from "react";
-import ReportIssuePopup from "../../user/dashboard/common/ReportIssue";
 
 const navigationConfig = {
   admin: [
@@ -22,9 +20,8 @@ const navigationConfig = {
   ],
 };
 
-const Sidebar = ({ role = "admin" }) => {
+const Sidebar = ({ role = "admin", setShowPopup }) => {
   const { iconToggle, isOpen } = useSelector((state) => state.sidebar);
-  const [showPopup, setShowPopup] = useState(false)
   const navItems = navigationConfig[role];
   const dispatch = useDispatch()
   const navigate = useNavigate();
@@ -109,7 +106,6 @@ const Sidebar = ({ role = "admin" }) => {
             <img src="/icons/questions.svg" alt="Question Icon" />
           </div>
         )}
-        {showPopup && <ReportIssuePopup onClose={() => setShowPopup(false)} />}
     </aside>
   );
 };
