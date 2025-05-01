@@ -165,6 +165,7 @@ def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_tok
 @router.post("/ai-suggestion")
 async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str = Depends(get_hostaway_key)):
     token_record = db.query(ChromeExtensionToken).filter(ChromeExtensionToken.key == key).first()
+    user_id = None
     if token_record is None:
         decode_token = decode_access_token(key)
         user_id = decode_token['sub']
@@ -913,11 +914,11 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                                 if checkout_date_obj:
                                                     nights_extended = (new_checkout_date_obj - checkout_date_obj).days
                                                     # Add success message with correct number of nights
-                                                    gap_info += f"\n🎉 GREAT NEWS! I've automatically extended your stay by {nights_extended} more nights until {new_checkout_formatted}.\n"
+                                                    gap_info += f"\n GREAT NEWS! I've automatically extended your stay by {nights_extended} more nights until {new_checkout_formatted}.\n"
                                                     gap_info += f"Your reservation has been updated to check out on {new_checkout_formatted}.\n"
                                                 else:
                                                     nights_extended = direct_extension['gap_days']
-                                                    gap_info += f"\n🎉 GREAT NEWS! I've automatically extended your stay by {nights_extended} more nights until {new_checkout_formatted}.\n"
+                                                    gap_info += f"\n GREAT NEWS! I've automatically extended your stay by {nights_extended} more nights until {new_checkout_formatted}.\n"
                                                     gap_info += f"Your reservation has been updated to check out on {new_checkout_formatted}.\n"
                                             else:
                                                 logging.warning(f"System reported success but verification failed")
