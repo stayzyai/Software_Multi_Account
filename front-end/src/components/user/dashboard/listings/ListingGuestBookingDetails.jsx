@@ -101,7 +101,7 @@ const ListingGuestBooking = ({ guestInfo, setGuestOpen }) => {
  
           <div className="flex gap-2 lg:text-xl text-md bg-white p-2 rounded-md">
             <p className="font-normal text-gray-700">Address:</p>
-            <p className="text-black">{guestInfo?.guestAddress || "N/A"}</p>
+            <p className="text-black">{guestInfo?.guestAddress || ""}</p>
           </div>
           {/* Guest Portal */}
           <div className="flex gap-2 lg:text-xl text-md bg-white p-2 rounded-md ">

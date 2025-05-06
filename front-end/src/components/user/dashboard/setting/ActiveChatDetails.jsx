@@ -1,6 +1,6 @@
 const ActiveChat = ({ activeAccount }) => {
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6 border border-gray-200 dark:border-gray-700 mb-10">
+    <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg md:p-6 p-2 border border-gray-200 dark:border-gray-700 mb-10">
       <h2 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
         Active Chats
       </h2>
@@ -9,7 +9,7 @@ const ActiveChat = ({ activeAccount }) => {
           {activeAccount.map((listing, idx) => (
             <div
               key={idx}
-              className="border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-white dark:bg-gray-900 shadow-sm"
+              className="border border-gray-200 dark:border-gray-700 rounded-lg md:p-6 p-2 bg-white dark:bg-gray-900 shadow-sm"
             >
               {/* Header */}
               <div className="flex justify-between items-center mb-4">
