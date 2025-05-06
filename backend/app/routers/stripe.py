@@ -1,7 +1,7 @@
 
 
 from fastapi import APIRouter, HTTPException, Depends, Request, Query
-from app.service.stripe_service import create_checkout_session
+from app.service.stripe_service import create_checkout_session, get_all_reservations, activate_ai_for_chats
 from app.database.db import get_db
 from sqlalchemy.orm import Session
 from app.common.auth import get_token, decode_access_token
@@ -14,7 +14,6 @@ from app.models.user import Subscription, ChatAIStatus, Listings
 from datetime import datetime, timedelta
 from app.database.db import get_db
 from app.common.user_query import get_user_id_by_email
-import json
 
 load_dotenv()
 
@@ -126,21 +125,23 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
             logging.info(f"Listing ID {listing.listing_id} set to active due to new subscription.")
 
             # Only create ChatAIStatus if it doesn't already exist for this chat_id
-            existing_chat_status = db.query(ChatAIStatus).filter(ChatAIStatus.chat_id == chat_id).first()
-            if not existing_chat_status:
-                logging.info("Creating new ChatAIStatus.")
-                chat_ai_status = ChatAIStatus(
-                    chat_id=chat_id,
-                    listing_id=listing.listing_id,
-                    ai_enabled=True,
-                    user_id=user_id,
-                    is_active=True
-                )
-                db.add(chat_ai_status)
-            else:
-                existing_chat_status.is_active = True
-                existing_chat_status.ai_enabled = True
-                logging.info("ChatAIStatus already exists. Skipping update to avoid deactivating previous ones.")
+            # existing_chat_status = db.query(ChatAIStatus).filter(ChatAIStatus.chat_id == chat_id).first()
+            chat_ids = get_all_reservations(email, listing_id, db)
+            saved_chat = activate_ai_for_chats(db, chat_ids, listing_id, user_id)
+            logging.info(f"AI enable for this chat: {saved_chat}")
+            # if not existing_chat_status:
+            #     logging.info("Creating new ChatAIStatus.")
+            #     chat_ai_status = ChatAIStatus(
+            #         chat_id=chat_id,
+            #         listing_id=listing.listing_id,
+            #         ai_enabled=True,
+            #         user_id=user_id,
+            #         is_active=True
+            #     )
+            #     db.add(chat_ai_status)
+            # else:
+            #     existing_chat_status.is_active = True
+            #     existing_chat_status.ai_enabled = True
 
             db.commit()
             logging.info("Stripe webhook processed successfully.")

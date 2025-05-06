@@ -16,6 +16,7 @@ import { setListings } from "../../../../store/listingSlice";
 import { setUnreadChat } from "../../../../store/notificationSlice";
 import MessageList from "./MessageList";
 import { getHostawayTask } from "../../../../helpers/TaskHelper";
+import TaskMultiSelect from "./TaskMultiSelect";
 
 const Messages = ({ handleClickMessages, title }) => {
   const [simplifiedConversation, setSimplifiedConversation] = useState([]);
@@ -25,6 +26,7 @@ const Messages = ({ handleClickMessages, title }) => {
   const [allListings, setAllListings] = useState([]);
   const [allTasks, setAllTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const dispatch = useDispatch();
   const conversation = useSelector((state) => state.conversation.conversations);
@@ -36,7 +38,7 @@ const Messages = ({ handleClickMessages, title }) => {
     const taskData = await getHostawayTask();
     dispatch(setListings(listingData));
     setAllListings(getListingsName(listingData));
-    setAllTasks(getTasksTitle(taskData));
+    setAllTasks(taskData);
   };
 
   const getConversationData = async (newMessage = null) => {
@@ -54,7 +56,7 @@ const Messages = ({ handleClickMessages, title }) => {
       transports: ["websocket"],
     });
     newSocket.on("connect", () => {
-      console.log("Connected to WebSocket server")
+      console.log("Connected to WebSocket server");
     });
     newSocket.on("received_message", (newMessage) => {
       console.log("New message received: ", newMessage);
@@ -80,7 +82,7 @@ const Messages = ({ handleClickMessages, title }) => {
       const simplifiedData = simplifiedResult(conversation);
       setSimplifiedConversation(simplifiedData);
       setAllListings(getListingsName(listings?.listings));
-      setAllTasks(getTasksTitle(tasks));
+      setAllTasks(tasks);
       setLoading(false);
       return;
     }
@@ -89,9 +91,9 @@ const Messages = ({ handleClickMessages, title }) => {
   }, []);
 
   useEffect(() => {
-    const data = filterMessages(simplifiedConversation, selectedFilters);
+    const data = filterMessages(simplifiedConversation, selectedFilters, selectedIds);
     setFilteredConversations(data);
-  }, [selectedFilters]);
+  }, [selectedFilters, selectedIds]);
 
   const handleDropdownClick = (label) => {
     setOpenDropdown(openDropdown === label ? null : label);
@@ -109,8 +111,8 @@ const Messages = ({ handleClickMessages, title }) => {
             <div className="flex flex-col gap-2 justify-between md:flex-row md:gap-0 p-5">
               <h2 className="text-lg font-semibold">Latest Messages</h2>
               <div className="flex gap-6 mr-4">
-                <div className="flex gap-4 text-[14px] cursor-pointer">
-                  {["Date", "Listing", "Task"].map((label, index) => (
+                <div className="flex items-center gap-4 text-[14px] cursor-pointer">
+                  {["Date", "Listing"].map((label, index) => (
                     <Dropdown
                       key={index}
                       label={label}
@@ -127,6 +129,10 @@ const Messages = ({ handleClickMessages, title }) => {
                       selectedValue={selectedFilters[label]}
                     />
                   ))}
+                  <TaskMultiSelect
+                    tasks={allTasks}
+                    setSelectedIds={setSelectedIds}
+                  />
                 </div>
               </div>
             </div>
@@ -136,6 +142,7 @@ const Messages = ({ handleClickMessages, title }) => {
               simplifiedConversation={simplifiedConversation}
               filteredConversations={filteredConversations}
               handleClickMessages={handleClickMessages}
+              selectedIds={selectedIds}
             />
           </div>
         </div>

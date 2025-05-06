@@ -1,22 +1,16 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File
 from sqlalchemy.orm import Session
-from app.schemas.user import UserUpdate, ChangePasswordRequest, UserProfile, ChatRequest
+from app.schemas.user import UserUpdate, ChangePasswordRequest, UserProfile, ChatRequest, Role
 from app.models.user import User, ChromeExtensionToken, Subscription, ChatAIStatus
 from app.service.chat_service import get_current_user, get_user_subscription, update_ai_status, get_active_ai_chats
-from app.models.user import User, ChromeExtensionToken, Subscription, HostawayAccount
+from app.models.user import ChromeExtensionToken, Subscription, HostawayAccount
 from app.database.db import get_db
 from app.common.auth import verify_password, get_password_hash, decode_access_token, get_token, get_hostaway_key
 from app.common.user_query import update_user_details
-from app.schemas.user import Role
 from app.schemas.admin import UserList, UsersDetailResponse, UserResponse
-from sqlalchemy import and_
-import requests
-import logging
 from app.common.chat_query import store_chat
 from app.common.chat_gpt_assistant import get_latest_model_id
 from dotenv import load_dotenv
-from typing import Optional
-import requests
 import logging
 from app.common.open_ai import get_gpt_response, nearby_spots_gpt_response
 import uuid
@@ -24,14 +18,15 @@ from sqlalchemy.exc import NoResultFound
 import os
 import httpx
 from app.common.chat_query import haversine_distance
-from datetime import datetime
-import threading
 from datetime import datetime, timedelta
+import threading
 import json
 import re
 from app.common.hostaway_setup import hostaway_put_request, hostaway_get_request
 from app.websocket import update_checkout_date
 import time
+from fastapi.responses import JSONResponse
+# from app.service.s3_service import upload_or_replace_image
 
 load_dotenv()
 
@@ -58,15 +53,14 @@ def update_user(user: UserUpdate, db: Session = Depends(get_db), token: str = De
         else:
             updated_details = update_user_details(existing_user, user, db)
         db.commit()
-        logging.error(f"************user updated********{updated_details}")
         return {"detail": {"message": "User updated successfully", "data": updated_details}}
 
     except HTTPException as exc:
-        logging.error(f"************Error at update user********{exc}")
+        logging.error(f"Error at update user {exc}")
         raise exc
 
     except Exception as e:
-        logging.error(f"************Error updating user********{str(e)}")
+        logging.error(f"*Error updating user** {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error updating user: {str(e)}")
@@ -94,10 +88,10 @@ def get_all_users(db: Session = Depends(get_db), token: str = Depends(get_token)
         return response
 
     except HTTPException as exc:
-        logging.error(f"*****An error occurred while retrieving users********{exc}")
+        logging.error(f" An error occurred while retrieving users {exc}")
         raise exc
     except Exception as e:
-        logging.error(f"*****An error occurred while retrieving users********{exc}")
+        logging.error(f" An error occurred while retrieving users {exc}")
         raise HTTPException(status_code=500, detail={"message": f"An error occurred while retrieving users: {str(e)}"})
 
 @router.put("/change-password")
@@ -112,7 +106,7 @@ def change_password(change_password_request: ChangePasswordRequest, db: Session 
 
         if db_user.role.value == Role.admin.value:
             user_details = db.query(User).filter(User.email == change_password_request.email).first()
-            logging.error(f"*****user not found********{db_user}")
+            logging.error(f" user not found {db_user}")
             if not user_details:
                 raise HTTPException(status_code=404, detail="User not found")
             if not verify_password(change_password_request.current_password, user_details.hashed_password):
@@ -121,7 +115,7 @@ def change_password(change_password_request: ChangePasswordRequest, db: Session 
                 raise HTTPException(status_code=401, detail={"message": "Current password matches the old password"})
             user_details.hashed_password = get_password_hash(change_password_request.new_password)
             db.commit()
-            logging.info(f"*****Password changed successfully********")
+            logging.info(f" Password changed successfully ")
             return {"details": {"message": "Password changed successfully",}}
         else:
             if not verify_password(change_password_request.current_password, db_user.hashed_password):
@@ -133,7 +127,7 @@ def change_password(change_password_request: ChangePasswordRequest, db: Session 
             return {"details": {"message": "Password changed successfully"}}
 
     except HTTPException as exc:
-        logging.error(f"*****Error at change password*****{exc}")
+        logging.error(f" Error at change password {exc}")
         raise exc
     except Exception as e:
         logging.error(f"An error occurred while changing the password: {str(e)}")
@@ -150,7 +144,7 @@ def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_tok
             raise HTTPException(status_code=404, detail={"message": "User not found"})
         subscribed_user = db.query(Subscription).filter(Subscription.user_id == user_id).first()
         is_premium_member = subscribed_user.is_active if subscribed_user else False
-        ai_enable_list = db.query(ChatAIStatus).filter(ChatAIStatus.user_id == user_id, ChatAIStatus.ai_enabled == True).all()
+        ai_enable_list = db.query(ChatAIStatus).filter(ChatAIStatus.user_id == user_id).all()
         return UserProfile(id=db_user.id, firstname=db_user.firstname, lastname=db_user.lastname, email=db_user.email, role=db_user.role,
             created_at=db_user.created_at, ai_enable=is_premium_member, chat_list=ai_enable_list)
 
@@ -161,6 +155,19 @@ def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_tok
         logging.error(f"An error occurred while retrieving user profile: {str(e)}")
         raise HTTPException(status_code=500, detail={"message": f"An error occurred while retrieving user profile: {str(e)}"})
 
+# @router.post("/upload-image/")
+# async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db), token: str = Depends(get_token)):
+#     try:
+#         decode_token = decode_access_token(token)
+#         user_id = decode_token['sub']
+#         db_user = db.query(User).filter(User.id == user_id).first()
+#         if not db_user:
+#             raise HTTPException(status_code=404, detail={"message": "User not found"})
+#         # Upload image to S3 and get the file URL
+#         file_url = upload_or_replace_image(file, user_id)
+#         return JSONResponse(content={"message": "Image uploaded successfully", "url": file_url}, status_code=200)
+#     except Exception as e:
+#         return JSONResponse(content={"message": str(e)}, status_code=400)
 
 @router.post("/ai-suggestion")
 async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str = Depends(get_hostaway_key)):

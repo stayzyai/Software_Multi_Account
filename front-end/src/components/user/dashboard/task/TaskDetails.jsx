@@ -16,6 +16,7 @@ import { setConversations } from "../../../../store/conversationSlice"
 import { useNavigate } from "react-router-dom";
 import AddTask from "../Messages/CreateIssue";
 import { Pencil } from "lucide-react";
+import { toast } from "sonner";
 
 const TaskDetail = ({ setOpenTaskChat, openTaskChat, fetchData }) => {
   const dispatch = useDispatch();
@@ -68,6 +69,13 @@ const TaskDetail = ({ setOpenTaskChat, openTaskChat, fetchData }) => {
     setOpenEdit(!openEdit);
     setSelectedTask(task);
   }
+  const hanldeNavigate = (chatId)=>{
+    if(!chatId){
+      toast.info("Task is not linked with any chat")
+      return
+    }
+    navigate(`/user/chat/${task.chatId}`)
+  }
 
   if (loading) return <TaskMainContent />;
 
@@ -118,7 +126,7 @@ const TaskDetail = ({ setOpenTaskChat, openTaskChat, fetchData }) => {
       </button>
       <TaskStepper status={task.status} assigned={task.assigned} />
       <div className="flex justify-center">
-        <button onClick={() => navigate(`/user/chat/${task.chatId}`)} className="px-6 py-0.5 text-black font-semibold bg-[#C7EADD] hover:bg-[#C7EAD1] rounded-lg flex justify-center text-[14px]">Go to Chat</button>
+        <button onClick={() => hanldeNavigate(task.chatId)} className="px-6 py-0.5 text-black font-semibold bg-[#C7EADD] hover:bg-[#C7EAD1] rounded-lg flex justify-center text-[14px]">Go to Chat</button>
       </div>
     </div>
   );

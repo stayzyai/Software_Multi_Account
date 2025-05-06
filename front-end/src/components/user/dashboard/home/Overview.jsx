@@ -126,8 +126,8 @@ export const Overview = () => {
               selectedRange={selectedRange}
             />
             <StatCard
-              title="Avg Response Quality"
-              icon={<Smile />}
+              title="Avg Sentiment"
+              icon={<img src="/icons/Neutral_Face.svg" width={22} height={22} />}
               stats={{
                 current_count: responseQuality.average_score,
                 is_increase: responseQuality.is_increase,

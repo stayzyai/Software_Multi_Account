@@ -28,7 +28,7 @@ def update_user_details(current_user: User, user_update: UserUpdate, db: Session
         if user_update.lastname is not None:
             current_user.lastname = user_update.lastname
         if user_update.password is not None:
-            current_user.password = get_password_hash(user_update.password)
+            current_user.hashed_password = get_password_hash(user_update.password)
         return user_update
 
     except HTTPException as e:

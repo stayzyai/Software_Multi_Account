@@ -412,14 +412,14 @@ const updateConversation = (messages, newMessage) => {
   return [];
 };
 
-const filterMessages = (messages, filters) => {
+const filterMessages = (messages, filters, selectedIds) => {
   const {
     Date: filterType,
     Listing: selectedListing,
     Task: selectedTask,
   } = filters;
 
-  if (filterType === "Date" && !selectedListing && !selectedTask) {
+  if (filterType === "Date" && !selectedListing && !selectedTask && selectedIds?.length == 0) {
     return messages;
   }
 
@@ -458,9 +458,10 @@ const filterMessages = (messages, filters) => {
       listingMatch = message.listingMapId == selectedListing;
     }
 
+    // Task filter (by reservationId)
     let taskMatch = true;
-    if (selectedTask && selectedTask !== "") {
-      taskMatch = message.reservationId == selectedTask;
+    if (selectedIds?.length > 0) {
+      taskMatch = selectedIds.includes(message.reservationId);
     }
     return dateMatch && listingMatch && taskMatch;
   });

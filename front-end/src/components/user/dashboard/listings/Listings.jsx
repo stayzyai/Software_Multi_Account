@@ -9,7 +9,7 @@ import {
   getHostawayReservation,
   getAllListings,
 } from "../../../../helpers/Message";
-import ListingShimmer from "../../../common/shimmer/ListingShimmer";
+// import ListingShimmer from "../../../common/shimmer/ListingShimmer";
 import { getHostawayTask } from "../../../../helpers/TaskHelper";
 import { setTasks } from "../../../../store/taskSlice";
 
@@ -51,9 +51,7 @@ const Listings = () => {
   }, []);
 
   return (
-    <>
-      {!loading ? <Properties properties={properties} /> : <ListingShimmer />}
-    </>
+      <Properties properties={properties} loading={loading}/>
   );
 };
 

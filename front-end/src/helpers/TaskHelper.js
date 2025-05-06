@@ -105,7 +105,6 @@ const getNonCompletedTasks = (tasks, listings, users) => {
     });
 };
 
-
 const getHostawayTask = async (limit = null) => {
   try {
     const url = limit

@@ -182,6 +182,7 @@ const formatReservations = (reservations, listingMapId) => {
       endDate,
       nights: res?.nights,
       guests: res?.numberOfGuests,
+      ...res,
     });
     dateRanges.push(`${startDate} - ${endDate}`);
 
@@ -210,11 +211,10 @@ const formatedFAQ = (listings, listingId) => {
       (field) => field.customField?.name == "FAQ"
     )?.value || "";
 
-  const nearby =
+    const nearby =
     listing?.customFieldValues?.find(
       (field) => field?.customField?.name == "Nearby Spots"
-    )?.value || "";
-
+    )?.value;
   return { faq, nearby };
 };
 
@@ -231,7 +231,7 @@ const updateListings = async (listings, listingId, type, value) => {
     ...listing,
     customFieldValues: [{ customFieldId: customFieldId, value: value }],
   };
-  const updatedListings = [ ...listings] ;
+  const updatedListings = [ ...listings];
   try {
     const response = await api.post("/hostaway/update-listing", updatedListing);
     if (response?.data?.detail?.response?.result) {

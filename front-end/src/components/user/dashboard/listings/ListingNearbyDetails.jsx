@@ -1,9 +1,15 @@
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import api from "@/api/api";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { toast } from "sonner";
+import { Pencil } from "lucide-react";
 import { BeatLoader } from "react-spinners";
+import {
+  formatedFAQ,
+  updateListings,
+} from "../../../../helpers/ListingsHelper";
+import { setListings } from "../../../../store/listingSlice";
 
 const ListingNearbyDetails = ({ listingId, properties }) => {
   const [isGoogleMapsEnabled, setIsGoogleMapsEnabled] = useState(false);
@@ -12,7 +18,10 @@ const ListingNearbyDetails = ({ listingId, properties }) => {
   const [displayText, setDisplayText] = useState(null);
   const [index, setIndex] = useState(0);
   const [occupancy, setOccupancy] = useState([]);
+  const [edit, setEdit] = useState(false);
+  const [updateloader, setUpdateLoader] = useState(false);
   const listings = useSelector((state) => state.listings.listings);
+  const dispatch = useDispatch();
 
   const handleToggle = () => {
     setIsGoogleMapsEnabled((prevState) => !prevState);
@@ -55,6 +64,23 @@ const ListingNearbyDetails = ({ listingId, properties }) => {
     }
   }, [index, nearBySpots]);
 
+  useEffect(() => {
+    const { nearby } = formatedFAQ(listings, listingId);
+    setDisplayText(nearby);
+  }, []);
+
+  const handleChange = (e) => {
+    setDisplayText(e.target.value);
+  };
+
+  const handleSave = async () => {
+    setUpdateLoader(true);
+    const type = "nearby";
+    const data = await updateListings(listings, listingId, type, displayText);
+    setUpdateLoader(false);
+    dispatch(setListings(data));
+  };
+
   const Switch = () => (
     <label className="inline-flex items-center cursor-pointer">
       <input
@@ -89,16 +115,58 @@ const ListingNearbyDetails = ({ listingId, properties }) => {
           </div>
         </div>
         <div className="space-y-5">
-          <h2 className="text-xl lg:text-2xl font-normal">Info</h2>
-          <div className="text-xl lg:text-2xl py-12 px-5 bg-[#F8F8F8] rounded-2xl border border-gray-300 border-solid min-h-[341px]">
-            {loading ? (
-              <div>
-                <BeatLoader size={12} />
+          <h2 className="text-xl lg:text-2xl font-normal">Nearby spot</h2>
+          {edit && (
+            <div className="rounded-lg overflow-hidden">
+              {loading && <BeatLoader />}
+              <textarea
+                value={displayText}
+                onChange={handleChange}
+                placeholder="Enter nearby attractions information"
+                className={`w-[88%] md:w-full min-h-[200px] p-6 text-base bg-gray-100 rounded-3xl focus:outline-none resize-none}`}
+              />
+              <div className="w-[90%] md:w-full ml-2 flex justify-end gap-4 p-4">
+                <button
+                  disabled={loading}
+                  onClick={handleSave}
+                  className="bg-[#2D8062] hover:bg-emerald-600 text-white px-6 py-2 rounded-[20px] font-normal text-xl border border-black"
+                >
+                  {updateloader ? "Updating.." : "Save"}
+                </button>
+                <button
+                  disabled={loading}
+                  onClick={() => setEdit(false)}
+                  className="bg-[#D24040] hover:bg-red-600 text-white px-6 py-2 rounded-[20px] font-normal text-xl border border-black"
+                >
+                  Cancel
+                </button>
               </div>
-            ) : (
-              <span className="md:text-lg text-sm">{displayText}</span>
-            )}
-          </div>
+            </div>
+          )}
+          {!edit && (
+            <div
+              className={`bg-gray-100 rounded-3xl p-6 min-h-[200px] ${
+                edit ? "w-[88%] md:w-full" : "w-[100%] sm:w-[100%] md:w-full"
+              }`}
+            >
+              <div className="w-full flex justify-end">
+                <button
+                  onClick={() => setEdit(true)}
+                  className="text-gray-600 hover:text-gray-900"
+                >
+                  <Pencil size={16} />
+                </button>
+              </div>
+              {loading && <BeatLoader/>}
+              {displayText ? (
+                <div dangerouslySetInnerHTML={{ __html: displayText }} />
+              ) : (
+                <p className="text-gray-500">
+                  Text that owner inputs for AI to know about the property
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -74,6 +74,7 @@ const Sidebar = ({ role = "admin", setShowPopup }) => {
               return (
                 <div key={item.id} className="flex justify-center mb-3">
                   <button onClick={() => {handleNavigation(item)}}
+                  title={iconToggle ? item.label: ""}
                   className={`flex items-center ${ iconToggle ? "rounded-xl scale-110 px-4 py-3 my-1"   : "w-[90%] gap-2 px-4 lg:px-6 py-3 rounded-3xl" } 
                   ${ isActive ? "bg-[#FFFFFF] text-[#060606]"  : "text-[#FFFFFF] hover:bg-[#2D8062]" }`} >
                     {isImageIcon ? (

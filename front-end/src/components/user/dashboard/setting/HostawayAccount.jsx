@@ -14,7 +14,7 @@ const HostawayAccount = ({ setOpenModal }) => {
     secret_id: "",
   });
   const [openPopup, setOpenPopup] = useState(false);
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
 
   useEffect(() => {
@@ -31,83 +31,93 @@ const HostawayAccount = ({ setOpenModal }) => {
         console.log("Some error occred at get hostaway account", error);
         setHostawayAccount({ account_id: "", secret_id: "" });
       }
-      setLoading(false)
+      setLoading(false);
     };
     getAccount();
   }, []);
 
   const handleDeleteAccount = async () => {
-    setOpenPopup(false)
-    try{
+    setOpenPopup(false);
+    try {
       const response = await api.delete("/hostaway/remove-authentication");
       if (response?.data?.detail?.message) {
         setHostawayAccount({ account_id: "", secret_id: "" });
-        toast.success(response?.data?.detail?.message)
-        removeItem("isHostwayAccount")
+        toast.success(response?.data?.detail?.message);
+        removeItem("isHostwayAccount");
       }
-    }catch(error){
-      console.log("Some error occred at delete hostaway account", error)
-      toast.error("Some error occured. Please try again")
+    } catch (error) {
+      console.log("Some error occred at delete hostaway account", error);
+      toast.error("Some error occured. Please try again");
     }
   };
 
- 
   return (
     <>
-      {!loading ? <div className="bg-[#FCFDFC] dark:bg-gray-900 flex pt-32 justify-center p-7">
-        <div className="w-full bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200">
-          <div className="p-6 sm:p-8">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">
-              Hostaway account
-            </h2>
-            {hostawayAccount.account_id !== "" &&
-            hostawayAccount.secret_id !== "" ? (
-              <div className="space-y-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
-                  <span className="font-semibold text-sm text-gray-600 dark:text-gray-400">
-                    Account ID
-                  </span>
-                  <span className="md:text-md text-sm text-gray-800 dark:text-gray-200">
-                    {hostawayAccount.account_id}
-                  </span>
+      {!loading ? (
+        <div className="bg-[#FCFDFC] dark:bg-gray-900 flex pt-32 justify-center p-7">
+          <div className="w-full bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200">
+            <div className="p-6 sm:p-8">
+              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">
+                Hostaway account
+              </h2>
+              {hostawayAccount?.account_id !== "" &&
+              hostawayAccount?.secret_id !== "" ? (
+                <div className="space-y-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
+                    <span className="font-semibold text-sm text-gray-600 dark:text-gray-400">
+                      Account ID
+                    </span>
+                    <span className="md:text-md text-sm text-gray-800 dark:text-gray-200">
+                      {/* {hostawayAccount?.account_id} */}
+                      {hostawayAccount?.account_id
+                        ? "*".repeat(hostawayAccount.account_id.length - 4) +
+                          hostawayAccount.account_id.slice(-4)
+                        : ""}
+                    </span>
+                  </div>
+                  <div className="flex flex-col lg:flex-row lg:items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
+                    <span className="font-semibold text-sm text-gray-600 dark:text-gray-400 text-nowrap">
+                      Secret ID
+                    </span>
+                    <span className="md:text-base text-sm text-gray-800 dark:text-gray-200 break-words">
+                      {hostawayAccount?.secret_id
+                        ? "*".repeat(hostawayAccount.secret_id.length - 4) +
+                          hostawayAccount.secret_id.slice(-4)
+                        : ""}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setOpenPopup(true)}
+                    className="w-full border border-red-600 sm:w-auto mt-6 px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md transition duration-300 ease-in-out flex items-center justify-center"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Remove account
+                  </button>
                 </div>
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between py-3 border-b border-gray-200 dark:border-gray-700">
-                  <span className="font-semibold text-sm text-gray-600 dark:text-gray-400 text-nowrap">
-                    Secret ID
-                  </span>
-                  <span className="md:text-base text-sm text-gray-800 dark:text-gray-200 break-words">
-                    {hostawayAccount.secret_id}
-                  </span>
+              ) : (
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-2 text-yellow-600 dark:text-yellow-500">
+                    <AlertCircle className="h-5 w-5" />
+                    <p className="text-sm">
+                      Hostaway account not found. Please add your Hostaway
+                      account.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => dispatch(setHostawayModal(true))}
+                    className="w-full sm:w-auto mt-4 px-4 py-1.5 bg-green-800 border-green-600 hover:bg-green-700 text-white font-semibold rounded-md transition duration-300 ease-in-out flex items-center justify-center"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add account
+                  </button>
                 </div>
-                <button
-                  onClick={() => setOpenPopup(true)}
-                  className="w-full border border-red-600 sm:w-auto mt-6 px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-md transition duration-300 ease-in-out flex items-center justify-center"
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Remove account
-                </button>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <div className="flex items-center space-x-2 text-yellow-600 dark:text-yellow-500">
-                  <AlertCircle className="h-5 w-5" />
-                  <p className="text-sm">
-                    Hostaway account not found. Please add your Hostaway
-                    account.
-                  </p>
-                </div>
-                <button
-                  onClick={() => dispatch(setHostawayModal(true))}
-                  className="w-full sm:w-auto mt-4 px-4 py-1.5 bg-green-800 border-green-600 hover:bg-green-700 text-white font-semibold rounded-md transition duration-300 ease-in-out flex items-center justify-center"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add account
-                </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
-      </div>:<SettingShimmer/>}
+      ) : (
+        <SettingShimmer />
+      )}
       {openPopup && (
         <div class="fixed inset-0 bg-gray-800 bg-opacity-50 flex items-center lg:justify-center justify-center md:justify-end md:pr-24 lg:pl-44">
           <div class="bg-white rounded-xl shadow-lg p-6 w-96">

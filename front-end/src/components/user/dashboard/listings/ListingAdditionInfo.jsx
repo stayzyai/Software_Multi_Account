@@ -134,7 +134,7 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
           </div>
         )}
       </div>
-      <div className="mb-10">
+      {/* <div className="mb-10">
         <div className="flex justify-between items-center mb-5">
           <h1 className="font-medium text-xl">Nearby Spots</h1>
         </div>
@@ -183,7 +183,7 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
             )}
           </div>
         )}
-      </div>
+      </div> */}
     </div>
   );
 };

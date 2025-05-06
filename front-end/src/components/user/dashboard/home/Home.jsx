@@ -15,8 +15,8 @@ const Home = ({ role }) => {
       try {
         const response = await api.get("/user/profile");
         if (response?.status === 200 && response?.data) {
-          const { firstname, lastname, email, role, ai_enable, chat_list } = response.data;
-          dispatch(setUser({ firstname, lastname, email, role, ai_enable, chat_list }));
+          const { firstname, lastname, email, role, ai_enable, chat_list, id } = response.data;
+          dispatch(setUser({ firstname, lastname, email, role, ai_enable, chat_list, id }));
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
