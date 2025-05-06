@@ -36,7 +36,7 @@ const ListingGuestBooking = ({ guestInfo, setGuestOpen }) => {
           <div className="flex gap-2 flex-wrap lg:text-xl text-md bg-white p-2 rounded-md">
             <p className="font-normal text-gray-700">Email:</p>
             <p className="text-black break-all">
-              {guestInfo?.guestEmail || "N/A"}
+              {guestInfo?.guestEmail || ""}
             </p>
           </div>
           <div className="flex gap-2 lg:text-xl text-md bg-white p-2 rounded-md">
@@ -61,37 +61,37 @@ const ListingGuestBooking = ({ guestInfo, setGuestOpen }) => {
 
           <div className="flex gap-2 lg:text-xl text-md bg-white p-2 rounded-md">
             <p className="font-normal text-gray-700">City:</p>
-            <p className="text-black">{guestInfo?.guestCity || "N/A"}</p>
+            <p className="text-black">{guestInfo?.guestCity || ""}</p>
           </div>
 
           <div className="flex gap-2 lg:text-xl text-md bg-white p-2 rounded-md">
             <p className="font-normal text-gray-700">Zip Code:</p>
-            <p className="text-black">{guestInfo?.guestZipCode || "N/A"}</p>
+            <p className="text-black">{guestInfo?.guestZipCode || ""}</p>
           </div>
 
           <div className="flex gap-2 lg:text-xl text-md bg-white p-2 rounded-md">
             <p className="font-normal text-gray-700">Country:</p>
-            <p className="text-black">{guestInfo?.guestCountry || "N/A"}</p>
+            <p className="text-black">{guestInfo?.guestCountry || ""}</p>
           </div>
 
           <div className="flex gap-2 lg:text-xl text-md bg-white p-2 rounded-md">
             <p className="font-normal text-gray-700">Adults:</p>
-            <p className="text-black">{guestInfo?.adults || "N/A"}</p>
+            <p className="text-black">{guestInfo?.adults || ""}</p>
           </div>
 
           <div className="flex gap-2 lg:text-xl text-md bg-white p-2 rounded-md">
             <p className="font-normal text-gray-700">Children:</p>
-            <p className="text-black">{guestInfo?.children || "N/A"}</p>
+            <p className="text-black">{guestInfo?.children || ""}</p>
           </div>
 
           <div className="flex gap-2 lg:text-xl text-md bg-white p-2 rounded-md">
             <p className="font-normal text-gray-700">Infants:</p>
-            <p className="text-black">{guestInfo?.infants || "N/A"}</p>
+            <p className="text-black">{guestInfo?.infants || ""}</p>
           </div>
 
           <div className="flex gap-2 lg:text-xl text-md bg-white p-2 rounded-md">
             <p className="font-normal text-gray-700">Pets:</p>
-            <p className="text-black">{guestInfo?.pets || "N/A"}</p>
+            <p className="text-black">{guestInfo?.pets || ""}</p>
           </div>
 
           <div className="flex gap-2 lg:text-xl text-md bg-white p-2 rounded-md">
