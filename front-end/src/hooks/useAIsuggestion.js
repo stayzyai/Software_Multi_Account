@@ -8,8 +8,14 @@ const useAISuggestion = (setInput, chatInfo, amenity, tasks, setIsAISuggestion) 
   const dispatch = useDispatch();
   const users = useSelector((state) => state.hostawayUser.users);
   const listings = useSelector((state) => state.listings.listings);
+  const userProfile = useSelector((state)=>state.user)
 
   const handleAISuggestion = async (messages) => {
+    if(!userProfile?.ai_enable){
+      toast.info("Upgrade your plan to unlock AI-powered responses. To upgrade, simply toggle the AI button")
+      return
+    }
+
     if (!chatInfo || chatInfo.length === 0) return;
 
     dispatch(setSuggestion(true));

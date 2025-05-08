@@ -10,7 +10,6 @@ import { toast } from "sonner";
 
 export function ResetPasswordComponent() {
     const { token } = useParams();
-    console.log("token", token)
     const navigate = useNavigate();
     const [newPassword, setNewPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");

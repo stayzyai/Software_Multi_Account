@@ -90,7 +90,7 @@ const CommonTable = ({ properties, columns }) => {
                   </span>
                 </td>
                 <td className="md:py-2 p-1 text-center">{property.issues}</td>
-                <td className="md:py-2 p-1 text-center">{property.ai}</td>
+                <td className="md:py-2 p-1 text-center px-4">{property.ai}</td>
               </tr>
             ))}
           </tbody>

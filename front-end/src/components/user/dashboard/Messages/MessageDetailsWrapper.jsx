@@ -139,7 +139,6 @@ const MessageDetailsWrapper = () => {
       console.log("Connected to WebSocket server");
     });
     newSocket.on("received_message", (newMessage) => {
-      console.log("New message received: ", newMessage);
       getConversationData(newMessage);
     });
     const fetchData = async () => {

@@ -19,7 +19,6 @@ const ReportIssuePopup = ({ onClose }) => {
     }
     setIsLoading(true);
     const payload = { subject, message };
-    console.log("payload data:", payload);
     const response = await reportIssues(payload);
     if (response) {
       toast.success("Issue reported successfully");

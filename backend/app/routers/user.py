@@ -143,7 +143,7 @@ def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_tok
         if not db_user:
             raise HTTPException(status_code=404, detail={"message": "User not found"})
         subscribed_user = db.query(Subscription).filter(Subscription.user_id == user_id).first()
-        is_premium_member = subscribed_user.is_active if subscribed_user else False
+        is_premium_member = subscribed_user and  subscribed_user.is_active if True else False
         ai_enable_list = db.query(ChatAIStatus).filter(ChatAIStatus.user_id == user_id).all()
         return UserProfile(id=db_user.id, firstname=db_user.firstname, lastname=db_user.lastname, email=db_user.email, role=db_user.role,
             created_at=db_user.created_at, ai_enable=is_premium_member, chat_list=ai_enable_list)
@@ -1089,14 +1089,13 @@ async def get_nearby_places(request: Request, token: str = Depends(get_token), d
 @router.get("/update-ai", response_model=UserProfile)
 def get_user_profile(
     chatId: int = Query(..., description="Chat Id is for auto mode"),
-    listingId: int = Query(..., description="Listing Id is for auto mode"),
     db: Session = Depends(get_db),
     token: str = Depends(get_token)
 ):
     try:
         db_user = get_current_user(db, token)
-        subscription = get_user_subscription(db, db_user.id, listingId)
-        is_premium_member = update_ai_status(db, db_user.id, chatId, listingId, subscription)
+        subscription = get_user_subscription(db, db_user.id)
+        is_premium_member = update_ai_status(db, db_user.id, chatId, subscription)
         active_ai_chats = get_active_ai_chats(db, db_user.id)
 
         return UserProfile(

@@ -28,7 +28,6 @@ const AIContent: React.FC<AIContentProps> = ({ text, setSuggestions }) => {
       textarea.dispatchEvent(new Event("input", { bubbles: true }));
       if (button) {
         button.click();
-        console.log("Button clicked !");
       }
     }
   };

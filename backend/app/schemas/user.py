@@ -18,7 +18,6 @@ class UserCreate(BaseModel):
 class ChatAIStatusModel(BaseModel):
     id: int
     chat_id: int
-    listing_id: int
     is_active: bool
     user_id: int
     ai_enabled: bool

@@ -31,7 +31,6 @@ export default function Settings({ setOpenModal }) {
     setLoading(true);
     try {
       const data = await api.get("/user/profile");
-      console.log("data", data);
       setProfile(data.data);
       setInitialProfile(data.data);
       setLoading(false);

@@ -23,39 +23,31 @@ const reportIssues = async (data) => {
   }
 };
 
-const getAllActiveListing = (listings, conversations, userProfile) => {
-
+const getAllActiveListing = (conversations, userProfile) => {
   const guestMap = new Map();
-  conversations.forEach(convo => {
+  conversations.forEach((convo) => {
     guestMap.set(convo.id, convo.recipientName || "Unknown");
   });
 
-  const result = listings.map(listing => {
-    const listingId = listing.id;
-
-    const relatedChats = userProfile.chat_list.filter(
-      chat => chat.listing_id === listingId
-    );
-
-    const listingdetails = relatedChats.map(chat => ({
-      chatId: chat.chat_id,
-      ai_enabled: chat.ai_enabled,
-      guestName: guestMap.get(chat.chat_id) || "Unknown"
-    }));
-
-    const listingSubscriptions = relatedChats.some(chat => chat.is_active);
-
-    return {
-      id: listing.id,
-      name: listing.name,
-      listingdetails,
-      listingSubscriptions
-    };
-  });
+  const result = userProfile?.chat_list?.map((chat) => ({
+    chatId: chat.chat_id,
+    ai_enabled: chat.ai_enabled,
+    guestName: guestMap.get(chat.chat_id) || "Unknown",
+  }));
 
   return result;
 };
 
+const getPaymentData = async () => {
+  try {
+    const response = await api.get("/payment/card-details");
+    if (response.status == 200) {
+      const data = response?.data?.card_details;
+      return data;
+    }
+  } catch (error) {
+    console.error("Error at get payment ", error);
+  }
+};
 
-
-export { getProfile, reportIssues, getAllActiveListing };
+export { getProfile, reportIssues, getAllActiveListing, getPaymentData };

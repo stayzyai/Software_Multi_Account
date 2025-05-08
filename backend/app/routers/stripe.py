@@ -1,7 +1,7 @@
 
 
 from fastapi import APIRouter, HTTPException, Depends, Request, Query
-from app.service.stripe_service import create_checkout_session, get_all_reservations, activate_ai_for_chats
+from app.service.stripe_service import create_checkout_session, get_all_reservations, activate_ai_for_chats, upadate_subscription, get_user_cards_and_payments
 from app.database.db import get_db
 from sqlalchemy.orm import Session
 from app.common.auth import get_token, decode_access_token
@@ -9,8 +9,7 @@ from app.models.user import User
 import os, stripe, logging
 from dotenv import load_dotenv
 import logging
-from sqlalchemy import or_
-from app.models.user import Subscription, ChatAIStatus, Listings 
+from app.models.user import Subscription 
 from datetime import datetime, timedelta
 from app.database.db import get_db
 from app.common.user_query import get_user_id_by_email
@@ -23,7 +22,7 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
 
 @router.get("/create-checkout-session")
-def create_session(chatId: int = Query(..., description="Chat ID associated with the session"), listingId: int = Query(..., description="ListingId associated with the session"),  db: Session = Depends(get_db), token: str = Depends(get_token)):
+def create_session(chatId: int = Query(..., description="Chat ID associated with the session"),  db: Session = Depends(get_db), token: str = Depends(get_token)):
     try:
         decode_token = decode_access_token(token)
         user_id = decode_token['sub']
@@ -31,8 +30,11 @@ def create_session(chatId: int = Query(..., description="Chat ID associated with
         if not db_user:
             raise HTTPException(status_code=404, detail={"message": "User not found"})
         user_email = db_user.email
-        session = create_checkout_session(user_email, chatId, listingId)
-
+        subscription = db.query(Subscription).filter(Subscription.user_id == user_id).first()
+        if subscription:
+            session = create_checkout_session(user_email, chatId, subscription.stripe_customer_id)
+        else: 
+            session = create_checkout_session(user_email, chatId)
         return {"detail": {"message":"checkout session created", "checkout_url": session.url,
                 "customer_email": session.customer_email, "success_url": session.success_url,"cancel_url": session.cancel_url}}
 
@@ -43,6 +45,22 @@ def create_session(chatId: int = Query(..., description="Chat ID associated with
         logging.error(f"Error:", {str(e)})
         raise HTTPException(status_code=500, detail={"message": f"An error occurred at create checkout session: {str(e)}"})
 
+@router.get("/card-details")
+def get_card_detials(db: Session = Depends(get_db), token: str = Depends(get_token)):
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail={"message": "User not found"})
+        subscription = db.query(Subscription).filter(Subscription.user_id == user_id).first()
+        if subscription:
+            card_details = get_user_cards_and_payments(subscription.stripe_customer_id)
+            return {"status":"success", "card_details": card_details}
+        return  {"status":"success", "card_details": {"cards": [], "payments": []}}
+    except Exception as e:
+        logging.error(f"Error at get card details {str(e)}")
+        raise HTTPException(f"Error at get card details {str(e)}")
 
 @router.post("/webhook")
 async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
@@ -64,12 +82,19 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
         elif event['type'] == 'invoice.payment_failed':
             invoice = event['data']['object']
             logging.warning(f"Invoice payment failed for {invoice['id']}")
+        elif event["type"] == "customer.subscription.deleted":
+            subscription = event["data"]["object"]
+            customer_id = subscription["customer"]
+            ended_at = subscription.get("ended_at")
+            upadated_subscription = upadate_subscription(db, customer_id)
+            logging.info(f"subscriptions end for this customer: {customer_id} on this date: {ended_at}")
+            logging.info(f"Updated subscriptions: {upadated_subscription}")
+            return {"status": "success", "message": "subscription updated successfully."}
 
         elif event['type'] == 'checkout.session.completed':
             payment_intent = event['data']['object']
             logging.info("Checkout session completed.")
-
-            email = payment_intent.get('customer_email')
+            email = payment_intent['customer_details']['email']
             stripe_subscription_id = payment_intent['id']
             stripe_customer_id = payment_intent['customer']
             logging.info(f"Customer email: {email}, Subscription ID: {stripe_subscription_id}, Customer ID: {stripe_customer_id}")
@@ -80,33 +105,15 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
             payment_at = datetime.fromtimestamp(payment_intent['created'])
             expire_at = payment_at + timedelta(days=30)
-
-            metadata = payment_intent.get("metadata", {})
-            chat_id = int(metadata["chatId"]) if "chatId" in metadata else None
-            listing_id = metadata.get("listingId")
-            logging.info(f"Metadata parsed - chat_id: {chat_id}, listing_id: {listing_id}")
-
-            if not chat_id or not listing_id:
-                raise HTTPException(status_code=400, detail="Missing chat_id or listing_id in metadata")
-
-            listing = db.query(Listings).filter(Listings.listing_id == listing_id).first()
-            if not listing:
-                logging.info(f"Listing ID {listing_id} not found. Creating new listing.")
-                listing = Listings(listing_id=listing_id, user_id=user_id)
-                db.add(listing)
-                db.flush()
-
-            existing_subscription = (
-                db.query(Subscription)
-                .filter(Subscription.chat_id == chat_id, Subscription.listing_id == listing.listing_id)
-                .first()
-            )
+            existing_subscription = db.query(Subscription).filter(Subscription.user_id == user_id).first()
 
             if existing_subscription:
                 existing_subscription.is_active = True
                 existing_subscription.expire_at = expire_at
                 existing_subscription.payment_at = payment_at
-                logging.info(f"Updated existing subscription for chat_id={chat_id} and listing_id={listing_id}")
+                existing_subscription.stripe_subscription_id = stripe_subscription_id
+                existing_subscription.stripe_customer_id = stripe_customer_id
+
             else:
                 logging.info("No existing subscription found for this chat_id and listing_id. Creating new one.")
                 new_subscription = Subscription(
@@ -114,34 +121,15 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
                 stripe_customer_id=stripe_customer_id,
                 is_active=True,
                 user_id=user_id,
-                chat_id=chat_id,
-                listing_id=listing.listing_id,
+                email=email,
                 payment_at=payment_at,
                 expire_at=expire_at
                 )
                 db.add(new_subscription)
 
-            listing.is_active = True
-            logging.info(f"Listing ID {listing.listing_id} set to active due to new subscription.")
-
-            # Only create ChatAIStatus if it doesn't already exist for this chat_id
-            # existing_chat_status = db.query(ChatAIStatus).filter(ChatAIStatus.chat_id == chat_id).first()
-            chat_ids = get_all_reservations(email, listing_id, db)
-            saved_chat = activate_ai_for_chats(db, chat_ids, listing_id, user_id)
+            chat_ids = get_all_reservations(email, db)
+            saved_chat = activate_ai_for_chats(db, chat_ids, user_id)
             logging.info(f"AI enable for this chat: {saved_chat}")
-            # if not existing_chat_status:
-            #     logging.info("Creating new ChatAIStatus.")
-            #     chat_ai_status = ChatAIStatus(
-            #         chat_id=chat_id,
-            #         listing_id=listing.listing_id,
-            #         ai_enabled=True,
-            #         user_id=user_id,
-            #         is_active=True
-            #     )
-            #     db.add(chat_ai_status)
-            # else:
-            #     existing_chat_status.is_active = True
-            #     existing_chat_status.ai_enabled = True
 
             db.commit()
             logging.info("Stripe webhook processed successfully.")
@@ -153,8 +141,8 @@ async def stripe_webhook(request: Request, db: Session = Depends(get_db)):
 
     except ValueError:
         logging.error("Invalid Stripe payload.")
-        raise HTTPException(status_code=400, detail="Invalid payload")
+        return {"status": "error", "message": "Invalid Stripe payload"}
 
     except Exception as e:
-        logging.exception("Error processing Stripe webhook")
-        raise HTTPException(status_code=500, detail={"message": f"An error occurred: {str(e)}"})
+        logging.exception(f"Error processing Stripe webhook {str(e)}")
+        return {"status": "error", "message": f"Error processing Stripe webhook: {str(e)}"}

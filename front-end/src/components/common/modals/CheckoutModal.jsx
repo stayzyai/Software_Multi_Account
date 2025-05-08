@@ -32,7 +32,7 @@ const CheckoutModal = ({ isOpen, setIsOpen, isConfirm,setIsConfirm, checkoutUrl 
           </div>
           {!isConfirm ? (<div className="flex-1 flex flex-col items-center p-6 text-center">
             <h3 className="text-lg font-semibold">
-              This feature is part of our paid plan at just $5 per property/month.
+              This feature is part of our paid plan at just $50/month.
             </h3>
             <p className="text-sm text-gray-600 mt-10">
               Upgrade now to unlock full access and streamline your workflow.

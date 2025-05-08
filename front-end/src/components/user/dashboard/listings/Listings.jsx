@@ -22,28 +22,28 @@ const Listings = () => {
   const reservation = useSelector((state) => state.reservations.reservations);
   const listing = useSelector((state) => state.listings.listings);
   const tasks = useSelector((state) => state.tasks.tasks);
+  const userProfile = useSelector((state)=>state.user)
 
   const getReservations = async () => {
     const data = await getHostawayReservation();
     dispatch(setReservations(data));
     return data;
   };
-
   const getListings = async () => {
     const reservations = await getReservations();
     const data = await getAllListings();
-    const listingAIStatus = await getListingstatus();
+    // const listingAIStatus = await getListingstatus();
     const hostawayTask = await getHostawayTask();
-    setListingStatus(listingAIStatus);
-    setProperties(formattedListing(data, reservations, listingAIStatus, hostawayTask));
+    // setListingStatus(listingAIStatus);
+    setProperties(formattedListing(data, reservations, userProfile, hostawayTask));
     dispatch(setListings(data));
     dispatch(setTasks(hostawayTask));
     setLoading(false);
   };
 
   useEffect(() => {
-    if (listing?.length !== 0 && reservation?.length !== 0 && listingStatus?.length !== 0 && tasks?.length !== 0) {
-      setProperties(formattedListing(listing, reservation, listingStatus, tasks));
+    if (listing?.length !== 0 && reservation?.length !== 0 && tasks?.length !== 0) {
+      setProperties(formattedListing(listing, reservation, userProfile, tasks));
       setLoading(false);
       return;
     }

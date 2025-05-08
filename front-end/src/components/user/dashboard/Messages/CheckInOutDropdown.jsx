@@ -49,8 +49,6 @@ const CheckInOutDropdown = ({ selectedTime, onSelect, chatInfo, type }) => {
         "/hostaway/update-reservation",
         updatedReservation
       );
-      console.log("Updated checkIn or checkOut: ", data)
-
     } catch (error) {
       console.log("error at update checkIn or checkOut", error);
     }

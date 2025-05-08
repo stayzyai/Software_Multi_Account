@@ -28,13 +28,10 @@ const getListingstatus = async () => {
   }
 };
 
-const formattedListing = (data, reservations, listingAIStatus= [], issues= []) => {
-
+const formattedListing = (data, reservations, userData=null, issues= []) => {
   const listings = data?.map((item) => {
     const occupancy = getOccupancy(reservations, item.id);
-    const aiStatus = listingAIStatus?.find(
-      (status) => status?.listing_id === item?.id
-    );
+    const aiStatus = userData?.ai_enable
     const hasIssue = issues?.some((issue) => issue?.listingMapId === item?.id);
     return {
       id: item.id,
@@ -42,7 +39,7 @@ const formattedListing = (data, reservations, listingAIStatus= [], issues= []) =
       address: item.address,
       occupancy: occupancy,
       issues: hasIssue ? "Issue" : "No Issue",
-      ai: aiStatus?.ai_enabled ? "Enabled" : "Not Enabled",
+      ai: aiStatus ? "Enabled" : "Not Enabled",
     };
   });
 

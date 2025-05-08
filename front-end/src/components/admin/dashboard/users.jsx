@@ -40,7 +40,6 @@ export default function Users({ setOpenModal }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const pageSize = 10;
-  console.log(userData, "userData");
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);

@@ -33,19 +33,20 @@ const StatCard = ({ title, stats, selectedRange, icon }) => {
                   }`}
                 />
               )}
-              {Math.abs(parseFloat(stats?.percentage_change)).toFixed(2)} %{" "}
+              {Math.abs(parseFloat(stats?.percentage_change)).toFixed(2)} % {" "}
             </div>
           ) : (
             <p className="mx-2 text-lg">
               {stats?.current_count == "N/A"
                 ? "😐"
-                : stats?.is_increase == "increase" &&
-                  stats?.percentage_change >= 50
+                : stats?.is_increase === true &&
+                  parseFloat(stats?.percentage_change) >= 30
                 ? "😊"
-                : stats?.is_increase == "increase" &&
-                  stats?.percentage_change < 50
+                : stats?.is_increase === true &&
+                  parseFloat(stats?.percentage_change) < 30 &&
+                  parseFloat(stats?.percentage_change) >= 10
                 ? "😐"
-                : "😟"}{" "}
+                : "😟"}
             </p>
           )}
           {stats?.is_increase ? " increase" : " decrease"} from last{" "}

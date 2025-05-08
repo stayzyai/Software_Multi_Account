@@ -4,16 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 import EditUserDetails from "./EditUserdetails";
 import { useEffect } from "react";
-import { setListings } from "../../../../store/listingSlice";
 import { setConversations } from "../../../../store/conversationSlice";
-import {
-  getAllListings,
-  getConversationsWithResources,
-} from "../../../../helpers/Message";
+import { getConversationsWithResources } from "../../../../helpers/Message";
 import { getAllActiveListing } from "../../../../helpers/user";
 import ActiveChat from "./ActiveChatDetails";
 import ChatCardShimmer from "../../../common/shimmer/ActiveChatShimmer";
 import AccountDetailsShimmer from "../../../common/shimmer/AccountDetailsShimmer";
+import PaymentData from "./PaymentDetails";
 
 const UserProfile = () => {
   const [currentUser, setCurrentUser] = useState(null);
@@ -31,7 +28,6 @@ const UserProfile = () => {
 
   const userProfile = useSelector((state) => state.user);
 
-  const listings = useSelector((state) => state.listings.listings);
   const conversations = useSelector(
     (state) => state.conversation.conversations
   );
@@ -50,19 +46,17 @@ const UserProfile = () => {
   const fetchEmptyData = async () => {
     setLoading(true);
     const data = await getConversationsWithResources();
-    const listingdata = await getAllListings();
     dispatch(setConversations(data));
-    dispatch(setListings(listingdata));
     setLoading(false);
   };
 
   useEffect(() => {
-    if (listings?.length == 0 || conversations?.length == 0) {
+    if (conversations?.length == 0) {
       fetchEmptyData();
     }
-    const data = getAllActiveListing(listings, conversations, userProfile);
+    const data = getAllActiveListing(conversations, userProfile);
     setActiveAccount(data);
-  }, [listings, conversations]);
+  }, [conversations]);
 
   const openModal = (user) => {
     setCurrentUser(user);
@@ -186,7 +180,7 @@ const UserProfile = () => {
             </div>
           </div>
         )}
-
+        <PaymentData />
         {/* Chat List Section */}
         {loading ? (
           <ChatCardShimmer />

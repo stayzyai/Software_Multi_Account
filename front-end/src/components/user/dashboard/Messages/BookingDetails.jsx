@@ -20,7 +20,8 @@ const BookingDetails = ({
   const chatAIenabledList = useSelector((state) => state.user.chat_list);
 
   const isChatInList = useCallback((chat_list, chatId) => {
-    return chat_list.some((chat) => chat.chat_id === chatId);
+    // return chat_list.some((chat) => chat.chat_id === chatId);
+    return chat_list.some(item => item.chat_id === chatId && item.ai_enabled === true);
   }, []);
 
   const Switch = ({ checked, handleSwitch }) => (
@@ -37,13 +38,12 @@ const BookingDetails = ({
 
   const handleCheckOut = async () => {
     const chatId = chatInfo[0]["id"];
-    const listingId = chatInfo[0]["listingMapId"];
-    const response = await updateAIStatus(chatId, listingId);
+    const response = await updateAIStatus(chatId);
     const { firstname, lastname, email, role, ai_enable, chat_list } = response;
     dispatch(
       setUser({ firstname, lastname, email, role, ai_enable, chat_list })
     );
-    const chatExists = isChatInList(chat_list, chatId, listingId);
+    const chatExists = isChatInList(chat_list, chatId);
     if (ai_enable) {
       setIsCheckoutModalOpen(false);
       if (!chatExists) {
@@ -52,7 +52,7 @@ const BookingDetails = ({
         toast.success("Enabled AI for this chat");
       }
     } else {
-      const checkoutResponse = await checkout(chatId, listingId);
+      const checkoutResponse = await checkout(chatId);
       setIsCheckoutModalOpen(true);
       if (checkoutResponse?.detail?.checkout_url) {
         setCheckoutUrl(checkoutResponse.detail.checkout_url);
@@ -116,7 +116,6 @@ const BookingDetails = ({
                 checked={isChatInList(
                   chatAIenabledList,
                   chatInfo[0]["id"],
-                  chatInfo[0]["listingMapId"]
                 )}
                 handleSwitch={handleCheckOut}
               />
