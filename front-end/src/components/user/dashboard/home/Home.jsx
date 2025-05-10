@@ -25,7 +25,7 @@ const Home = ({ role }) => {
       }
     };
     getProfile();
-  }, [userProfile]);
+  }, []);
 
   return (
     <div>
