@@ -245,7 +245,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
             direct_date_check = True
             logging.info(f"Direct date mention found in user message: {re.search(pattern, user_message_lower).group(0)}")
             break
-    
+
     # If we detect a date mention directly in the user's message, force dates_specified to True
     if direct_date_check:
         dates_specified = True
@@ -253,7 +253,10 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
         print("Date detected directly in user message, setting dates_specified to True")
         
         # If this appears to be a direct extension request, also set is_extension_request to True
-        if re.search(r'(extend|extension|stay\s+(longer|more|extra)|book\s+more)', user_message_lower):
+        # Check for direct extension keywords or phrasing that indicates shifting the stay later
+        if re.search(r'(extend|extension|stay\s+(longer|more|extra)|book\s+more)', user_message_lower) or \
+        re.search(r'\b\d+\s+days?\s+later\b.*(check\s*-?\s*in|check\s*-?\s*out)', user_message_lower) or \
+        re.search(r'both\s+check\s*-?\s*in\s+and\s+check\s*-?\s*out.*\b\d+\s+days?\s+later\b', user_message_lower):
             is_extension_request = True
             logging.info("Extension request detected directly in user message, setting is_extension_request to True")
             print("Extension request detected directly in user message, setting is_extension_request to True")
@@ -269,9 +272,9 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
         # 2025-04-07
         r'(\d{4})-(\d{1,2})-(\d{1,2})'
     ]
-    
+
     requested_dates = []
-    
+
     for pattern in date_patterns:
         date_matches = re.findall(pattern, request.messsages.lower())
         print(f"Pattern: {pattern}, Matches: {date_matches}")
@@ -339,7 +342,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
         requested_dates.sort()
         latest_requested_date = requested_dates[-1]
         logging.info(f"Latest requested extension date: {latest_requested_date}")
-
+    
     if is_extension_request:
         # try:
             # Get hostaway account for this user
@@ -489,12 +492,6 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                         f"Upcoming condition: {upcoming_condition}, Status condition: {status_condition}")
                                 print(f"DEBUG: Details - CheckIn: {check_in}, CheckOut: {check_out}, Current: {current_date}, Status: {status}")
                         
-                        # except Exception as res_proc_err:
-                        #     logging.error(f"Error while processing reservations to find current listing: {str(res_proc_err)}")
-                            # Continue without a current listing ID
-                        
-                        # try:
-                            # Get listings data with a timeout limit
                         listings_response = hostaway_get_request(hostaway_account.hostaway_token, "/listings")
                         if listings_response:
                             listings_data = json.loads(listings_response)
@@ -791,6 +788,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                         
                                         # Just update the departure date field
                                         update_payload['departureDate'] = new_checkout_date
+                                        # update_payload['arrivalDate'] = new_checkin_date
                                         
                                         
                                         # Call the API to update the reservation
@@ -949,7 +947,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                 # This block is for when direct_extension_covers_request is false
                                 if direct_extension:
                                     next_checkin_formatted = datetime.strptime(direct_extension['next_checkin'], "%Y-%m-%d").strftime("%B %d, %Y") 
-                                    gap_info += f"\nI found a gap after your stay, but it doesn't cover your requested date ({latest_requested_date}).\n"
+                                    gap_info += f"\nI found a gap after your stay, but it doesn't cover your requested date.\n"
                                     gap_info += f"The available extension period is until {next_checkin_formatted}.\n"
                                     gap_info += f"Please let me know if you'd like to extend within this period instead.\n"
                                 else:
