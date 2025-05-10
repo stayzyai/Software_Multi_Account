@@ -23,6 +23,8 @@ const CreateUpsellModal = ({
   const [periodDropdownOpen, setPeriodDropdownOpen] = useState(false);
   const [variablesDropdownOpen, setVariablesDropdownOpen] = useState(false);
   const [existing, setExisting] = useState({});
+  const [selectedNights, setSelectedNights] = useState(1);
+  const [checkinTime, setCheckinTime] = useState("12:00 AM");
 
   const variablesDropdownRef = useRef(null);
   const periodDropdownRef = useRef(null);
@@ -32,9 +34,11 @@ const CreateUpsellModal = ({
     if (showUpsell && Object.keys(showUpsell).length !== 0) {
       setExisting(showUpsell);
       setUpsellName(showUpsell.name || "");
-      setDiscount(showUpsell.discount?.split("%")[0] || "");
+      setDiscount(showUpsell.discount?.split("%")[0] || 0);
       setDetectPeriod(showUpsell.timing || "1 days");
       setMessage(showUpsell.message || "");
+      setCheckinTime(showUpsell?.gapTime)
+      setSelectedNights(showUpsell?.nightExist)
     }
     function handleClickOutside(event) {
       if (
@@ -77,26 +81,38 @@ const CreateUpsellModal = ({
         </div>
         <div className="p-6 space-y-6">
           <div className="relative">
-            <span className="my-2 text-sm">Enter name</span>
-            <input
+            <label htmlFor="upsell-name" className="my-2 block text-sm">
+              Select upsell type
+            </label>
+            <select
               id="upsell-name"
-              placeholder="Enter upsell name"
               value={upsellName}
               onChange={(e) => setUpsellName(e.target.value)}
-              className="w-full text-sm border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-green-200 resize-none scrollbar-hide"
-            />
-            <div className="mt-3">
-              <p className="text-sm pb-1">Upsell discount</p>
-              <input
-                type="number"
-                id="upsell-offer"
-                placeholder="Enter discount offer"
-                onWheel={(e) => e.target.blur()}
-                value={discount}
-                onChange={(e) => setDiscount(e.target.value)}
-                className="w-full text-sm border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-green-200 resize-none scrollbar-hide"
-              />
-            </div>
+              className="w-full text-sm border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-green-200 bg-white hover:bg-gray-50 cursor-pointer"
+            >
+              <option value="" disabled>
+                Select upsell type
+              </option>
+              <option value="Post stay gap night">Post stay gap night</option>
+              <option value="Late checkout">Late checkout</option>
+              <option value="Early check in">Early check in</option>
+              <option value="Pre-stay gap night">Pre-stay gap night</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <p>Where there exists</p>
+            <select
+              className="border rounded-md px-2 py-1 text-sm bg-white focus:ring-2 focus:ring-green-100 font-sans cursor-pointer"
+              value={selectedNights}
+              onChange={(e) => setSelectedNights(Number(e.target.value))}
+            >
+              {[1, 2, 3, 4].map((item) => (
+                <option key={item} value={item}>
+                  {item} {item === 1 ? "Night" : "Nights"}
+                </option>
+              ))}
+            </select>
+            <p>between reservations</p>
           </div>
           <DetectUpsell
             detectPeriod={detectPeriod}
@@ -104,7 +120,23 @@ const CreateUpsellModal = ({
             periodDropdownOpen={periodDropdownOpen}
             setPeriodDropdownOpen={setPeriodDropdownOpen}
             setDetectPeriod={setDetectPeriod}
+            upsellName={upsellName}
+            setCheckinTime={setCheckinTime}
+            checkinTime={checkinTime}
           />
+          <div className="mt-3 flex gap-2 items-center">
+            <p className="text-sm font-semibold">Offer</p>
+            <input
+              type="number"
+              id="upsell-offer"
+              // placeholder="Enter discount offer"
+              onWheel={(e) => e.target.blur()}
+              value={discount}
+              onChange={(e) => setDiscount(e.target.value)}
+              className="text-sm border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-green-200 resize-none scrollbar-hide w-16 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+            />
+            <p>{"% discount"}</p>
+          </div>
           <UpsellMessages
             variablesDropdownRef={variablesDropdownRef}
             variablesDropdownOpen={variablesDropdownOpen}
@@ -135,6 +167,8 @@ const CreateUpsellModal = ({
           setUpsellName={setUpsellName}
           setDiscount={setDiscount}
           setDetectPeriod={setDetectPeriod}
+          selectedNights={selectedNights}
+          checkinTime={checkinTime}
         />
       </div>
     </div>

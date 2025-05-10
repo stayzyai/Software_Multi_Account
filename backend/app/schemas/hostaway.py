@@ -11,6 +11,8 @@ class UpsellData(BaseModel):
     discount: str
     detect_upsell_days: str
     upsell_message: str
+    nights_exist: int
+    gap_time: str
 
 class UpsellStatusUpdate(BaseModel):
     upsell_id: int

@@ -258,7 +258,9 @@ const ticketCreateByAI = async (
     };
     const response = await api.post(`/hostaway/ai-issue-detection`, payload);
     if (response?.data?.answer) {
-      const parsedResponse = JSON.parse(response?.data?.answer);
+      const rawAnswer = response?.data?.answer;
+      const cleanText = rawAnswer.replace(/^```json\s*|\s*```$/g, "");
+      const parsedResponse = JSON.parse(cleanText);
       const { email, ...taskDetails } = parsedResponse;
       const payloadResponse = {
         ...taskDetails,
@@ -412,14 +414,13 @@ const updateConversation = (messages, newMessage) => {
   return [];
 };
 
-const filterMessages = (messages, filters, selectedIds) => {
+const filterMessages = (messages, filters, selectedIds, selectedListingIds) => {
   const {
     Date: filterType,
     Listing: selectedListing,
     Task: selectedTask,
   } = filters;
-
-  if (filterType === "Date" && !selectedListing && !selectedTask && selectedIds?.length == 0) {
+  if (filterType === "Date" && !selectedListing && !selectedTask && selectedIds?.length == 0 && selectedListingIds?.length == 0) {
     return messages;
   }
 
@@ -454,8 +455,9 @@ const filterMessages = (messages, filters, selectedIds) => {
     }
 
     let listingMatch = true;
-    if (selectedListing && selectedListing !== "") {
-      listingMatch = message.listingMapId == selectedListing;
+    if (selectedListingIds?.length !== 0 ) {
+      // listingMatch = message.listingMapId == selectedListing;
+      listingMatch = selectedListingIds.includes(message.listingMapId);
     }
 
     // Task filter (by reservationId)

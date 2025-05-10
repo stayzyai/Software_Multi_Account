@@ -3,6 +3,7 @@ const initialState = {
   unreadChats: {},
   issueStaus: {},
   issueId: null,
+  reservationId: null,
   isSuggestion: false
 };
 const notificationsSlice = createSlice({
@@ -23,10 +24,13 @@ const notificationsSlice = createSlice({
     setTaskId: (state, action)=>{
       state.issueId = action.payload
     },
+    setDetectReservationId: (state, action)=>{
+      state.reservationId = action.payload
+    },
     setSuggestion: (state, action)=>{
-      state.isSuggestion = action.payload
+      state.reservationId = action.payload
     }
   }
 });
-export const { setUnreadChat, markChatAsRead, setIssueStatus, setTaskId, setSuggestion } = notificationsSlice.actions;
+export const { setUnreadChat, markChatAsRead, setIssueStatus, setTaskId, setSuggestion, setDetectReservationId } = notificationsSlice.actions;
 export default notificationsSlice.reducer;

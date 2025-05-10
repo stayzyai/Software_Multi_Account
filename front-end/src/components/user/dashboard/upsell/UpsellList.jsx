@@ -84,7 +84,7 @@ const UpsellManagement = ({
                     {upsell.name}
                   </div>
                   <div className="text-sm md:text-base md:w-1/3 mb-2 md:mb-0">
-                    {upsell.timing}
+                  {upsell.timing} before {upsell?.name.includes("Early") || upsell?.name.includes("Pre") ? "check-in" : "check-out"}
                   </div>
                   <div className="w-full md:w-1/3 flex justify-between items-center">
                     <span className="text-sm md:text-base">

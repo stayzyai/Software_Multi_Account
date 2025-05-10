@@ -24,6 +24,7 @@ const Header = ({
   const firstname = useSelector((state) => state.user.firstname);
   const lastname = useSelector((state) => state.user.lastname);
   const userRole = useSelector((state) => state.user.role);
+  const profileImage = useSelector((state) => state.user.image_url);
   const listings = useSelector((state) => state.listings.listings);
   const conversations = useSelector(
     (state) => state.conversation.conversations
@@ -186,7 +187,7 @@ const Header = ({
           className="relative flex items-center gap-3 cursor-pointer bg-white rounded-3xl px-2 py-1"
         >
           <img
-            src="/avatar.png"
+            src={profileImage? profileImage : "/avatar.png"}
             alt="User avatar"
             className="rounded-full"
             width={38}

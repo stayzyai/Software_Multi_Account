@@ -26,7 +26,7 @@ from app.common.hostaway_setup import hostaway_put_request, hostaway_get_request
 from app.websocket import update_checkout_date
 import time
 from fastapi.responses import JSONResponse
-# from app.service.s3_service import upload_or_replace_image
+from app.service.s3_service import upload_or_replace_image
 
 load_dotenv()
 
@@ -145,8 +145,9 @@ def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_tok
         subscribed_user = db.query(Subscription).filter(Subscription.user_id == user_id).first()
         is_premium_member = subscribed_user and  subscribed_user.is_active if True else False
         ai_enable_list = db.query(ChatAIStatus).filter(ChatAIStatus.user_id == user_id).all()
+        image_url = db_user.profile_url if db_user.profile_url else None
         return UserProfile(id=db_user.id, firstname=db_user.firstname, lastname=db_user.lastname, email=db_user.email, role=db_user.role,
-            created_at=db_user.created_at, ai_enable=is_premium_member, chat_list=ai_enable_list)
+            created_at=db_user.created_at, ai_enable=is_premium_member, chat_list=ai_enable_list, image_url=image_url)
 
     except HTTPException as exc:
         logging.error(f"An error occurred while changing the password: {exc}")
@@ -155,19 +156,23 @@ def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_tok
         logging.error(f"An error occurred while retrieving user profile: {str(e)}")
         raise HTTPException(status_code=500, detail={"message": f"An error occurred while retrieving user profile: {str(e)}"})
 
-# @router.post("/upload-image/")
-# async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db), token: str = Depends(get_token)):
-#     try:
-#         decode_token = decode_access_token(token)
-#         user_id = decode_token['sub']
-#         db_user = db.query(User).filter(User.id == user_id).first()
-#         if not db_user:
-#             raise HTTPException(status_code=404, detail={"message": "User not found"})
-#         # Upload image to S3 and get the file URL
-#         file_url = upload_or_replace_image(file, user_id)
-#         return JSONResponse(content={"message": "Image uploaded successfully", "url": file_url}, status_code=200)
-#     except Exception as e:
-#         return JSONResponse(content={"message": str(e)}, status_code=400)
+@router.post("/upload-image")
+async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db), token: str = Depends(get_token)):
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail={"message": "User not found"})
+        # Upload image to S3 and get the file URL
+        file_url = upload_or_replace_image(file, user_id)
+        if file_url:
+            db_user.profile_url = file_url
+            db.commit()
+        return JSONResponse(content={"message": "Image uploaded successfully", "url": file_url}, status_code=200)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail={"message": f"An error occurred while upload profile image: {str(e)}"})
+
 
 @router.post("/ai-suggestion")
 async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str = Depends(get_hostaway_key)):

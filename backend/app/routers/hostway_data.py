@@ -182,13 +182,15 @@ async def create_or_update_upsell(upsell_data: UpsellData, token: str = Depends(
                 existing_upsell.discount = upsell_data.discount
                 existing_upsell.detect_upsell_days = upsell_data.detect_upsell_days
                 existing_upsell.upsell_message = upsell_data.upsell_message
+                existing_upsell.nights_exist = upsell_data.nights_exist
+                existing_upsell.gap_time = upsell_data.gap_time
                 db.commit()
                 db.refresh(existing_upsell)
                 return {"message": "Upsell offer updated successfully", "data": existing_upsell}
 
         new_upsell = Upsell(name=upsell_data.name, discount=upsell_data.discount,
                             detect_upsell_days=upsell_data.detect_upsell_days,
-                            upsell_message=upsell_data.upsell_message, user_id=user.id)
+                            upsell_message=upsell_data.upsell_message, nights_exist=upsell_data.nights_exist, user_id=user.id, gap_time=upsell_data.gap_time)
         db.add(new_upsell)
         db.commit()
         db.refresh(new_upsell)

@@ -9,7 +9,8 @@ const MessageList = ({
   filteredConversations,
   handleClickMessages,
   selectedFilters,
-  selectedIds
+  selectedIds,
+  selectedListingIds
 }) => {
   const [isFilteringActive, setFilteringActive] = useState(false);
   const unreadChats = useSelector((state) => state.notifications.unreadChats);
@@ -18,10 +19,9 @@ const MessageList = ({
 
   useEffect(() => {
     const filterActive =
-      selectedFilters.Date !== "" ||
-      selectedFilters.Listing !== "" || selectedIds?.length !== 0 ; 
+      selectedFilters.Date !== "" || selectedIds?.length !== 0 || selectedListingIds?.length != 0;
     setFilteringActive(filterActive);
-  }, [selectedFilters, selectedIds]);
+  }, [selectedFilters, selectedIds, selectedListingIds]);
 
   const getInitials = (name) => {
     let words = name?.trim().split(" ").slice(0, 1);

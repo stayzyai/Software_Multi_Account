@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { toast } from "sonner";
 import { openAISuggestion, formatedMessages } from "../helpers/Message";
-import { setIssueStatus, setTaskId, setSuggestion } from "../store/notificationSlice";
+import { setIssueStatus, setTaskId, setSuggestion, setDetectReservationId } from "../store/notificationSlice";
 
 const useAISuggestion = (setInput, chatInfo, amenity, tasks, setIsAISuggestion) => {
 
@@ -43,6 +43,7 @@ const useAISuggestion = (setInput, chatInfo, amenity, tasks, setIsAISuggestion) 
     );
     dispatch(setTaskId(taskId));
     dispatch(setSuggestion(false));
+    dispatch(setDetectReservationId(reservationId))
 
     if (response) {
       setInput((prev) => ({ ...prev, [chatId]: response }));

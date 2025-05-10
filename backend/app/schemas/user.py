@@ -40,7 +40,8 @@ class UserProfile(BaseModel):
     role: Role
     created_at: datetime
     ai_enable: Optional[bool]
-    chat_list: List[ChatAIStatusModel] 
+    chat_list: List[ChatAIStatusModel]
+    image_url: Optional[str] = None
 
     class Config:
         from_attributes = True    

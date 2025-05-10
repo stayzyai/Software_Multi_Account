@@ -6,24 +6,26 @@ import { useEffect } from "react";
 import api from "../../../../api/api";
 import { useDispatch } from "react-redux";
 import { setUser } from "../../../../store/userSlice";
+import { useSelector } from "react-redux";
 
 const Home = ({ role }) => {
   const dispatch = useDispatch();
+  const userProfile = useSelector((state)=>state.user)
 
   useEffect(() => {
     const getProfile = async () => {
       try {
         const response = await api.get("/user/profile");
         if (response?.status === 200 && response?.data) {
-          const { firstname, lastname, email, role, ai_enable, chat_list, id } = response.data;
-          dispatch(setUser({ firstname, lastname, email, role, ai_enable, chat_list, id }));
+          const { firstname, lastname, email, role, ai_enable, chat_list, id, image_url } = response.data;
+          dispatch(setUser({ firstname, lastname, email, role, ai_enable, chat_list, id, image_url }));
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
       }
     };
     getProfile();
-  }, []);
+  }, [userProfile]);
 
   return (
     <div>

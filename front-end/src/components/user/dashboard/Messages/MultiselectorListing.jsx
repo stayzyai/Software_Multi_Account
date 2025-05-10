@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import OutlinedInput from "@mui/material/OutlinedInput";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
@@ -6,44 +6,61 @@ import ListItemText from "@mui/material/ListItemText";
 import Select from "@mui/material/Select";
 import Checkbox from "@mui/material/Checkbox";
 import Box from "@mui/material/Box";
-import Divider from "@mui/material/Divider";
 
-const TaskMultiSelect = ({ tasks, setSelectedIds }) => {
+const MultipleSelectListing = ({
+  listings,
+  setSelectedListingIds,
+  selectedListingIds,
+}) => {
   const [selectedTask, setSelectedTask] = useState([]);
+
+  useEffect(() => {
+    const matchedIds = listings
+      .filter((item) => selectedListingIds.includes(item.id))
+      .map((item) => item.id);
+    setSelectedTask(matchedIds);
+  }, [selectedListingIds]);
 
   const handleChange = (event) => {
     const {
       target: { value },
     } = event;
-    const newSelectedTaskIds =
+
+    if (value.includes("clear")) {
+      return;
+    }
+
+    const newSelectedListingIds =
       typeof value === "string" ? value.split(",") : value;
 
-    setSelectedTask(newSelectedTaskIds);
+    setSelectedTask(newSelectedListingIds);
 
-    const reservationIds = tasks
-      ?.filter((item) => newSelectedTaskIds.includes(item.id))
-      .map((item) => item.reservationId)
+    const listingId = listings
+      ?.filter((item) => newSelectedListingIds.includes(item.id))
+      .map((item) => item.id)
       .filter((id) => id !== undefined);
 
-    setSelectedIds(reservationIds);
-  };
-
-  const handleClearFilter = () => {
-    setSelectedTask([]);
-    setSelectedIds([]);
+    setSelectedListingIds(listingId);
   };
 
   const getSelectedNames = () => {
-    if (!selectedTask.length) return "Tasks";
-    return tasks
+    if (!selectedTask.length) return "Listings";
+    return listings
       .filter((item) => selectedTask.includes(item.id))
-      .map((item) => item.title)
+      .map((item) => item.name)
       .join(", ");
+  };
+
+  const handleClearInDropdown = (e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setSelectedTask([]);
+    setSelectedListingIds([]);
   };
 
   return (
     <Box display="flex" alignItems="center" gap={1}>
-      <FormControl sx={{ minWidth: 10 }}>
+      <FormControl sx={{ minWidth: 120 }}>
         <Select
           multiple
           displayEmpty
@@ -57,13 +74,11 @@ const TaskMultiSelect = ({ tasks, setSelectedIds }) => {
               style: {
                 maxHeight: 300,
                 maxWidth: 200,
-                overflowY: "auto",
+                marginRight: 100,
+                overflow: "auto",
               },
               sx: {
-                "&::-webkit-scrollbar": {
-                  width: 0,
-                  background: "transparent",
-                },
+                "&::-webkit-scrollbar": { display: "none" },
                 scrollbarWidth: "none",
               },
             },
@@ -72,42 +87,37 @@ const TaskMultiSelect = ({ tasks, setSelectedIds }) => {
             fontSize: "14px",
             fontFamily: "DM Sans",
             fontWeight: 500,
-            width: 100,
+            width: "110px",
             border: "none",
           }}
         >
-          {tasks?.length > 0 && (
-            <>
-              <MenuItem
-                onClick={(e) => {
-                  e.stopPropagation(); // prevent Select from closing
-                  handleClearFilter();
-                }}
-                sx={{
-                  justifyContent: "center",
-                  fontSize: "12px",
-                  color: "error.main",
-                }}
-              >
-                Clear
-              </MenuItem>
-              <Divider />
-            </>
-          )}
+          <MenuItem
+            value="clear"
+            onClick={handleClearInDropdown}
+            sx={{ py: 0.4, fontSize: "1px", color: "red", width: "200px", textAlign:"center"}}
+          >
+            <ListItemText
+              primary="Clear Filter"
+              primaryTypographyProps={{
+                fontSize: "11px",
+                fontWeight: 500,
+              }}
+            />
+          </MenuItem>
 
-          {tasks?.map((item) => (
+          {listings?.map((item) => (
             <MenuItem key={item.id} value={item.id} sx={{ py: 0.4 }}>
               <Checkbox
                 checked={selectedTask.includes(item.id)}
-                sx={{ p: 0.5, mr: 0 }}
+                sx={{
+                  p: 0.5,
+                  mr: 0,
+                  transform: "scale(0.8)",
+                }}
               />
               <ListItemText
-                primary={item.title}
+                primary={item.name}
                 primaryTypographyProps={{ fontSize: "12px" }}
-                sx={{
-                  wordWrap: "break-word", // Ensures text wraps
-                  whiteSpace: "normal", // Ensures wrapping happens naturally
-                }}
               />
             </MenuItem>
           ))}
@@ -117,4 +127,4 @@ const TaskMultiSelect = ({ tasks, setSelectedIds }) => {
   );
 };
 
-export default TaskMultiSelect;
+export default MultipleSelectListing;

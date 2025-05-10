@@ -23,6 +23,8 @@ const ModalFooter = ({
   setUpsellName,
   setDiscount,
   setDetectPeriod,
+  selectedNights,
+  checkinTime
 }) => {
   const upsellOffer = useSelector((state) => state.upsells.upsell);
   const dispatch = useDispatch();
@@ -42,7 +44,10 @@ const ModalFooter = ({
       discount,
       detect_upsell_days: detectPeriod,
       upsell_message: message,
+      nights_exist: selectedNights,
+      gap_time: checkinTime
     };
+
     const response = await saveUpsell(upsellData);
     if (response?.length !== 0) {
       const formattedResponse = formateUpsell([response])[0];

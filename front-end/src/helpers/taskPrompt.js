@@ -56,7 +56,7 @@ Given a user’s message describing a problem, generate a JSON response with the
     "title": "<Generated Title>",
     "description": "<Generated Description>",
     "assigneeUserId": <userId from {{users}}>,
-    "priority": <1 (Urgent) or 2 (Normal) based on previous tasks or AI's understanding>,
+    "priority": <1 (Urgent) or 2 (Normal) based on previous tasks or your understanding>,
     "email": {
         "user email": "<Email of the assigned user from {{users}}>"
         "subject": "New Maintenance Task Assigned: <Generated Title>",

@@ -31,13 +31,15 @@ const getUpsell = async () => {
 };
 
 const formateUpsell = (data) => {
-  const outputData = data.map((item) => ({
-    id: item.id,
-    name: item.name,
-    timing: `${item.detect_upsell_days}`,
-    discount: `${item.discount}% off`,
-    enabled: item.enabled,
-    message: item.upsell_message
+  const outputData = data?.map((item) => ({
+    id: item?.id,
+    name: item?.name,
+    timing: `${item?.detect_upsell_days}`,
+    discount: `${item?.discount}% off`,
+    enabled: item?.enabled,
+    message: item?.upsell_message,
+    nightExist: item?.nights_exist,
+    gapTime: item?.gap_time
   }));
   return outputData;
 };

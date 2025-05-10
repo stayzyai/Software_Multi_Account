@@ -89,7 +89,7 @@ return (
           </div>
         )}
          <div ref={messagesEndRef}></div>
-         <DetectIssue/>
+         <DetectIssue chatInfo={chatInfo}/>
       </div>
       <div className="flex justify-between mb-4 xl:hidden">
         <button

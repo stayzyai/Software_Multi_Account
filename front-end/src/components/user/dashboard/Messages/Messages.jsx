@@ -8,7 +8,6 @@ import {
   getAllListings,
   getListingsName,
   simplifiedResult,
-  getTasksTitle,
   getConversationsWithResources,
 } from "../../../../helpers/Message";
 import Dropdown from "./DropDown";
@@ -17,16 +16,22 @@ import { setUnreadChat } from "../../../../store/notificationSlice";
 import MessageList from "./MessageList";
 import { getHostawayTask } from "../../../../helpers/TaskHelper";
 import TaskMultiSelect from "./TaskMultiSelect";
+import MultipleSelectListing from "./MultiselectorListing"
 
 const Messages = ({ handleClickMessages, title }) => {
   const [simplifiedConversation, setSimplifiedConversation] = useState([]);
   const [filteredConversations, setFilteredConversations] = useState([]);
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [selectedFilters, setSelectedFilters] = useState({ Date: "", Listing: "", Task: ""});
+  const [selectedFilters, setSelectedFilters] = useState({
+    Date: "",
+    Listing: "",
+    Task: "",
+  });
   const [allListings, setAllListings] = useState([]);
   const [allTasks, setAllTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState([]);
+  const [selectedListingIds, setSelectedListingIds] = useState([])
 
   const dispatch = useDispatch();
   const conversation = useSelector((state) => state.conversation.conversations);
@@ -91,9 +96,9 @@ const Messages = ({ handleClickMessages, title }) => {
   }, []);
 
   useEffect(() => {
-    const data = filterMessages(simplifiedConversation, selectedFilters, selectedIds);
+    const data = filterMessages(simplifiedConversation, selectedFilters, selectedIds, selectedListingIds);
     setFilteredConversations(data);
-  }, [selectedFilters, selectedIds]);
+  }, [selectedFilters, selectedIds, selectedListingIds]);
 
   const handleDropdownClick = (label) => {
     setOpenDropdown(openDropdown === label ? null : label);
@@ -112,7 +117,7 @@ const Messages = ({ handleClickMessages, title }) => {
               <h2 className="text-lg font-semibold">Latest Messages</h2>
               <div className="flex gap-6 mr-4">
                 <div className="flex items-center gap-4 text-[14px] cursor-pointer">
-                  {["Date", "Listing"].map((label, index) => (
+                  {["Date"].map((label, index) => (
                     <Dropdown
                       key={index}
                       label={label}
@@ -129,6 +134,11 @@ const Messages = ({ handleClickMessages, title }) => {
                       selectedValue={selectedFilters[label]}
                     />
                   ))}
+                  <MultipleSelectListing
+                    listings={allListings}
+                    setSelectedListingIds={setSelectedListingIds}
+                    selectedListingIds={selectedListingIds}
+                  />
                   <TaskMultiSelect
                     tasks={allTasks}
                     setSelectedIds={setSelectedIds}
@@ -143,6 +153,7 @@ const Messages = ({ handleClickMessages, title }) => {
               filteredConversations={filteredConversations}
               handleClickMessages={handleClickMessages}
               selectedIds={selectedIds}
+              selectedListingIds={selectedListingIds}
             />
           </div>
         </div>

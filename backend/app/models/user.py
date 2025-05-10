@@ -17,6 +17,7 @@ class User(Base):
     role = Column(Enum(Role), default=Role.user)
     refresh_token = Column(String, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
+    profile_url = Column(String, default=None)
 
     def __repr__(self):
         return f"<User(id={self.id}, firstname={self.firstname}, lastname={self.lastname}, email={self.email}, role={self.role})>"
@@ -81,6 +82,8 @@ class Upsell(Base):
     upsell_message = Column(String)
     enabled = Column(Boolean, default=True)
     user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
+    nights_exist = Column(Integer, default=1)
+    gap_time = Column(String, default=None)
 
 class ChatAIStatus(Base):
     __tablename__ = "chat_ai_status"

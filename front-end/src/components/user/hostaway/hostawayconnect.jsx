@@ -57,6 +57,7 @@ const HostawayConnectModal = () => {
         toast.success("Hostaway account connected successfully!");
         setItem("isHostwayAccount", true);
         dispatch(setHostawayModal(false))
+        window.location.reload();
       }
       setIsLoading(false);
     } catch (error) {

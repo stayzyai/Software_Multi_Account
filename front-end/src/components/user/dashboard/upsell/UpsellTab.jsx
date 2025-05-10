@@ -38,7 +38,7 @@ const UpsellTab = () => {
         isEditMode={isEditMode}
         setEditMode={setEditMode}
         setUpsell={setUpsell}
-        upsell={upsell}
+        upsells={upsell}
       />}
     </div>
   );

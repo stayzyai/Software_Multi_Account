@@ -100,7 +100,7 @@ export const Overview = () => {
               stats={{
                 current_count: messageStats.total_messages,
                 is_increase: messageStats.is_increase,
-                percentage_change: messageStats.percentage_change,
+                percentage_change: messageStats.percentage_change ?? 0,
               }}
               selectedRange={selectedRange}
             />
