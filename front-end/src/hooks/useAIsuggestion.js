@@ -8,7 +8,8 @@ const useAISuggestion = (setInput, chatInfo, amenity, tasks, setIsAISuggestion) 
   const dispatch = useDispatch();
   const users = useSelector((state) => state.hostawayUser.users);
   const listings = useSelector((state) => state.listings.listings);
-  const userProfile = useSelector((state)=>state.user)
+  const userProfile = useSelector((state) => state.user);
+  const allReservations = useSelector((state) => state.reservations.reservations);
 
   const handleAISuggestion = async (messages) => {
     if(!userProfile?.ai_enable){
@@ -25,7 +26,14 @@ const useAISuggestion = (setInput, chatInfo, amenity, tasks, setIsAISuggestion) 
     const chatId = chatInfo[0]["id"];
     const listing = listings?.find((item) => item.id === listingMapId);
     const listingsName = listing?.name;
-    const { systemPrompt, lastUserMessage } = formatedMessages(messages, listing, amenity);
+    
+    // Filter reservations for the current listing
+    const listingReservations = allReservations.filter(
+      (reservation) => reservation.listingMapId == listingMapId
+    );
+    
+    // Pass the reservations to the formatedMessages function
+    const { systemPrompt, lastUserMessage } = formatedMessages(messages, listing, amenity, listingReservations);
     if(lastUserMessage === undefined) {
       toast.info("A response can only be generated after the guest has sent at least one message.");
       setIsAISuggestion(false);

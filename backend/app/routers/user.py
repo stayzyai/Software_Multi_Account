@@ -173,828 +173,552 @@ async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_d
     except Exception as e:
         raise HTTPException(status_code=500, detail={"message": f"An error occurred while upload profile image: {str(e)}"})
 
-
 @router.post("/ai-suggestion")
 async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str = Depends(get_hostaway_key)):
-    token_record = db.query(ChromeExtensionToken).filter(ChromeExtensionToken.key == key).first()
-    user_id = None
-    if token_record is None:
-        decode_token = decode_access_token(key)
-        user_id = decode_token['sub']
-        if user_id is None:
-            raise HTTPException(status_code=404, detail="User ID not found in token")
-        token_record = True
-    if token_record is None:
-        raise HTTPException(status_code=404, detail="extension key not found")
-    
-    # Record the time when the message was received
-    received_timestamp = datetime.now().isoformat()
-    
-    model_id = get_latest_model_id()
-    prompt = request.prompt
-    if request.messsages is None:
-        request.messsages = ""
-    gpt_response = get_gpt_response(model_id, prompt, request.messsages)
-    if gpt_response is None:
-        raise HTTPException(status_code=400, detail="Some error occurred. Please try again.")
-    # logging.info(f"chat gpt response{gpt_response}")
-    
-    # Record the time when the response was generated
-    response_timestamp = datetime.now().isoformat()
-    
-    interaction_data = {
+    try:
+        logging.info(f"AI suggestion request received with key: {key[:10] if key else 'None'}")
+        
+        # Authenticate the user
+        token_record = db.query(ChromeExtensionToken).filter(ChromeExtensionToken.key == key).first()
+        user_id = None
+        if token_record is None:
+            logging.info("No extension token found, attempting to decode as JWT token")
+            try:
+                decode_token = decode_access_token(key)
+                user_id = decode_token['sub']
+                if user_id is None:
+                    logging.error("User ID not found in token after decoding")
+                    raise HTTPException(status_code=404, detail="User ID not found in token")
+                logging.info(f"Successfully decoded JWT token, user_id: {user_id}")
+                token_record = True
+            except Exception as decode_error:
+                logging.error(f"Error decoding token: {str(decode_error)}")
+                raise HTTPException(status_code=401, detail=f"Invalid authentication token: {str(decode_error)}")
+        else:
+            logging.info(f"Extension token found for user_id: {token_record.user_id}")
+            user_id = token_record.user_id
+            
+        if token_record is None:
+            logging.error("Extension key not found after token check")
+            raise HTTPException(status_code=404, detail="extension key not found")
+        
+        # Record the time when the message was received
+        received_timestamp = datetime.now().isoformat()
+        
+        # Get model and generate response
+        model_id = get_latest_model_id()
+        prompt = request.prompt
+        
+        if request.messsages is None:
+            request.messsages = ""
+            
+        gpt_response = get_gpt_response(model_id, prompt, request.messsages)
+        if gpt_response is None:
+            raise HTTPException(status_code=400, detail="Some error occurred. Please try again.")
+        
+        # Record response timestamp
+        response_timestamp = datetime.now().isoformat()
+        
+        # Store interaction data
+        interaction_data = {
             "prompt": request.messsages,
             "completion": gpt_response,
             "received_timestamp": received_timestamp,
             "response_timestamp": response_timestamp,
             "user_id": user_id if user_id else None,
-            }
-    
-    # store_chat(interaction_data)
-    threading.Thread(target=store_chat, args=(interaction_data,), daemon=True).start()
-
-    # First check GPT response for extension request flags
-    gpt_extension_request = bool(re.search(r'extension[_\s]request.*?yes', gpt_response.lower(), re.IGNORECASE))
-    gpt_dates_specified = bool(re.search(r'dates[_\s]specified.*?true', gpt_response.lower(), re.IGNORECASE))
-    
-    # Initialize with GPT detection results
-    is_extension_request = gpt_extension_request
-    dates_specified = gpt_dates_specified
-    
-    print(f"GPT detected - dates_specified: {dates_specified}, extension_request: {is_extension_request}")
-
-    mentioned_listing_name = request.listingName
-    mentioned_listing_id = request.listingMapId
-    
-    # Also check the user message directly for date mentions
-    # This is a simpler and more direct approach that doesn't rely on the GPT response
-    direct_date_check = False
-    
-    # Common date patterns in natural language
-    date_keywords = [
-        r'(?:for|on|until|through)?\s*(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)',  # "7 April" or "the 7th of April"
-        r'(?:for|on|until|through)?\s*(?:the\s+)?(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?',  # "April 7" or "April 7th"
-        r'(?:for|on|until|through)?\s*(\d{1,2})[/-](\d{1,2})',  # "4/7" or "4-7"
-        r'(?:for|on|until|through)?\s*(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})'  # "4/7/2023" or "4-7-23"
-    ]
-    
-    user_message_lower = request.messsages.lower() if request.messsages else ""
-    
-    for pattern in date_keywords:
-        if re.search(pattern, user_message_lower):
-            direct_date_check = True
-            logging.info(f"Direct date mention found in user message: {re.search(pattern, user_message_lower).group(0)}")
-            break
-
-    # If we detect a date mention directly in the user's message, force dates_specified to True
-    if direct_date_check:
-        dates_specified = True
-        logging.info("Date detected directly in user message, setting dates_specified to True")
-        print("Date detected directly in user message, setting dates_specified to True")
+        }
         
-        # If this appears to be a direct extension request, also set is_extension_request to True
-        # Check for direct extension keywords or phrasing that indicates shifting the stay later
-        if re.search(r'(extend|extension|stay\s+(longer|more|extra)|book\s+more)', user_message_lower) or \
-        re.search(r'\b\d+\s+days?\s+later\b.*(check\s*-?\s*in|check\s*-?\s*out)', user_message_lower) or \
-        re.search(r'both\s+check\s*-?\s*in\s+and\s+check\s*-?\s*out.*\b\d+\s+days?\s+later\b', user_message_lower):
+        # Store chat in background thread
+        try:
+            threading.Thread(target=store_chat, args=(interaction_data,), daemon=True).start()
+        except Exception as thread_err:
+            logging.error(f"Error starting thread to store chat: {str(thread_err)}")
+            # Continue execution even if chat storage fails
+        
+        # Check if this is an extension request
+        is_extension_request = False
+        dates_specified = False
+        
+        # Check GPT response for extension flags
+        try:
+            is_extension_request = bool(re.search(r'(extension[_\s]request.*?yes|date[_\s]change.*?yes|change[_\s]date.*?yes|extend.*?stay|change.*?check[_\s]in|change.*?check[_\s]out)', gpt_response.lower(), re.IGNORECASE))
+            dates_specified = bool(re.search(r'dates[_\s]specified.*?true', gpt_response.lower(), re.IGNORECASE))
+        except Exception:
+            pass
+            
+        # Check user message for date change keywords
+        user_message_lower = request.messsages.lower() if request.messsages else ""
+        if re.search(r'(extend|extension|stay\s+(longer|more|extra)|book\s+more|change\s+date|move\s+date|update\s+date|from\s+\d{1,2}\s+\w+|upto\s+\d{1,2}\s+\w+|check[_\s]in|check[_\s]out)', user_message_lower):
             is_extension_request = True
-            logging.info("Extension request detected directly in user message, setting is_extension_request to True")
-            print("Extension request detected directly in user message, setting is_extension_request to True")
-    
-    # Extract specific dates mentioned in user query
-    date_patterns = [
-        # April 7, 2025 or April 7 2025
-        r'(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?\s*(?:,\s*)?(\d{4})?',
-        # 7 April, 2025 or 7 April 2025
-        r'(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)(?:,\s*)?(\d{4})?',
-        # 04/07/2025 or 4/7/2025 (assuming MM/DD/YYYY format)
-        r'(\d{1,2})/(\d{1,2})/(\d{4})',
-        # 2025-04-07
-        r'(\d{4})-(\d{1,2})-(\d{1,2})'
-    ]
-
-    requested_dates = []
-
-    for pattern in date_patterns:
-        date_matches = re.findall(pattern, request.messsages.lower())
-        print(f"Pattern: {pattern}, Matches: {date_matches}")
-        for match in date_matches:
-            # try:
-                # Handle different date formats
-                if len(match) == 3:  # All patterns should capture 3 groups
-                    if re.match(r'\d{4}', match[0]):  # ISO format: 2025-04-07
-                        year, month, day = match
-                        month_name = None
-                    elif match[0].isalpha():  # Month name first: April 7, 2025
-                        month_name, day, year = match
-                        month = None
-                    else:  # Day first: 7 April, 2025 or MM/DD/YYYY: 04/07/2025
-                        if match[1] and match[1].isalpha():  # 7 April, 2025
-                            day, month_name, year = match
-                            month = None
-                        else:  # 04/07/2025
-                            month, day, year = match
-                            month_name = None
-                
-                    # Convert month name to number if needed
-                    if month_name:
-                        import calendar
-                        month_names = {month.lower(): i for i, month in enumerate(calendar.month_name) if month}
-                        month_abbr = {month.lower(): i for i, month in enumerate(calendar.month_abbr) if month}
-                        
-                        month_name = month_name.lower()
-                        if month_name in month_names:
-                            month = month_names[month_name]
-                        elif month_name in month_abbr:
-                            month = month_abbr[month_name]
-                        else:
-                            continue
-                    
-                    # Handle missing year (assume current or next year)
-                    if not year or year == '':
-                        current_year = datetime.now().year
-                        current_month = datetime.now().month
-                        
-                        # If the mentioned month is earlier than the current month, assume next year
-                        if int(month) < current_month:
-                            year = current_year + 1
-                        else:
-                            year = current_year
-                    
-                    # Create date object
-                    date_obj = datetime(int(year), int(month), int(day))
-                    date_str = date_obj.strftime("%Y-%m-%d")
-                    
-                    if date_str not in requested_dates:
-                        requested_dates.append(date_str)
-                        logging.info(f"Found requested date in user query: {date_str}")
             
-            # except (ValueError, TypeError) as e:
-            #     logging.warning(f"Error parsing date from {match}: {str(e)}")
-            #     continue
-            # except Exception as e:
-            #     logging.warning(f"Unexpected error parsing date: {str(e)}")
-            #     continue
-    
-    # Get the latest requested date if there are multiple
-    latest_requested_date = None
-    if requested_dates:
-        requested_dates.sort()
-        latest_requested_date = requested_dates[-1]
-        logging.info(f"Latest requested extension date: {latest_requested_date}")
-    
-    if is_extension_request:
-        # try:
-            # Get hostaway account for this user
-            user_id = None
-            if token_record is not True:  # It's an extension token
-                user_id = token_record.user_id
-            else:  # It's a normal token
-                decode_token = decode_access_token(key)
-                user_id = decode_token['sub']
+        # Extract specified listing information
+        mentioned_listing_name = request.listingName
+        mentioned_listing_id = request.listingMapId
+        
+        # Only proceed with extension logic if this is an extension request and we have a listing ID
+        if is_extension_request and mentioned_listing_id:
+            # Extract dates from user message
+            requested_dates = []
+            date_patterns = [
+                r'(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?\s*(?:,\s*)?(\d{4})?',  # April 7, 2025
+                r'(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)(?:,\s*)?(\d{4})?',  # 7 April, 2025
+                r'(\d{1,2})/(\d{1,2})/(\d{4})',  # MM/DD/YYYY
+                r'(\d{4})-(\d{1,2})-(\d{1,2})'  # YYYY-MM-DD
+            ]
             
+            # Extract dates from message
+            for pattern in date_patterns:
+                date_matches = re.findall(pattern, request.messsages.lower())
+                for match in date_matches:
+                    # Process date matches
+                    try:
+                        if len(match) == 3:
+                            if re.match(r'\d{4}', match[0]):  # ISO format: 2025-04-07
+                                year, month, day = match
+                                month_name = None
+                            elif match[0].isalpha():  # Month name first: April 7, 2025
+                                month_name, day, year = match
+                                month = None
+                            else:  # Day first or MM/DD/YYYY
+                                if match[1] and match[1].isalpha():  # 7 April, 2025
+                                    day, month_name, year = match
+                                    month = None
+                                else:  # MM/DD/YYYY
+                                    month, day, year = match
+                                    month_name = None
+                        
+                            # Convert month name to number if needed
+                            if month_name:
+                                import calendar
+                                month_names = {month.lower(): i for i, month in enumerate(calendar.month_name) if month}
+                                month_abbr = {month.lower(): i for i, month in enumerate(calendar.month_abbr) if month}
+                                
+                                month_name_lower = month_name.lower()
+                                
+                                if month_name_lower in month_names:
+                                    month = month_names[month_name_lower]
+                                elif month_name_lower in month_abbr:
+                                    month = month_abbr[month_name_lower]
+                                else:
+                                    # Try partial matching
+                                    for known_month, idx in month_names.items():
+                                        if known_month.startswith(month_name_lower) or month_name_lower.startswith(known_month):
+                                            month = idx
+                                            break
+                                    
+                                    if not month:
+                                        for known_abbr, idx in month_abbr.items():
+                                            if known_abbr.startswith(month_name_lower) or month_name_lower.startswith(known_abbr):
+                                                month = idx
+                                                break
+                            
+                            # Ensure month is valid
+                            if isinstance(month, int) and (month <= 0 or month > 12):
+                                continue
+                            
+                            # Handle missing year
+                            if not year or year == '':
+                                current_year = datetime.now().year
+                                current_month = datetime.now().month
+                                
+                                # If mentioned month is earlier than current month, assume next year
+                                if int(month) < current_month:
+                                    year = current_year + 1
+                                else:
+                                    year = current_year
+                            
+                            # Convert values to integers and validate
+                            month_int = int(month)
+                            day_int = int(day)
+                            year_int = int(year)
+                            
+                            # Validate month and day
+                            if not (1 <= month_int <= 12):
+                                continue
+                                
+                            # Check days in month
+                            max_days = 31
+                            if month_int in [4, 6, 9, 11]:
+                                max_days = 30
+                            elif month_int == 2:
+                                # Simple leap year check
+                                max_days = 29 if (year_int % 4 == 0 and year_int % 100 != 0) or (year_int % 400 == 0) else 28
+                                
+                            if not (1 <= day_int <= max_days):
+                                continue
+                            
+                            # Create date object
+                            date_obj = datetime(year_int, month_int, day_int)
+                            date_str = date_obj.strftime("%Y-%m-%d")
+                            
+                            if date_str not in requested_dates:
+                                requested_dates.append(date_str)
+                                dates_specified = True
+                    except Exception as e:
+                        logging.error(f"Error parsing date: {str(e)}")
+                        continue
+            
+            # Get the earliest and latest requested dates
+            earliest_requested_date = None
+            latest_requested_date = None
+            if requested_dates:
+                requested_dates.sort()
+                earliest_requested_date = requested_dates[0]
+                latest_requested_date = requested_dates[-1]
+                logging.info(f"Found requested dates: earliest={earliest_requested_date}, latest={latest_requested_date}")
+            
+            # If we have user_id, try to update the reservation
             if user_id:
                 # Get the user's Hostaway account
                 hostaway_account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
                 
-                if hostaway_account:
-                    # Get all reservations
-                    import requests.exceptions
-                    
-                    # Define the fields we need
-                    check_in_field = "arrivalDate"
-                    check_out_field = "departureDate"
-                    reservation_listing_field = "listingMapId"
-                    
-                    # Check if a specific username was provided for reservation lookup
-                    username_filter = request.username
-                    if username_filter:
-                        logging.info(f"Searching for reservations with username: {username_filter}")
-                        print(f"DEBUG: Searching for reservations with username: {username_filter!r}")
-                    else:
-                        logging.info("No username provided in request, will search all reservations")
-                        print("DEBUG: No username provided in request, will search all reservations")
-                    
-                    # try:
-                        # Get reservations data with a timeout limit
-                    logging.info(f"Retrieving reservations with hostaway token: {hostaway_account.hostaway_token[:5]}...")
+                if hostaway_account and hostaway_account.hostaway_token:
+                    # Get reservation for the specific listing
                     reservations_response = hostaway_get_request(hostaway_account.hostaway_token, "/reservations")
+                    
                     if reservations_response:
-                        reservations_data = json.loads(reservations_response)
-                        all_reservations = reservations_data
-                        logging.info(f"Successfully retrieved reservations data with {len(all_reservations)} reservations")
-                        print(f"DEBUG: Retrieved {len(all_reservations)} total reservations")
+                        all_reservations = json.loads(reservations_response)
                         
-                        # Filter reservations by username if provided
-                        if username_filter:
-                            original_count = len(all_reservations)
-                            logging.info(f"Username filter: '{username_filter}', Reservations before filter: {original_count}")
-                            
-                            # Debug: Check each reservation's guest name
-                            for i, res in enumerate(all_reservations):  # Check first 10
-                                guest_name = res.get('guestName', '')
-                                print(f"DEBUG: Reservation {i+1} guest: '{guest_name!r}' vs filter: '{username_filter!r}'")
-                                match = guest_name.lower() == username_filter.lower() or username_filter.lower() in guest_name.lower() 
-                                print(f"DEBUG: Match result: {match}")
-                            
-                            # Filter for reservations that match the username (case insensitive)
-                            reservations_data['result'] = [
-                                r for r in all_reservations
-                                if r.get('guestName', '').lower() == username_filter.lower() or 
-                                    username_filter.lower() in r.get('guestName', '').lower()
-                            ]
-                            filtered_count = len(reservations_data)
-                            logging.info(f"Filtered reservations by username '{username_filter}': {filtered_count} out of {original_count}")
-                            print(f"Filtered reservations by username '{username_filter}': {filtered_count} out of {original_count}")
-                            
-                            if filtered_count == 0:
-                                gpt_response += f"\n\nI couldn't find any reservations for the username '{username_filter}'. Please check the spelling or try with a different username."
-                                return {"model": model_id, "answer": gpt_response}
-                        
-                        # Find the user's current or most recent reservation
-                        current_listing_id = None
-                        current_reservation = None
+                        # Filter reservations to get only those for the mentioned listing
+                        listing_reservations = [
+                            res for res in all_reservations.get('result', [])
+                            if str(res.get('listingMapId')) == str(mentioned_listing_id) and
+                            res.get('status', '').lower() in ['confirmed', 'modified', 'new']
+                        ]
                         
                         # Get current date for comparison
                         current_date = datetime.now().strftime("%Y-%m-%d")
-                        logging.info(f"Current date for comparison: {current_date}")
                         
-                        # Look for active reservations (where user is currently staying)
-                        user_reservations = []
+                        # Find current/upcoming reservation
+                        current_reservation = None
                         
-                        # try:
-                        reservations_data = [reservation for reservation in reservations_data.get('result', []) if reservation.get('listingMapId') == mentioned_listing_id]
-                        for reservation in reservations_data:
-                            # Check if required fields exist
-                            if check_in_field not in reservation or check_out_field not in reservation:
-                                logging.warning(f"Reservation missing required date fields: {reservation.get('id', 'unknown')}")
-                                continue
-                                
-                            # Check if this reservation is in the specifically mentioned listing
-                            if mentioned_listing_id and reservation.get(reservation_listing_field) is not None:
-                                if str(reservation.get(reservation_listing_field)) == mentioned_listing_id:
-                                    # Found a reservation in the mentioned listing - check if it's for this user
-                                    if reservation.get('status', '').lower() in ['confirmed', 'modified', 'new']:
-                                        current_reservation = reservation
-                                        current_listing_id = mentioned_listing_id
-                                        logging.info(f"Found user's reservation in mentioned listing ID: {current_listing_id}")
-                                        # Found a match - skip the remaining checks
-                                        break
-                                
-                            # Check if this is an active reservation (check-in date <= today <= check-out date)
-                            if (reservation.get(check_in_field) <= current_date and 
-                                reservation.get(check_out_field) >= current_date and
-                                reservation.get('status', '').lower() in ['confirmed', 'modified', 'new']):
-                                user_reservations.append(reservation)
-                            
-                            # Also add upcoming reservations (check-in date > today) - they're valid for extensions too
-                            elif (reservation.get(check_in_field) > current_date and
-                                    reservation.get('status', '').lower() in ['confirmed', 'modified', 'new']):
-                                print(f"DEBUG: Found upcoming reservation: ID={reservation.get('id')}, "
-                                        f"Guest={reservation.get('guestName')}, Dates={reservation.get(check_in_field)} to {reservation.get(check_out_field)}")
-                                user_reservations.append(reservation)
+                        # Filter for active or upcoming reservations
+                        active_reservations = [
+                            res for res in listing_reservations
+                            if (res.get('arrivalDate') <= current_date and res.get('departureDate') >= current_date)
+                        ]
                         
-                        # This print statement and the code below should be outside the reservation loop
-                        print(f"DEBUG: Found {len(user_reservations)} active or upcoming reservations")
-                        if user_reservations:
-                            for i, res in enumerate(user_reservations):
-                                # Determine if this is active now or upcoming
-                                is_active = (res.get(check_in_field) <= current_date and 
-                                            res.get(check_out_field) >= current_date)
-                                status = "Active" if is_active else "Upcoming"
-                                
-                                print(f"DEBUG: {status} reservation {i+1}: ID={res.get('id')}, " 
-                                        f"Guest={res.get('guestName')}, ListingID={res.get(reservation_listing_field)}, "
-                                        f"Dates={res.get(check_in_field)} to {res.get(check_out_field)}")
-                            
-                            # Sort reservations - active ones first, then by check-in date (earliest first)
-                            user_reservations.sort(key=lambda x: (
-                                0 if x.get(check_in_field) <= current_date and x.get(check_out_field) >= current_date else 1,
-                                x.get(check_in_field)
-                            ))
-                            current_reservation = user_reservations[0]
-                            current_listing_id = str(current_reservation.get(reservation_listing_field))
-                            logging.info(f"Found user's reservation in listing ID: {current_listing_id}")
-                            print(f"DEBUG: Selected reservation: ID={current_reservation.get('id')}, "
-                                    f"Guest={current_reservation.get('guestName')}, "
-                                    f"Dates={current_reservation.get(check_in_field)} to {current_reservation.get(check_out_field)}")
-                        else:
-                            # Debug why no active reservations were found
-                            print(f"DEBUG: No active or upcoming reservations found. Current date: {current_date}")
-                            for i, res in enumerate(reservations_data):
-                                check_in = res.get(check_in_field)
-                                check_out = res.get(check_out_field)
-                                status = res.get('status', '').lower()
-                                date_condition = (check_in <= current_date and check_out >= current_date) if check_in and check_out else False
-                                upcoming_condition = (check_in > current_date) if check_in else False
-                                status_condition = status in ['confirmed', 'modified', 'new']
-                                print(f"DEBUG: Reservation {i+1} check - Current date condition: {date_condition}, " 
-                                        f"Upcoming condition: {upcoming_condition}, Status condition: {status_condition}")
-                                print(f"DEBUG: Details - CheckIn: {check_in}, CheckOut: {check_out}, Current: {current_date}, Status: {status}")
+                        upcoming_reservations = [
+                            res for res in listing_reservations
+                            if res.get('arrivalDate') > current_date
+                        ]
                         
-                        listings_response = hostaway_get_request(hostaway_account.hostaway_token, "/listings")
-                        if listings_response:
-                            listings_data = json.loads(listings_response)
-                            logging.info(f"Successfully retrieved listings data with {len(listings_data.get('result', []))} listings")
+                        # Use active reservation if available, otherwise use upcoming
+                        if active_reservations:
+                            current_reservation = active_reservations[0]
+                            logging.info(f"Found active reservation: {current_reservation.get('id')}")
+                        elif upcoming_reservations:
+                            # Sort by arrival date and use the earliest
+                            upcoming_reservations.sort(key=lambda x: x.get('arrivalDate'))
+                            current_reservation = upcoming_reservations[0]
+                            logging.info(f"Found upcoming reservation: {current_reservation.get('id')}")
+                        
+                        if current_reservation:
+                            # We have a reservation to update
+                            current_arrival_date = current_reservation.get('arrivalDate')
+                            current_departure_date = current_reservation.get('departureDate')
+                            reservation_id = current_reservation.get('id')
+                            logging.info(f"Current dates: arrival={current_arrival_date}, departure={current_departure_date}, reservation ID: {reservation_id}")
                             
-                            # Store all gaps found
-                            all_gaps = []
+                            # Determine the new dates
+                            new_arrival_date = current_arrival_date  # Keep current by default
+                            new_departure_date = current_departure_date  # Keep current by default
                             
-                            # Define valid statuses for reservations
-                            valid_statuses = ['confirmed', 'modified', 'new']
-                            
-                            # If we found the user's listing, prioritize that
-                            processed_listings = []
-                            
-                            # First, look for specifically mentioned listing by name
-                            mentioned_listing_found = False
-                            if mentioned_listing_name:
-                                for listing in listings_data.get('result', []):
-                                    # Case-insensitive partial match on listing name
-                                    if (listing.get('name') and 
-                                        mentioned_listing_name.lower() in listing.get('name', '').lower()):
-                                        mentioned_listing_found = True
-                                        current_listing_id = mentioned_listing_id
-                                        processed_listings.append(listing)
-                                        logging.info(f"Found mentioned listing by name: {listing.get('name')} (ID: {current_listing_id})")
-                                        break
+                            # Check if we have new dates to apply
+                            if earliest_requested_date:
+                                # Check the type of request
+                                is_extension = bool(re.search(r'(extend|extension|stay\s+(longer|more|extra)|upto\s+\d{1,2}\s+\w+)', user_message_lower))
+                                is_checkin_change = bool(re.search(r'(check[_\s]in|from\s+\d{1,2}\s+\w+|want.*?from|start.*?from|stay\s+from|begin\s+from)', user_message_lower))
+                                is_checkout_change = bool(re.search(r'(check[_\s]out|until\s+\d{1,2}\s+\w+|upto\s+\d{1,2}\s+\w+)', user_message_lower))
                                 
-                                if not mentioned_listing_found:
-                                    logging.warning(f"Mentioned listing name '{mentioned_listing_name}' not found in listings data")
-                            
-                            # Then check the user's current/recent booking
-                            if current_listing_id and not mentioned_listing_found:
-                                # First check the user's current/recent listing
-                                current_listing_found = False
-                                for listing in listings_data.get('result', []):
-                                    if str(listing['id']) == current_listing_id:
-                                        processed_listings.append(listing)
-                                        current_listing_found = True
-                                        logging.info(f"Found current listing in listings data: {listing.get('name', 'unknown')}")
-                                        break
+                                # Get current reservation details first
+                                current_res_details_response = hostaway_get_request(
+                                    hostaway_account.hostaway_token, 
+                                    f"reservations/{reservation_id}"
+                                )
                                 
-                                if not current_listing_found:
-                                    logging.warning(f"Current listing ID {current_listing_id} not found in listings data")
+                                if current_res_details_response:
+                                    current_res_details = json.loads(current_res_details_response).get('result', {})
+                                    current_arrival_date = current_res_details.get('arrivalDate')
+                                    current_departure_date = current_res_details.get('departureDate')
+                                    logging.info(f"Current reservation dates - Arrival: {current_arrival_date}, Departure: {current_departure_date}")
                                 
-                                # Then add other listings if needed
-                                for listing in listings_data.get('result', []):
-                                    if str(listing['id']) != current_listing_id:
-                                        processed_listings.append(listing)
-                            else:
-                                # If no current listing found, process all listings
-                                processed_listings = listings_data.get('result', [])
-                                logging.info(f"No current listing identified, processing all {len(processed_listings)} listings")
-                            
-                            # Process each listing
-                            for listing in processed_listings:
-                                listing_id = listing['id']
-                                
-                                # Get reservations for this listing with valid statuses
-                                listing_reservations = [r for r in reservations_data 
-                                                        if r.get(reservation_listing_field) is not None and
-                                                        str(r[reservation_listing_field]) == str(listing_id) and
-                                                        r.get('status', '').lower() in valid_statuses]
-                                
-                                logging.info(f"Found {len(listing_reservations)} reservations for listing {listing_id}")
-                                
-                                # Sort by check-in date
-                                if listing_reservations:
-                                    # try:
-                                    listing_reservations.sort(key=lambda x: x[check_in_field])
-                                    
-                                    # Need at least 2 reservations to find gaps
-                                    if len(listing_reservations) >= 2:
-                                        logging.info(f"Looking for gaps between {len(listing_reservations)} reservations for listing {listing_id}")
-                                        print(f"DEBUG: Looking for gaps between {len(listing_reservations)} reservations for listing {listing_id}")
-                                        
-                                        # Find gaps between reservations
-                                        for i in range(len(listing_reservations) - 1):
-                                            try:
-                                                current_checkout = listing_reservations[i][check_out_field]
-                                                next_checkin = listing_reservations[i+1][check_in_field]
-                                                
-                                                # Calculate gap nights
-                                                current_checkout_date = datetime.strptime(current_checkout, "%Y-%m-%d")
-                                                next_checkin_date = datetime.strptime(next_checkin, "%Y-%m-%d")
-                                                gap_days = (next_checkin_date - current_checkout_date).days
-                                                
-                                                logging.info(f"Calculating gap between checkout {current_checkout} and checkin {next_checkin}: {gap_days} days")
-                                                print(f"DEBUG: Calculating gap between checkout {current_checkout} and checkin {next_checkin}: {gap_days} days")
-                                                
-                                                if gap_days > 0:
-                                                    # Found a gap
-                                                    all_gaps.append({
-                                                        "listing_id": listing_id,
-                                                        "listing_name": listing.get('name', f'Listing {listing_id}'),
-                                                        "current_checkout": current_checkout,
-                                                        "next_checkin": next_checkin,
-                                                        "gap_days": gap_days,
-                                                        "current_guest": listing_reservations[i].get('guestName', 'Guest'),
-                                                        "status": listing_reservations[i].get('status', 'unknown'),
-                                                        "is_current_listing": str(listing_id) == current_listing_id
-                                                    })
-                                                    logging.info(f"Found gap of {gap_days} days for listing {listing_id}")
-                                                    print(f"DEBUG: Found gap of {gap_days} days for listing {listing_id}")
-                                            except Exception as gap_err:
-                                                logging.error(f"Error calculating gap for listing {listing_id}, reservations {i} and {i+1}: {str(gap_err)}")
-                                    else:
-                                        logging.info(f"Only found {len(listing_reservations)} reservation(s) for listing {listing_id}, need at least 2 to find gaps")
-                                        print(f"DEBUG: Only found {len(listing_reservations)} reservation(s) for listing {listing_id}, need at least 2 to find gaps")
-                                        
-                                        # Special case: If this is the current listing and we only have 1 reservation (the user's),
-                                        # we should still allow extension into the future if there are no conflicting bookings
-                                        if len(listing_reservations) == 1 and str(listing_id) == current_listing_id:
-                                            current_reservation_data = listing_reservations[0]
-                                            if current_reservation_data.get('id') == current_reservation.get('id'):
-                                                logging.info(f"This is the user's current reservation, will check if extension is possible")
-                                                print(f"DEBUG: This is the user's current reservation, will check if extension is possible")
-                                                
-                                                # Create a simulated gap with a generous future date (e.g., 30 days from checkout)
-                                                current_checkout = current_reservation_data[check_out_field]
-                                                current_checkout_date = datetime.strptime(current_checkout, "%Y-%m-%d")
-                                                future_date = current_checkout_date + timedelta(days=30)
-                                                next_checkin = future_date.strftime("%Y-%m-%d")
-                                                
-                                                logging.info(f"Creating simulated gap after {current_checkout} until {next_checkin}")
-                                                print(f"DEBUG: Creating simulated gap after {current_checkout} until {next_checkin}")
-                                                
-                                                # Create a simulated gap that allows for extension
-                                                all_gaps.append({
-                                                    "listing_id": listing_id,
-                                                    "listing_name": listing.get('name', f'Listing {listing_id}'),
-                                                    "current_checkout": current_checkout,
-                                                    "next_checkin": next_checkin,
-                                                    "gap_days": 30,  # Simulate a 30-day gap
-                                                    "current_guest": current_reservation_data.get('guestName', 'Guest'),
-                                                    "status": current_reservation_data.get('status', 'unknown'),
-                                                    "is_current_listing": True,
-                                                    "is_simulated": True  # Mark this as a simulated gap
-                                                })
-                                                logging.info(f"Added simulated gap of 30 days after current reservation")
-                                                print(f"DEBUG: Added simulated gap of 30 days after current reservation")
-                                    # except Exception as sort_err:
-                                    #     logging.error(f"Error sorting reservations for listing {listing_id}: {str(sort_err)}")
-                                    #     print(f"DEBUG: Error sorting reservations: {str(sort_err)}")
-                                            
-                            # Add the gap information to the response by appending it to the string
-                            # Initialize gap_info here to prevent reference before assignment error
-                            gap_info = ""
-                            
-                            if all_gaps:
-                                logging.info(f"Found a total of {len(all_gaps)} gaps across all listings")
-                                print(f"DEBUG: Found {len(all_gaps)} gaps across all listings")
-                                for i, gap in enumerate(all_gaps):  # Log all gaps
-                                    print(f"DEBUG: Gap {i+1}: ListingID={gap['listing_id']}, "
-                                            f"Name={gap['listing_name']}, "
-                                            f"Period={gap['current_checkout']} to {gap['next_checkin']}, "
-                                            f"Days={gap['gap_days']}, IsCurrentListing={gap['is_current_listing']}, "
-                                            f"Simulated={gap.get('is_simulated', False)}")
-                            else:
-                                logging.warning(f"No gaps found across any listings")
-                                print(f"DEBUG: No gaps found across any listings")
-                                
-                            # Check if requested dates are available in any of the found gaps
-                            if latest_requested_date:
-                                logging.info(f"Found requested date: {latest_requested_date}")
-                                print(f"DEBUG: Extracted date from request: {latest_requested_date}")
-                                # Check if the date is in the future
-                                current_date_obj = datetime.now()
-                                requested_date_obj = datetime.strptime(latest_requested_date, "%Y-%m-%d")
-                                is_future_date = requested_date_obj > current_date_obj
-                                days_until_date = (requested_date_obj - current_date_obj).days
-                                print(f"DEBUG: Requested date is in the future: {is_future_date}")
-                                print(f"DEBUG: Days from now: {days_until_date}")
-                                requested_date_formatted = requested_date_obj.strftime("%B %d, %Y")
-                            else:
-                                print("DEBUG: No specific date was found in the request")
-                            
-                            # FIRST PASS: Check for direct extension that covers the requested date
-                            direct_extension_covers_request = False
-                            direct_extension = None
-                            
-                            # Define check_out_date from current reservation for extension comparison
-                            check_out_date = None
-                            checkout_date_obj = None
-                            if current_reservation:
-                                check_out_date = current_reservation.get(check_out_field)
+                                # Parse the requested date
                                 try:
-                                    checkout_date_obj = datetime.strptime(check_out_date, "%Y-%m-%d")
-                                except (ValueError, TypeError):
-                                    logging.error(f"Invalid checkout date format: {check_out_date}")
-                            
-                            print(f"DEBUG: Checking for direct extensions with checkout date: {check_out_date}")
-                            
-                            # Check for direct extension
-                            for gap in all_gaps:
-                                if (gap['is_current_listing'] and  gap['current_checkout'] == check_out_date):
-                                    direct_extension = gap
-                                    print(f"DEBUG: Found direct extension opportunity: ListingID={gap['listing_id']}, " 
-                                            f"From={gap['current_checkout']} to {gap['next_checkin']}, Days={gap['gap_days']}")
-                                    
-                                    # Check if direct extension covers requested date
-                                    if latest_requested_date:
-                                        # try:
-                                        next_checkin_date = datetime.strptime(gap['next_checkin'], "%Y-%m-%d")
-                                        
-                                        # Add more detailed logging
-                                        logging.info(f"Comparing dates - Checkout: {checkout_date_obj.strftime('%Y-%m-%d') if checkout_date_obj else 'None'}, "
-                                                    f"Requested: {requested_date_obj.strftime('%Y-%m-%d')}, "
-                                                    f"Next checkin: {next_checkin_date.strftime('%Y-%m-%d')}")
-                                        print(f"DEBUG: Comparing dates - Checkout: {checkout_date_obj.strftime('%Y-%m-%d') if checkout_date_obj else 'None'}, "
-                                                f"Requested: {requested_date_obj.strftime('%Y-%m-%d')}, "
-                                                f"Next checkin: {next_checkin_date.strftime('%Y-%m-%d')}")
-                                        
-                                        # Check if the checkout date is before the requested date
-                                        # AND the requested date is before the next checkin date
-                                        if checkout_date_obj and checkout_date_obj <= requested_date_obj < next_checkin_date:
-                                            direct_extension_covers_request = True
-                                            logging.info(f"Direct extension covers requested date {latest_requested_date}")
-                                            print(f"DEBUG: Direct extension covers requested date {latest_requested_date}")
-                                        else:
-                                            logging.info(f"Direct extension doesn't cover requested date: {latest_requested_date}")
-                                            print(f"DEBUG: Direct extension doesn't cover requested date: {latest_requested_date}")
-                                            print(f"DEBUG: Extension period: {gap['current_checkout']} to {gap['next_checkin']}, Requested: {latest_requested_date}")
-                                            
-                                            # If this is a simulated gap (no next booking), we can still extend
-                                            if gap.get('is_simulated', False) and checkout_date_obj:
-                                                direct_extension_covers_request = True
-                                                logging.info(f"Using simulated gap to allow extension to {latest_requested_date}")
-                                                print(f"DEBUG: Using simulated gap to allow extension to {latest_requested_date}")
-                                        # except ValueError as ve:
-                                        #     logging.error(f"Error checking if extension covers request: {str(ve)}")
-                                        #     print(f"DEBUG: Error checking if extension covers request: {str(ve)}")
-                                        
-                                        break
-                            else:
-                                print(f"DEBUG: No direct extension opportunity found for checkout date: {check_out_date}")
-                            
-                            # Now determine the right message based on what we found
-                            if direct_extension_covers_request:
-                                print(f"DEBUG: Direct extension covers requested date: {latest_requested_date}")
-                                print(f"DEBUG: Extension details - From {direct_extension['current_checkout']} to {direct_extension['next_checkin']}, Gap: {direct_extension['gap_days']} days")
-                                # try:
-                                next_checkin_formatted = datetime.strptime(direct_extension['next_checkin'], "%Y-%m-%d").strftime("%B %d, %Y")
+                                    requested_date = datetime.strptime(earliest_requested_date, "%Y-%m-%d")
+                                    logging.info(f"Requested date: {earliest_requested_date}")
+                                except Exception as e:
+                                    logging.error(f"Error parsing requested date: {str(e)}")
+                                    return {
+                                        "model": model_id,
+                                        "answer": "I'm sorry, I couldn't understand the date format. Please try again with a clear date format."
+                                    }
                                 
-                                # Automatically extend the reservation - include upcoming ones by removing the days_until_checkout check
-                                if current_reservation:
-                                    check_in_date = current_reservation.get(check_in_field)
+                                if is_checkin_change:
+                                    # For check-in changes, only update the arrival date
+                                    new_arrival_date = earliest_requested_date
+                                    new_departure_date = current_departure_date  # Keep existing check-out date
+                                    logging.info(f"Check-in change detected: updating arrival date to: {new_arrival_date}, keeping check-out date as: {new_departure_date}")
+                                elif is_extension:
+                                    # For extension requests, only update the departure date
+                                    new_departure_date = earliest_requested_date
+                                    new_arrival_date = current_arrival_date  # Keep existing check-in date
+                                    logging.info(f"Extension request detected: updating check-out date to: {new_departure_date}, keeping check-in date as: {new_arrival_date}")
+                                elif is_checkout_change:
+                                    # For check-out changes, only update the departure date
+                                    new_departure_date = earliest_requested_date
+                                    new_arrival_date = current_arrival_date  # Keep existing check-in date
+                                    logging.info(f"Check-out change detected: updating departure date to: {new_departure_date}, keeping check-in date as: {new_arrival_date}")
+                                else:
+                                    # For other date changes, check if it's check-in or check-out based on date
+                                    requested_date_obj = datetime.strptime(earliest_requested_date, "%Y-%m-%d")
+                                    current_arrival_obj = datetime.strptime(current_arrival_date, "%Y-%m-%d")
                                     
-                                    # Add debug info about the reservation status (active now or upcoming)
-                                # try:
-                                    checkin_date_obj = datetime.strptime(check_in_date, "%Y-%m-%d")
-                                    days_until_checkin = (checkin_date_obj - datetime.now()).days
-                                    
-                                    if days_until_checkin > 0:
-                                        print(f"DEBUG: Attempting to extend upcoming reservation (starts in {days_until_checkin} days): {current_reservation.get('id')}")
+                                    # If the requested date is before the current departure, it's likely a check-in date
+                                    if requested_date_obj < datetime.strptime(current_departure_date, "%Y-%m-%d"):
+                                        new_arrival_date = earliest_requested_date
+                                        new_departure_date = current_departure_date  # Keep existing check-out date
+                                        logging.info(f"Date change detected: updating check-in date to: {new_arrival_date}, keeping check-out date as: {new_departure_date}")
                                     else:
-                                        print(f"DEBUG: Attempting to extend active reservation: {current_reservation.get('id')}")
-                                    # except Exception as e:
-                                    #     print(f"DEBUG: Attempting to extend reservation: {current_reservation.get('id')}")
+                                        # Otherwise, it's a check-out date
+                                        new_departure_date = earliest_requested_date
+                                        new_arrival_date = current_arrival_date  # Keep existing check-in date
+                                        logging.info(f"Date change detected: updating check-out date to: {new_departure_date}, keeping check-in date as: {new_arrival_date}")
+                            
+                            if latest_requested_date and latest_requested_date != earliest_requested_date:
+                                # If we have a different latest date, it's definitely a check-out date
+                                new_departure_date = latest_requested_date
+                                new_arrival_date = current_arrival_date  # Keep existing check-in date
+                                logging.info(f"Multiple dates detected: updating check-out date to: {new_departure_date}, keeping check-in date as: {new_arrival_date}")
+                            
+                            # Get current reservation details
+                            logging.info(f"Getting reservation details for ID: {reservation_id}")
+                            current_res_details_response = hostaway_get_request(
+                                hostaway_account.hostaway_token, 
+                                f"reservations/{reservation_id}"
+                            )
+                            
+                            if not current_res_details_response:
+                                logging.error(f"Failed to get reservation details for ID: {reservation_id}")
+                                return {
+                                    "model": model_id,
+                                    "answer": "I'm sorry, I couldn't retrieve your current reservation details. Please try again later or contact customer service."
+                                }
+                            
+                            current_res_details = json.loads(current_res_details_response).get('result', {})
+                            
+                            if not current_res_details:
+                                logging.error(f"Empty result when getting reservation details for ID: {reservation_id}")
+                                return {
+                                    "model": model_id,
+                                    "answer": "I'm sorry, I couldn't find the details for your current reservation. Please try again later or contact customer service."
+                                }
+                            
+                            # Prepare update payload
+                            update_payload = current_res_details
+                            update_payload['arrivalDate'] = new_arrival_date
+                            update_payload['departureDate'] = new_departure_date
+                            
+                            # Log the request we're about to make
+                            logging.info(f"Sending update request for reservation {reservation_id} to change dates from {current_arrival_date}-{current_departure_date} to {new_arrival_date}-{new_departure_date}")
+                            
+                            # Try to update the reservation
+                            update_response = hostaway_put_request(
+                                hostaway_account.hostaway_token,
+                                f"/reservations/{reservation_id}",
+                                update_payload,
+                                force_overbooking=True
+                            )
+                            
+                            if not update_response:
+                                logging.error(f"No response received from update request for reservation {reservation_id}")
+                                return {
+                                    "model": model_id,
+                                    "answer": "I tried to update your stay dates, but the system didn't respond. Please try again later or contact customer service."
+                                }
+                            
+                            try:
+                                update_result = json.loads(update_response)
+                                logging.info(f"Update response status: {update_result.get('status')}")
+                            except json.JSONDecodeError:
+                                logging.error(f"Invalid JSON response from update request: {update_response}")
+                                return {
+                                    "model": model_id,
+                                    "answer": "I encountered an error while processing your date change request. Please try again later or contact customer service."
+                                }
+                            
+                            if update_result.get('status') == 'success':
+                                # Wait briefly for the system to process the change
+                                time.sleep(1)
+                                
+                                # Verify the update by retrieving the reservation again
+                                verification_response = hostaway_get_request(
+                                    hostaway_account.hostaway_token,
+                                    f"/reservations/{reservation_id}"
+                                )
+                                
+                                if not verification_response:
+                                    logging.warning(f"Unable to verify reservation update - no response")
+                                    # We'll still assume it worked since the update call succeeded
+                                    new_arrival_formatted = datetime.strptime(new_arrival_date, "%Y-%m-%d").strftime("%B %d, %Y")
+                                    new_departure_formatted = datetime.strptime(new_departure_date, "%Y-%m-%d").strftime("%B %d, %Y")
+                                    
+                                    # Update via websocket if needed
+                                    new_updated_data = {
+                                        "reservation_id": reservation_id,
+                                        "new_arrival_date": new_arrival_date,
+                                        "new_departure_date": new_departure_date
+                                    }
+                                    await update_checkout_date(new_updated_data)
+                                    
+                                    return {
+                                        "model": model_id,
+                                        "answer": f"I've updated your stay dates. Your reservation has been changed to check in on {new_arrival_formatted} and check out on {new_departure_formatted}."
+                                    }
+                                
+                                try:
+                                    verification_result = json.loads(verification_response)
+                                    reservation_details = verification_result.get('result', {})
+                                    
+                                    # Check if the dates were actually updated
+                                    final_arrival_date = reservation_details.get('arrivalDate')
+                                    final_departure_date = reservation_details.get('departureDate')
+                                    logging.info(f"Verification: final dates = {final_arrival_date}-{final_departure_date}, requested = {new_arrival_date}-{new_departure_date}")
+                                    
+                                    if final_arrival_date == new_arrival_date and final_departure_date == new_departure_date:
+                                        # Success - reservation updated and verified
+                                        new_arrival_formatted = datetime.strptime(new_arrival_date, "%Y-%m-%d").strftime("%B %d, %Y")
+                                        new_departure_formatted = datetime.strptime(new_departure_date, "%Y-%m-%d").strftime("%B %d, %Y")
                                         
-                                    try:
-                                        # Get the reservation ID and other required fields
-                                        reservation_id = current_reservation.get('id')
+                                        # Update via websocket if needed
+                                        new_updated_data = {
+                                            "reservation_id": reservation_id,
+                                            "new_arrival_date": new_arrival_date,
+                                            "new_departure_date": new_departure_date
+                                        }
+                                        await update_checkout_date(new_updated_data)
                                         
-                                        # If there's a specific requested date and this is a simulated gap,
-                                        # use the requested date instead of the full gap
-                                        if latest_requested_date and gap.get('is_simulated', False):
-                                            print(f"DEBUG: Using requested date for extension instead of full simulated gap---> {latest_requested_date}")
-                                            # Add one day to the requested date for checkout
-                                            # requested_checkout_obj = requested_date_obj + timedelta(days=1)
-                                            requested_checkout_obj = requested_date_obj
-                                            new_checkout_date = requested_checkout_obj.strftime("%Y-%m-%d")
-                                            print(f"DEBUG: Using requested date for extension instead of full simulated gap: {new_checkout_date}")
-                                            logging.info(f"Using requested date for extension instead of full simulated gap: {new_checkout_date}")
-                                            print(f"DEBUG: Using requested date for extension instead of full simulated gap: {new_checkout_date}")
-                                        else:
-                                            # Otherwise use the gap's end date
-                                            new_checkout_date = direct_extension['next_checkin']
-                                        print(f"DEBUG: Extension details - Reservation ID: {reservation_id}, Old checkout: {check_out_date}, New checkout: {new_checkout_date}")
-                                        logging.info(f"Extension details - Reservation ID: {reservation_id}, Old checkout: {check_out_date}, New checkout: {new_checkout_date}")
+                                        return {
+                                            "model": model_id,
+                                            "answer": f"GREAT NEWS! I've updated your stay dates. Your reservation has been changed to check in on {new_arrival_formatted} and check out on {new_departure_formatted}."
+                                        }
+                                    else:
+                                        # The API said success but the dates didn't update - try one more time
+                                        logging.warning(f"Verification failed - dates are {final_arrival_date}-{final_departure_date}, not {new_arrival_date}-{new_departure_date}")
                                         
-                                        # Verify we have the hostaway account
-                                        if not hostaway_account or not hostaway_account.hostaway_token:
-                                            logging.error(f"Missing hostaway account or token for user ID: {user_id}")
-                                            raise Exception("Missing Hostaway authentication")
+                                        # Try to update once more with fresh reservation data
+                                        fresh_reservation_data = reservation_details
+                                        fresh_reservation_data['arrivalDate'] = new_arrival_date
+                                        fresh_reservation_data['departureDate'] = new_departure_date
                                         
+                                        retry_response = hostaway_put_request(
+                                            hostaway_account.hostaway_token,
+                                            f"/reservations/{reservation_id}",
+                                            fresh_reservation_data,
+                                            force_overbooking=True
+                                        )
                                         
-                                        # First get the current reservation details to use as the base for our update
-                                        logging.info(f"Getting full reservation details before update")
-                                        current_reservation_details_response = hostaway_get_request(hostaway_account.hostaway_token, f"reservations/{reservation_id}")
-                                        current_reservation_details = json.loads(current_reservation_details_response).get('result', {})
-                                        
-                                        # Start with the complete current reservation data
-                                        update_payload = current_reservation_details
-                                        
-                                        # Just update the departure date field
-                                        update_payload['departureDate'] = new_checkout_date
-                                        # update_payload['arrivalDate'] = new_checkin_date
-                                        
-                                        
-                                        # Call the API to update the reservation
-                                        logging.info(f"Automatically extending reservation {reservation_id} to {new_checkout_date}")
-                                        # Add extensive logging before the API call
-                                        logging.info(f"DETAILED - Extension payload contains {len(update_payload)} fields")
-                                        logging.info(f"DETAILED - Hostaway token prefix: {hostaway_account.hostaway_token[:10]}...")
-                                        
-                                        # Use the hostaway token instead of the key for authentication
-                                        # Pass force_overbooking=True to enable overbooking for the extension
-                                        extension_response = hostaway_put_request(hostaway_account.hostaway_token, f"/reservations/{reservation_id}", update_payload, force_overbooking=True)
-                                        
-                                        # Add extensive logging for the response
-                                        logging.info(f"DETAILED - Raw extension response: {extension_response}")
-                                        
-                                        try:
-                                            extension_result = json.loads(extension_response)
-                                            print(f"DEBUG: Extension API full response: {json.dumps(extension_result, indent=2)}")
-                                            logging.info(f"DETAILED - Extension API full response: {json.dumps(extension_result, indent=2)}")
-                                        except json.JSONDecodeError as json_err:
-                                            print(f"DEBUG: CRITICAL - Failed to parse extension response as JSON: {extension_response}")
-                                            logging.error(f"CRITICAL - Failed to parse extension response as JSON: {extension_response}")
-                                            extension_result = {"status": "error", "message": f"Invalid JSON response: {str(json_err)}"}
-                                        
-                                        if extension_result.get('status') != 'success':
-                                            print(f"DEBUG: Extension failed with response: {json.dumps(extension_result)}")
-                                            logging.error(f"Extension failed: {json.dumps(extension_result)}")
-                                            # Check for specific error messages
-                                            error_message = extension_result.get('message', '')
-                                            if error_message and 'booking' in error_message.lower():
-                                                gap_info += f"\nI tried to extend your stay, but there appears to be a booking conflict.\n"
-                                                gap_info += f"Please contact our support team for assistance with your extension request.\n"
-                                            else:
-                                                gap_info += f"\nGood news! You could extend your current stay directly by {direct_extension['gap_days']} more nights until {next_checkin_formatted} as there are no bookings immediately after yours.\n"
-                                                gap_info += f"Please let me know if you'd like me to process this extension for you.\n"
-                                        else:
-                                            logging.info(f"Received success response for extension, but need to verify the change was applied")
+                                        if retry_response:
+                                            retry_result = json.loads(retry_response)
                                             
-                                            # Wait briefly for any database propagation (if needed)
-                                            time.sleep(1)
-                                            
-                                            # Fetch the reservation again to verify the change was applied
-                                            verification_response = hostaway_get_request(hostaway_account.hostaway_token, f"/reservations/{reservation_id}")
-                                            logging.info(f"DETAILED - Raw verification response: {verification_response}")
-                                            
-                                            try:
-                                                verification_result = json.loads(verification_response)
-                                                logging.info(f"DETAILED - Verification result: {json.dumps(verification_result, indent=2)}")
+                                            if retry_result.get('status') == 'success':
+                                                # Check one more time
+                                                time.sleep(1)
+                                                final_verification_response = hostaway_get_request(
+                                                    hostaway_account.hostaway_token,
+                                                    f"/reservations/{reservation_id}"
+                                                )
                                                 
-                                                if verification_result.get('status') == 'success':
-                                                    # Extract the result object directly
-                                                    reservation_details = verification_result.get('result', {})
+                                                if final_verification_response:
+                                                    final_verification_result = json.loads(final_verification_response)
+                                                    final_reservation_details = final_verification_result.get('result', {})
+                                                    final_arrival_date = final_reservation_details.get('arrivalDate')
+                                                    final_departure_date = final_reservation_details.get('departureDate')
                                                     
-                                                    # Check the specific fields that would contain the checkout/departure date
-                                                    actual_departure_date = reservation_details.get('departureDate')
-                                                    actual_checkout_date = reservation_details.get('checkOutDate')
-                                                    
-                                                    # Log both potential date fields
-                                                    logging.info(f"Verification - departureDate: {actual_departure_date}, checkOutDate: {actual_checkout_date}")
-                                                    print(f"DEBUG: Verification - departureDate: {actual_departure_date}, checkOutDate: {actual_checkout_date}")
-                                                    
-                                                    # Use either departureDate or checkOutDate, whichever is available
-                                                    final_checkout_date = actual_departure_date or actual_checkout_date
-                                                    
-                                                    if final_checkout_date == new_checkout_date:
-                                                        logging.info(f"Verified that reservation {reservation_id} checkout date was updated to {new_checkout_date}")
-                                                        # Continue with the success messaging
-                                                        extension_verified = True
-                                                    else:
-                                                        logging.error(f"Verification failed - checkout date is {final_checkout_date}, not {new_checkout_date}")
-                                                        print(f"DEBUG: Verification failed - checkout date is {final_checkout_date}, not {new_checkout_date}")
+                                                    if final_arrival_date == new_arrival_date and final_departure_date == new_departure_date:
+                                                        # Finally successful
+                                                        new_arrival_formatted = datetime.strptime(new_arrival_date, "%Y-%m-%d").strftime("%B %d, %Y")
+                                                        new_departure_formatted = datetime.strptime(new_departure_date, "%Y-%m-%d").strftime("%B %d, %Y")
                                                         
-                                                        # Try to update the reservation again
-                                                        logging.info(f"Attempting to update the reservation again after verification failure")
+                                                        # Update via websocket if needed
+                                                        new_updated_data = {
+                                                            "reservation_id": reservation_id,
+                                                            "new_arrival_date": new_arrival_date,
+                                                            "new_departure_date": new_departure_date
+                                                        }
+                                                        await update_checkout_date(new_updated_data)
                                                         
-                                                        # Get fresh reservation data
-                                                        fresh_reservation_response = hostaway_get_request(hostaway_account.hostaway_token, f"reservations/{reservation_id}")
-                                                        fresh_reservation_data = json.loads(fresh_reservation_response).get('result', {})
-                                                        
-                                                        # Update the departure date in the fresh data
-                                                        fresh_reservation_data['departureDate'] = new_checkout_date
-                                                        
-                                                        logging.info(f"Retry with fresh reservation data containing {len(fresh_reservation_data)} fields")
-                                                        retry_response = hostaway_put_request(hostaway_account.hostaway_token, f"/reservations/{reservation_id}", fresh_reservation_data, force_overbooking=True)
-                                                        logging.info(f"DETAILED - Raw retry response: {retry_response}")
-                                                        
-                                                        try:
-                                                            retry_result = json.loads(retry_response)
-                                                            logging.info(f"DETAILED - Retry result: {json.dumps(retry_result, indent=2)}")
-                                                            
-                                                            if retry_result.get('status') == 'success':
-                                                                logging.info(f"Second update attempt successful")
-                                                                # Check one more time
-                                                                time.sleep(1)
-                                                                verification_response2 = hostaway_get_request(hostaway_account.hostaway_token, f"/reservations/{reservation_id}")
-                                                                verification_result2 = json.loads(verification_response2)
-                                                                
-                                                                # Extract dates from second verification
-                                                                reservation_details2 = verification_result2.get('result', {})
-                                                                actual_departure_date2 = reservation_details2.get('departureDate')
-                                                                actual_checkout_date2 = reservation_details2.get('checkOutDate')
-                                                                final_checkout_date2 = actual_departure_date2 or actual_checkout_date2
-                                                                
-                                                                if final_checkout_date2 == new_checkout_date:
-                                                                    logging.info(f"Second verification successful - checkout date updated to {new_checkout_date}")
-                                                                    extension_verified = True
-                                                                else:
-                                                                    logging.error(f"Second verification failed - checkout date is {final_checkout_date2}, not {new_checkout_date}")
-                                                                    extension_verified = False
-                                                            else:
-                                                                logging.error(f"Second update attempt failed: {retry_result}")
-                                                                extension_verified = False
-                                                        except json.JSONDecodeError:
-                                                            logging.error(f"Failed to parse retry response as JSON: {retry_response}")
-                                                            extension_verified = False
-                                                else:
-                                                    logging.error(f"Failed to get reservation details for verification: {verification_result}")
-                                                    extension_verified = False
-                                            except json.JSONDecodeError:
-                                                logging.error(f"Failed to parse verification response as JSON: {verification_response}")
-                                                extension_verified = False
-                                            
-                                            # Now update the message based on whether verification succeeded
-                                            if extension_verified:
-                                                logging.info(f"Successfully extended reservation {reservation_id} to {new_checkout_date}")
-                                                new_updated_data = {"reservation_id": reservation_id, "new_checkout_date": new_checkout_date}
-                                                await update_checkout_date(new_updated_data)
-                                                # Format the new checkout date for display
-                                                new_checkout_date_obj = datetime.strptime(new_checkout_date, "%Y-%m-%d")
-                                                new_checkout_formatted = new_checkout_date_obj.strftime("%B %d, %Y")
-                                                
-                                                # Calculate the actual number of nights extended
-                                                if checkout_date_obj:
-                                                    nights_extended = (new_checkout_date_obj - checkout_date_obj).days
-                                                    # Add success message with correct number of nights
-                                                    gap_info += f"\n GREAT NEWS! I've automatically extended your stay by {nights_extended} more nights until {new_checkout_formatted}.\n"
-                                                    gap_info += f"Your reservation has been updated to check out on {new_checkout_formatted}.\n"
-                                                else:
-                                                    nights_extended = direct_extension['gap_days']
-                                                    gap_info += f"\n GREAT NEWS! I've automatically extended your stay by {nights_extended} more nights until {new_checkout_formatted}.\n"
-                                                    gap_info += f"Your reservation has been updated to check out on {new_checkout_formatted}.\n"
-                                            else:
-                                                logging.warning(f"System reported success but verification failed")
-                                                gap_info += f"\nI've submitted a request to extend your stay until {new_checkout_date}, but the system is still processing it.\n"
-                                                gap_info += f"Please check your reservation status in a few minutes to confirm the change, or contact customer service if you don't see the update.\n"
-                                    except Exception as e:
-                                        logging.error(f"Error extending reservation: {str(e)}")
-                                        gap_info += f"\nI encountered an issue while trying to extend your reservation: {str(e)}.\n"
-                                        gap_info += f"Please contact customer service for assistance with your extension request.\n"
-                                else:
-                                    # This block is for when direct_extension_covers_request is true but no current_reservation
-                                    next_checkin_formatted = datetime.strptime(direct_extension['next_checkin'], "%Y-%m-%d").strftime("%B %d, %Y")
-                                    gap_info += f"\nGood news! You could extend your current stay directly by {direct_extension['gap_days']} more nights until {next_checkin_formatted} as there are no bookings immediately after yours.\n"
-                                    gap_info += f"Please let me know if you'd like me to process this extension for you.\n"
+                                                        return {
+                                                            "model": model_id,
+                                                            "answer": f"GREAT NEWS! I've updated your stay dates. Your reservation has been changed to check in on {new_arrival_formatted} and check out on {new_departure_formatted}."
+                                                        }
+                                        
+                                        # If we got here, we couldn't update the reservation despite retries
+                                        return {
+                                            "model": model_id,
+                                            "answer": f"I submitted the date change request and the system accepted it, but I couldn't verify if it was fully processed. Please check your reservation status or contact customer service to confirm your new dates."
+                                        }
+                                
+                                except json.JSONDecodeError:
+                                    logging.error(f"Error parsing verification response: {verification_response}")
+                                    # We'll still assume it worked since the update call succeeded
+                                    new_arrival_formatted = datetime.strptime(new_arrival_date, "%Y-%m-%d").strftime("%B %d, %Y")
+                                    new_departure_formatted = datetime.strptime(new_departure_date, "%Y-%m-%d").strftime("%B %d, %Y")
+                                    
+                                    # Update via websocket if needed
+                                    new_updated_data = {
+                                        "reservation_id": reservation_id,
+                                        "new_arrival_date": new_arrival_date,
+                                        "new_departure_date": new_departure_date
+                                    }
+                                    await update_checkout_date(new_updated_data)
+                                    
+                                    return {
+                                        "model": model_id,
+                                        "answer": f"I've updated your stay dates. Your reservation has been changed to check in on {new_arrival_formatted} and check out on {new_departure_formatted}."
+                                    }
                             else:
-                                # This block is for when direct_extension_covers_request is false
-                                if direct_extension:
-                                    next_checkin_formatted = datetime.strptime(direct_extension['next_checkin'], "%Y-%m-%d").strftime("%B %d, %Y") 
-                                    gap_info += f"\nI found a gap after your stay, but it doesn't cover your requested date.\n"
-                                    gap_info += f"The available extension period is until {next_checkin_formatted}.\n"
-                                    gap_info += f"Please let me know if you'd like to extend within this period instead.\n"
+                                # Handle update failure
+                                error_message = update_result.get('message', '')
+                                logging.error(f"Date update failed: {error_message}")
+                                
+                                if error_message and 'booking' in error_message.lower():
+                                    return {
+                                        "model": model_id,
+                                        "answer": f"I tried to update your stay dates, but there appears to be a booking conflict. Please contact our support team for assistance with your date change request."
+                                    }
                                 else:
-                                    gap_info += f"\nUnfortunately, I couldn't find any available extension periods after your stay.\n"
-                                    gap_info += f"This might be because there's already another booking immediately after yours.\n"
-                                    gap_info += f"Please contact customer service if you need assistance with special arrangements.\n"
+                                    return {
+                                        "model": model_id,
+                                        "answer": f"I encountered an issue while trying to update your reservation dates. The error was: {error_message}. Please contact customer service for assistance."
+                                    }
+                        else:
+                            return {
+                                "model": model_id, 
+                                "answer": "I couldn't find an active or upcoming reservation for the property you are querying about. Please make sure you have a confirmed booking for this property."
+                            }
+                    else:
+                        return {
+                            "model": model_id,
+                            "answer": f"{gpt_response}\n\nI couldn't retrieve your reservation information. Please try again later or contact customer service."
+                        }
+                else:
+                    return {
+                        "model": model_id,
+                        "answer": f"{gpt_response}\n\nYou need to connect your Hostaway account to use the booking date change feature."
+                    }
         
-        # Check if gpt_response mentions extension but no date was found
-            if is_extension_request and not dates_specified:
-                # Check if the user message directly contains an extension request
-                extension_words = ['extend', 'extending', 'extension', 'stay longer', 'more nights', 'additional nights']
-                has_extension_words = any(word in user_message_lower for word in extension_words)
-                
-                if has_extension_words:
-                    # Add more date patterns that might be specific to extension requests
-                    specific_extension_patterns = [
-                        r'(?:until|through|for|to)\s+(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)',  # "until 7 April"
-                        r'(?:until|through|for|to)\s+(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?',  # "through April 7"
-                        r'(?:until|to)\s+(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)?',  # "until the 7th"
-                        r'(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)'  # "7th of April" or just "7 April"
-                    ]
-                    
-                    for pattern in specific_extension_patterns:
-                        matches = re.search(pattern, user_message_lower)
-                        if matches:
-                            logging.info(f"Found date in extension request: {matches.group(0)}")
-                            print(f"Found date in extension request: {matches.group(0)}")
-                            dates_specified = True
-                            break
-            
-        # Final debug log to show the state of the flags
-            print(f"Final state - is_extension_request: {is_extension_request}, dates_specified: {dates_specified}")
-            logging.info(f"Final state - is_extension_request: {is_extension_request}, dates_specified: {dates_specified}")
-            
-            # Append the gap information to the GPT response if available
-            if 'gap_info' in locals():
-                gpt_response = gap_info
-            else:
-                gpt_response
-            
-            # Final debug log to confirm function is reaching the end
-            print("Function completed successfully!")
-            logging.info("Function completed successfully!")
-
-            return {"model": model_id, "answer": gpt_response}
-    else:
+        # If we didn't handle extension or there was no extension request, return the GPT response
         return {"model": model_id, "answer": gpt_response}
+    
+    except HTTPException as he:
+        logging.error(f"HTTP Exception in chat_with_gpt: {str(he)}")
+        raise he
+    except Exception as e:
+        import traceback
+        tb = traceback.format_exc()
+        logging.error(f"Unhandled exception in chat_with_gpt: {str(e)}\n{tb}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @router.get("/genrate-extension-key")
 def genrate_extension_key(token: str = Depends(get_token), db: Session = Depends(get_db)):
@@ -1086,8 +810,6 @@ async def get_nearby_places(request: Request, token: str = Depends(get_token), d
     except Exception as e:
         logging.error(f"Error at get near places {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching nearby places: {str(e)}")
-
-
 
 @router.get("/update-ai", response_model=UserProfile)
 def get_user_profile(

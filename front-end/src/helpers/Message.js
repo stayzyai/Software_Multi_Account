@@ -203,7 +203,7 @@ const simplifiedResult = (conversations) => {
     });
 };
 
-const formatedMessages = (messages, listing, amenity) => {
+const formatedMessages = (messages, listing, amenity, reservations = []) => {
   const formattedMessages = messages?.map((msg) => ({
     role: msg.isIncoming == 0 ? "assistant" : "user",
     content: msg.body,
@@ -214,13 +214,23 @@ const formatedMessages = (messages, listing, amenity) => {
   const previousConversation = JSON.stringify(formattedMessages);
   const propertyDetails = JSON.stringify(listing);
   const amenityDetails = JSON.stringify(amenity);
-  const systemPrompt = SYSTEM_PROMPT.replace(
+  const reservationDetails = JSON.stringify(reservations);
+  
+  let systemPrompt = SYSTEM_PROMPT.replace(
     /{previous_conversation}/g,
     previousConversation
   )
     .replace(/{latest_message}/g, lastUserMessage)
     .replace(/{property_details}/g, propertyDetails)
     .replace(/{amenities_detail}/g, amenityDetails);
+    
+  // Add reservation details if available
+  if (reservations && reservations.length > 0) {
+    systemPrompt = systemPrompt.replace(/{reservation_details}/g, reservationDetails);
+  } else {
+    systemPrompt = systemPrompt.replace(/{reservation_details}/g, "No reservation data available.");
+  }
+  
   return { systemPrompt, lastUserMessage };
 };
 
