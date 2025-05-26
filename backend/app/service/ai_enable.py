@@ -11,7 +11,8 @@ from app.common.chat_query import store_chat
 from app.common.open_ai import get_gpt_response, gpt_taskCreation
 from app.common.send_email import send_email
 import json
-
+from datetime import datetime
+import threading
 
 def generate_prompt(previous_conversation, latest_message, property_details, amenities_detail):
     try:
@@ -108,17 +109,23 @@ def get_amenities_detail(new_messages):
     except Exception as e:
         return []
 
-def get_ai_response(prompt, messsages):
+def get_ai_response(prompt, messsages, user_id):
     try:
+        received_timestamp = datetime.now().isoformat()
         model_id = get_latest_model_id()
         gpt_response = get_gpt_response(model_id, prompt, messsages)
         if gpt_response is None:
             raise HTTPException(status_code=400, detail="Some error occurred. Please try again.")
+        response_timestamp = datetime.now().isoformat()
         interaction_data = {
-                "prompt": messsages,
-                "completion": gpt_response
-                }
-        store_chat(interaction_data)
+            "prompt": messsages,
+            "completion": gpt_response,
+            "received_timestamp": received_timestamp,
+            "response_timestamp": response_timestamp,
+            "user_id": user_id if user_id else None,
+        }
+        # store_chat(interaction_data)
+        threading.Thread(target=store_chat, args=(interaction_data,), daemon=True).start()
         
         return {"model": model_id, "answer": gpt_response}
     except Exception as e:
@@ -217,7 +224,7 @@ def send_auto_ai_messages(new_messages):
                     amenities_detail = future_amenities_detail.result()
 
                 prompt = generate_prompt(previous_conversation, latest_incoming, property_details, amenities_detail)
-                gpt_response = get_ai_response(prompt, latest_incoming)
+                gpt_response = get_ai_response(prompt, latest_incoming, user_id)
                 return send_message(new_messages, gpt_response)
         else:
             print(f"AI is not Enable for Id: {consversationsId}")

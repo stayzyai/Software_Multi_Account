@@ -16,7 +16,7 @@ const CreateUpsellModal = ({
 }) => {
   const [upsellName, setUpsellName] = useState("");
   const [discount, setDiscount] = useState("");
-  const [detectPeriod, setDetectPeriod] = useState("1 days");
+  const [detectPeriod, setDetectPeriod] = useState("1 day");
   const [message, setMessage] = useState(
     "Hi {guest_name}, your stay is coming up soon! We'd like to offer you a {discount} off your stay if you book an additional night. Let me know if you're interested!"
   );

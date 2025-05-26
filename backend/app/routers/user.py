@@ -600,7 +600,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                         
                                         return {
                                             "model": model_id,
-                                            "answer": f"GREAT NEWS! I've updated your stay dates. Your reservation has been changed to check in on {new_arrival_formatted} and check out on {new_departure_formatted}."
+                                            "answer": f"I've updated your reservation. Your new check-in date is {new_arrival_formatted}, and your check-out date is {new_departure_formatted}. Let me know if you need anything else"
                                         }
                                     else:
                                         # The API said success but the dates didn't update - try one more time
@@ -650,7 +650,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                                         
                                                         return {
                                                             "model": model_id,
-                                                            "answer": f"GREAT NEWS! I've updated your stay dates. Your reservation has been changed to check in on {new_arrival_formatted} and check out on {new_departure_formatted}."
+                                                            "answer": f"I've successfully updated your reservation. Your new check-in date is {new_arrival_formatted}, and your check-out date is {new_departure_formatted}. Let me know if you need anything else"
                                                         }
                                         
                                         # If we got here, we couldn't update the reservation despite retries
