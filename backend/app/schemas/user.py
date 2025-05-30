@@ -84,6 +84,7 @@ class ChatRequest(BaseModel):
     thread_id: Optional[str] = None
     listingName: Optional[str] = None
     listingMapId: Optional[int] = None
+    reservationId: Optional[int] = None
 
     # Original fields
     prompt: Optional[str] = ""

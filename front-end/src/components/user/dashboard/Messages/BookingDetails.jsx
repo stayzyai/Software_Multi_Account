@@ -5,6 +5,8 @@ import { checkout, updateAIStatus } from "../../../../helpers/payment";
 import { useSelector, useDispatch } from "react-redux";
 import { toast } from "sonner";
 import { setUser } from "../../../../store/userSlice";
+import { useEffect } from "react";
+import {getAllListings} from "../../../../helpers/Message"
 
 const BookingDetails = ({
   timeDetails,
@@ -18,11 +20,20 @@ const BookingDetails = ({
   const [checkoutUrl, setCheckoutUrl] = useState("");
   const [isConfirm, setIsConfirm] = useState(false);
   const chatAIenabledList = useSelector((state) => state.user.chat_list);
-
+  const [listingCount, setListingsCount] = useState(null)
   const isChatInList = useCallback((chat_list, chatId) => {
     // return chat_list.some((chat) => chat.chat_id === chatId);
     return chat_list.some(item => item.chat_id === chatId && item.ai_enabled === true);
   }, []);
+
+  const fetchListings = async()=>{
+    const data = await getAllListings()
+    setListingsCount(data?.length ?? 1)
+  }
+
+  useEffect(()=>{
+    fetchListings()
+  },[])
 
   const Switch = ({ checked, handleSwitch }) => (
     <label className="inline-flex items-center cursor-pointer">
@@ -52,7 +63,7 @@ const BookingDetails = ({
         toast.success("Enabled AI for this chat");
       }
     } else {
-      const checkoutResponse = await checkout(chatId);
+      const checkoutResponse = await checkout(chatId, listingCount);
       setIsCheckoutModalOpen(true);
       if (checkoutResponse?.detail?.checkout_url) {
         setCheckoutUrl(checkoutResponse.detail.checkout_url);

@@ -12,25 +12,14 @@ load_dotenv()
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 price_id = os.getenv("STRIPE_BASIC_PLAN_ID")
 
-def create_checkout_session(email: str, chatId: int, customer_id=None):
+def create_checkout_session(email: str, chatId: int, quantity, customer_id=None):
     try:
         BASE_URL = os.getenv("BASE_URL")
         success_url = f"{BASE_URL}/payment-success"
         cancel_url = f"{BASE_URL}/payment-cancel"
-        # session = stripe.checkout.Session.create(
-        #     payment_method_types=["card"],
-        #     customer=customer_id,  # Stripe will use the saved card if available
-        #     success_url=success_url,
-        #     cancel_url=cancel_url,
-        #    line_items=[{"price": price_id , "quantity": 1}],
-        #     mode='subscription',
-        #     customer_email=email,
-        #     metadata={"chatId": chatId},
-        # )
-        # Create session with customer_id if it exists, otherwise use email
         session_params = {
             "payment_method_types": ["card"],
-            "line_items": [{"price": price_id, "quantity": 1}],
+            "line_items": [{"price": price_id, "quantity": quantity}],
             "mode": "subscription",
             "success_url": success_url,
             "cancel_url": cancel_url,

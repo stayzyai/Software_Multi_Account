@@ -45,11 +45,11 @@ const getSentiment = async (chatData) => {
 };
 
 const assignSentiment = (sentimentData) => {
-    const icons = {
-    "Angry": "/icons/Angry_Face.svg",
-    "Frowning": "/icons/Frowning_Face.svg",
-    "Grinning": "/icons/Grinning_Face.svg",
-    "Neutral": "/icons/Neutral_Face.svg",
+  const icons = {
+    Angry: "/icons/Angry_Face.svg",
+    Frowning: "/icons/Frowning_Face.svg",
+    Grinning: "/icons/Grinning_Face.svg",
+    Neutral: "/icons/Neutral_Face.svg",
     "Slightly Smiling": "/icons/Slightly_Smiling_Face.svg",
   };
 
@@ -59,7 +59,7 @@ const assignSentiment = (sentimentData) => {
     return { icon: null, summary: null };
   }
 
-  return { icon: icon, summary: summary };  // Return icon and summary as an object
+  return { icon: icon, summary: summary }; // Return icon and summary as an object
 };
 
 const getAllconversation = async (chat_id) => {
@@ -203,7 +203,15 @@ const simplifiedResult = (conversations) => {
     });
 };
 
-const formatedMessages = (messages, listing, amenity, reservations = []) => {
+const formatedMessages = (
+  messages,
+  listing,
+  amenity,
+  reservationGaps,
+  startReservationDate,
+  stayingGuest,
+  reservations = [],
+) => {
   const formattedMessages = messages?.map((msg) => ({
     role: msg.isIncoming == 0 ? "assistant" : "user",
     content: msg.body,
@@ -215,22 +223,31 @@ const formatedMessages = (messages, listing, amenity, reservations = []) => {
   const propertyDetails = JSON.stringify(listing);
   const amenityDetails = JSON.stringify(amenity);
   const reservationDetails = JSON.stringify(reservations);
-  
+
   let systemPrompt = SYSTEM_PROMPT.replace(
     /{previous_conversation}/g,
     previousConversation
   )
     .replace(/{latest_message}/g, lastUserMessage)
     .replace(/{property_details}/g, propertyDetails)
-    .replace(/{amenities_detail}/g, amenityDetails);
-    
+    .replace(/{amenities_detail}/g, amenityDetails)
+    .replace(/{starting_reservation}/g, startReservationDate)
+    .replace(/{gap_details}/g, reservationGaps)
+    .replace(/{current_booking}/g, stayingGuest);
+
   // Add reservation details if available
   if (reservations && reservations.length > 0) {
-    systemPrompt = systemPrompt.replace(/{reservation_details}/g, reservationDetails);
+    systemPrompt = systemPrompt.replace(
+      /{reservation_details}/g,
+      reservationDetails
+    );
   } else {
-    systemPrompt = systemPrompt.replace(/{reservation_details}/g, "No reservation data available.");
+    systemPrompt = systemPrompt.replace(
+      /{reservation_details}/g,
+      "No reservation data available."
+    );
   }
-  
+
   return { systemPrompt, lastUserMessage };
 };
 
@@ -430,7 +447,13 @@ const filterMessages = (messages, filters, selectedIds, selectedListingIds) => {
     Listing: selectedListing,
     Task: selectedTask,
   } = filters;
-  if (filterType === "Date" && !selectedListing && !selectedTask && selectedIds?.length == 0 && selectedListingIds?.length == 0) {
+  if (
+    filterType === "Date" &&
+    !selectedListing &&
+    !selectedTask &&
+    selectedIds?.length == 0 &&
+    selectedListingIds?.length == 0
+  ) {
     return messages;
   }
 
@@ -465,7 +488,7 @@ const filterMessages = (messages, filters, selectedIds, selectedListingIds) => {
     }
 
     let listingMatch = true;
-    if (selectedListingIds?.length !== 0 ) {
+    if (selectedListingIds?.length !== 0) {
       // listingMatch = message.listingMapId == selectedListing;
       listingMatch = selectedListingIds.includes(message.listingMapId);
     }
@@ -559,6 +582,51 @@ const formattedNewMessage = (data) => {
   };
 };
 
+const getReservationsGap = (reservations, listingMapId, listings) => {
+  if (!reservations || reservations.length === 0)
+    return { dateRanges: [], reservationStartDate: [] };
+
+  const filteredReservations = reservations?.filter(
+    (res) => res?.listingMapId == listingMapId
+  );
+
+  const sortedReservations = [...filteredReservations].sort(
+    (a, b) => new Date(a.arrivalDate) - new Date(b.arrivalDate)
+  );
+  const listing = listings.find((item) => item.id == listingMapId);
+  const reservationStartDate = listing?.insertedOn;
+  const bookings = [];
+  const dateRanges = [];
+
+  for (let i = 0; i < sortedReservations.length; i++) {
+    const res = sortedReservations[i];
+    const nextRes = sortedReservations[i + 1];
+
+    const startDate = res?.arrivalDate;
+    const endDate = res?.departureDate;
+
+    bookings.push({
+      id: res?.reservationId?.toString(),
+      guestName: res?.guestName,
+      startDate,
+      endDate,
+      nights: res?.nights,
+      guests: res?.numberOfGuests,
+    });
+    dateRanges.push(`${startDate} - ${endDate}`);
+
+    if (
+      nextRes &&
+      new Date(res?.departureDate) < new Date(nextRes?.arrivalDate)
+    ) {
+      const gapStart = endDate;
+      const gapEnd = nextRes?.arrivalDate;
+      dateRanges.push(`${gapStart} - ${gapEnd}`);
+    }
+  }
+  return { dateRanges, reservationStartDate };
+};
+
 export {
   getAllconversation,
   sendMessages,
@@ -583,5 +651,6 @@ export {
   updateTask,
   formatMessages,
   getSentiment,
-  assignSentiment
+  assignSentiment,
+  getReservationsGap,
 };

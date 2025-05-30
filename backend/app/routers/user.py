@@ -215,11 +215,21 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
         gpt_response = get_gpt_response(model_id, prompt, request.messsages)
         if gpt_response is None:
             raise HTTPException(status_code=400, detail="Some error occurred. Please try again.")
-        
         # Record response timestamp
+        print("--gpt_response---------------type-=-",type(gpt_response))
+        extension_request = False
         response_timestamp = datetime.now().isoformat()
-        
+        if isinstance(gpt_response, str):
+            try:
+                parsed = json.loads(gpt_response)
+                if isinstance(parsed, dict) and "response" in parsed:
+                    gpt_response = parsed["response"]
+                    extension_request = parsed.get("extension_request", "No") == "Yes"
+            except json.JSONDecodeError:
+                # It's just a plain string, no need to change gpt_response
+                pass
         # Store interaction data
+        print("--------gpt_response-----------", gpt_response)
         interaction_data = {
             "prompt": request.messsages,
             "completion": gpt_response,
@@ -227,7 +237,6 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
             "response_timestamp": response_timestamp,
             "user_id": user_id if user_id else None,
         }
-        
         # Store chat in background thread
         try:
             threading.Thread(target=store_chat, args=(interaction_data,), daemon=True).start()
@@ -241,151 +250,142 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
         
         # Check GPT response for extension flags
         try:
-            is_extension_request = bool(re.search(r'(extension[_\s]request.*?yes|date[_\s]change.*?yes|change[_\s]date.*?yes|extend.*?stay|change.*?check[_\s]in|change.*?check[_\s]out)', gpt_response.lower(), re.IGNORECASE))
+            is_extension_request = bool(re.search(r'(extension[_\s]request.*?yes|date[_\s]change.*?yes|change[_\s]date.*?yes|extend.*?stay|change.*?check[_\s]in|change.*?check[_\s]out)|checkout|checkin|check-in|check-out', gpt_response.lower(), re.IGNORECASE))
             dates_specified = bool(re.search(r'dates[_\s]specified.*?true', gpt_response.lower(), re.IGNORECASE))
         except Exception:
             pass
             
         # Check user message for date change keywords
         user_message_lower = request.messsages.lower() if request.messsages else ""
-        if re.search(r'(extend|extension|stay\s+(longer|more|extra)|book\s+more|change\s+date|move\s+date|update\s+date|from\s+\d{1,2}\s+\w+|upto\s+\d{1,2}\s+\w+|check[_\s]in|check[_\s]out)', user_message_lower):
+        if re.search(r'(extend|extension|stay\s+(longer|more|extra)|book\s+more|change\s+date|move\s+date|update\s+date|from\s+\d{1,2}\s+\w+|upto\s+\d{1,2}\s+\w+|check[_\s]in|check[_\s]out)|checkout|checkin|check-in|check-out|book', user_message_lower):
             is_extension_request = True
-            
+
         # Extract specified listing information
-        mentioned_listing_name = request.listingName
         mentioned_listing_id = request.listingMapId
-        
-        # Only proceed with extension logic if this is an extension request and we have a listing ID
-        if is_extension_request and mentioned_listing_id:
+        print("--------------is_extension_request----------", is_extension_request)
+        print("----------extension_request---------------", extension_request)
+        if is_extension_request or extension_request and mentioned_listing_id:
             # Extract dates from user message
             requested_dates = []
             date_patterns = [
-                r'(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?\s*(?:,\s*)?(\d{4})?',  # April 7, 2025
-                r'(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)(?:,\s*)?(\d{4})?',  # 7 April, 2025
-                r'(\d{1,2})/(\d{1,2})/(\d{4})',  # MM/DD/YYYY
-                r'(\d{4})-(\d{1,2})-(\d{1,2})'  # YYYY-MM-DD
+                r'\b(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?(?:,\s*|\s+)?(\d{4})?\b',             # April 7 2025 or April 7
+                r'\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)(?:,\s*|\s+)?(\d{4})?\b',   # 7th of April, 2025 or 7 April
+                r'\b(\d{1,2})/(\d{1,2})/(\d{4})\b',                                        # 07/04/2025
+                r'\b(\d{4})-(\d{1,2})-(\d{1,2})\b'                                         # 2025-04-07
             ]
-            
+
             # Extract dates from message
             for pattern in date_patterns:
                 date_matches = re.findall(pattern, request.messsages.lower())
                 for match in date_matches:
-                    # Process date matches
                     try:
                         if len(match) == 3:
-                            if re.match(r'\d{4}', match[0]):  # ISO format: 2025-04-07
+                            year = month = day = month_name = None
+                            if re.match(r'\d{4}', match[0]):  # ISO format
                                 year, month, day = match
-                                month_name = None
-                            elif match[0].isalpha():  # Month name first: April 7, 2025
+                            elif match[0].isalpha():  # Month name first
                                 month_name, day, year = match
-                                month = None
-                            else:  # Day first or MM/DD/YYYY
-                                if match[1] and match[1].isalpha():  # 7 April, 2025
+                            else:
+                                if match[1] and match[1].isalpha():  # Day MonthName Year
                                     day, month_name, year = match
-                                    month = None
                                 else:  # MM/DD/YYYY
                                     month, day, year = match
-                                    month_name = None
-                        
+
                             # Convert month name to number if needed
                             if month_name:
                                 import calendar
-                                month_names = {month.lower(): i for i, month in enumerate(calendar.month_name) if month}
-                                month_abbr = {month.lower(): i for i, month in enumerate(calendar.month_abbr) if month}
-                                
+                                month_names = {m.lower(): i for i, m in enumerate(calendar.month_name) if m}
+                                month_abbr = {m.lower(): i for i, m in enumerate(calendar.month_abbr) if m}
                                 month_name_lower = month_name.lower()
-                                
-                                if month_name_lower in month_names:
-                                    month = month_names[month_name_lower]
-                                elif month_name_lower in month_abbr:
-                                    month = month_abbr[month_name_lower]
-                                else:
+
+                                month = (
+                                    month_names.get(month_name_lower)
+                                    or month_abbr.get(month_name_lower)
+                                )
+                                if not month:
                                     # Try partial matching
                                     for known_month, idx in month_names.items():
                                         if known_month.startswith(month_name_lower) or month_name_lower.startswith(known_month):
                                             month = idx
                                             break
-                                    
                                     if not month:
                                         for known_abbr, idx in month_abbr.items():
                                             if known_abbr.startswith(month_name_lower) or month_name_lower.startswith(known_abbr):
                                                 month = idx
                                                 break
                             
-                            # Ensure month is valid
-                            if isinstance(month, int) and (month <= 0 or month > 12):
-                                continue
-                            
+                            # Skip if any required field is still None
+                            # if not all([month, day, year]):
+                            #     continue
+
                             # Handle missing year
-                            if not year or year == '':
-                                current_year = datetime.now().year
-                                current_month = datetime.now().month
-                                
-                                # If mentioned month is earlier than current month, assume next year
-                                if int(month) < current_month:
-                                    year = current_year + 1
-                                else:
-                                    year = current_year
-                            
-                            # Convert values to integers and validate
-                            month_int = int(month)
-                            day_int = int(day)
-                            year_int = int(year)
-                            
+                            if not year:
+                                now = datetime.now()
+                                year = now.year
+                                if month and int(month) < now.month:
+                                    year += 1
+
+                            # Convert values
+                            month_int = month and int(month)
+                            day_int = day and int(day)
+                            year_int = year and int(year)
                             # Validate month and day
                             if not (1 <= month_int <= 12):
                                 continue
-                                
-                            # Check days in month
+
                             max_days = 31
                             if month_int in [4, 6, 9, 11]:
                                 max_days = 30
                             elif month_int == 2:
-                                # Simple leap year check
                                 max_days = 29 if (year_int % 4 == 0 and year_int % 100 != 0) or (year_int % 400 == 0) else 28
-                                
+
                             if not (1 <= day_int <= max_days):
                                 continue
-                            
-                            # Create date object
+
+                            # Build date
                             date_obj = datetime(year_int, month_int, day_int)
                             date_str = date_obj.strftime("%Y-%m-%d")
-                            
+                            print("-----------date_str--------------", date_str)
+                            print("------date_obj--------------------", date_obj)
                             if date_str not in requested_dates:
                                 requested_dates.append(date_str)
                                 dates_specified = True
+
                     except Exception as e:
                         logging.error(f"Error parsing date: {str(e)}")
                         continue
-            
+
             # Get the earliest and latest requested dates
+            print("--------gpt_response---------------", gpt_response)
             earliest_requested_date = None
             latest_requested_date = None
+            print("-------requested_dates------------", requested_dates)
             if requested_dates:
                 requested_dates.sort()
                 earliest_requested_date = requested_dates[0]
                 latest_requested_date = requested_dates[-1]
-                logging.info(f"Found requested dates: earliest={earliest_requested_date}, latest={latest_requested_date}")
-            
+            else:
+                return {
+                    "model": model_id,
+                    "answer": f"Could you please let me know the exact checkin or checkout date you'd like to update? That’ll make it easier for me to check availability."
+                }
+
+            new_requested_dates = requested_dates
             # If we have user_id, try to update the reservation
             if user_id:
                 # Get the user's Hostaway account
                 hostaway_account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
-                
                 if hostaway_account and hostaway_account.hostaway_token:
                     # Get reservation for the specific listing
                     reservations_response = hostaway_get_request(hostaway_account.hostaway_token, "/reservations")
-                    
-                    if reservations_response:
-                        all_reservations = json.loads(reservations_response)
-                        
+                    reservations_response = json.loads(reservations_response)
+                    if reservations_response['status'] == 'success':
+                        all_reservations = reservations_response
                         # Filter reservations to get only those for the mentioned listing
                         listing_reservations = [
                             res for res in all_reservations.get('result', [])
-                            if str(res.get('listingMapId')) == str(mentioned_listing_id) and
-                            res.get('status', '').lower() in ['confirmed', 'modified', 'new']
+                            if str(res.get('listingMapId')) == str(mentioned_listing_id)
                         ]
-                        
                         # Get current date for comparison
                         current_date = datetime.now().strftime("%Y-%m-%d")
                         
@@ -393,44 +393,44 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                         current_reservation = None
                         
                         # Filter for active or upcoming reservations
+                        # active_reservations = [
+                        #     res for res in listing_reservations
+                        #     if (res.get('arrivalDate') <= current_date and res.get('departureDate') >= current_date)
+                        # ]
                         active_reservations = [
                             res for res in listing_reservations
-                            if (res.get('arrivalDate') <= current_date and res.get('departureDate') >= current_date)
+                            if (res.get('id') == request.reservationId)
                         ]
-                        
+                        print("----------active_reservations------------", active_reservations)
                         upcoming_reservations = [
                             res for res in listing_reservations
                             if res.get('arrivalDate') > current_date
                         ]
-                        
+                        print("----------upcoming_reservations--------------", upcoming_reservations)
                         # Use active reservation if available, otherwise use upcoming
                         if active_reservations:
                             current_reservation = active_reservations[0]
                             logging.info(f"Found active reservation: {current_reservation.get('id')}")
-                        elif upcoming_reservations:
+                        if upcoming_reservations:
                             # Sort by arrival date and use the earliest
                             upcoming_reservations.sort(key=lambda x: x.get('arrivalDate'))
                             current_reservation = upcoming_reservations[0]
                             logging.info(f"Found upcoming reservation: {current_reservation.get('id')}")
-                        
+                        print("------current_reservation-----------------", current_reservation)
                         if current_reservation:
                             # We have a reservation to update
                             current_arrival_date = current_reservation.get('arrivalDate')
                             current_departure_date = current_reservation.get('departureDate')
-                            reservation_id = current_reservation.get('id')
+                            reservation_id = request.reservationId
                             logging.info(f"Current dates: arrival={current_arrival_date}, departure={current_departure_date}, reservation ID: {reservation_id}")
                             
                             # Determine the new dates
                             new_arrival_date = current_arrival_date  # Keep current by default
                             new_departure_date = current_departure_date  # Keep current by default
-                            
                             # Check if we have new dates to apply
                             if earliest_requested_date:
-                                # Check the type of request
-                                is_extension = bool(re.search(r'(extend|extension|stay\s+(longer|more|extra)|upto\s+\d{1,2}\s+\w+)', user_message_lower))
-                                is_checkin_change = bool(re.search(r'(check[_\s]in|from\s+\d{1,2}\s+\w+|want.*?from|start.*?from|stay\s+from|begin\s+from)', user_message_lower))
-                                is_checkout_change = bool(re.search(r'(check[_\s]out|until\s+\d{1,2}\s+\w+|upto\s+\d{1,2}\s+\w+)', user_message_lower))
-                                
+                                is_checkin_change = bool(re.search(r'\b('r'check[_\s]?in.*?\b\d{1,2}(st|nd|rd|th)?\s+\w+|'r'from\s+\d{1,2}(st|nd|rd|th)?\s+\w+|'r'check[_\s]?in\s+(on\s+)?\w+\s+\d{1,2}(st|nd|rd|th)?|'r'check[_\s]?in\s+date|'r'arriving\s+on\s+\w+\s+\d{1,2}(st|nd|rd|th)?|'r'arrive\s+on|'r'want.*?(start|from|to\s+check[_\s]?in)|'r'planning\s+to\s+arrive|'r'starting\s+from|'r'stay\s+from|'r'begin\s+from|'r'coming\s+on|'r'checkin'r')\b|check-in',user_message_lower))
+                                is_checkout_change = bool(re.search(r'\b('r'check[_\s]?out.*?\b\d{1,2}(st|nd|rd|th)?\s+\w+|'r'until\s+\d{1,2}(st|nd|rd|th)?\s+\w+|'r'upto\s+\d{1,2}(st|nd|rd|th)?\s+\w+|'r'check[_\s]?out\s+(on\s+)?\w+\s+\d{1,2}(st|nd|rd|th)?|'r'leaving\s+on\s+\w+\s+\d{1,2}(st|nd|rd|th)?|'r'leave\s+on|'r'checkout'r')\b|check-out',user_message_lower))
                                 # Get current reservation details first
                                 current_res_details_response = hostaway_get_request(
                                     hostaway_account.hostaway_token, 
@@ -453,43 +453,51 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                         "model": model_id,
                                         "answer": "I'm sorry, I couldn't understand the date format. Please try again with a clear date format."
                                     }
+                                if earliest_requested_date == latest_requested_date:
+                                    if earliest_requested_date < current_arrival_date or latest_requested_date < current_arrival_date:
+                                        is_checkin_change = True
+                                    if latest_requested_date > current_departure_date or earliest_requested_date > current_departure_date:
+                                        is_checkout_change = True
+                                print("----------earliest_requested_date----------", earliest_requested_date)
+                                print("--------latest_requested_date---------", latest_requested_date)
+                                print("------is_checkin_change--------------", is_checkin_change)
+                                print("-----------------is_checkout_change--------", is_checkout_change)
+                                print("--------requested_date----------------", requested_date)
                                 
-                                if is_checkin_change:
+                                if (is_checkin_change and is_checkout_change) or len(new_requested_dates) == 2:
+                                    print("---------len(new_requested_dates)--------", len(new_requested_dates))
                                     # For check-in changes, only update the arrival date
                                     new_arrival_date = earliest_requested_date
-                                    new_departure_date = current_departure_date  # Keep existing check-out date
+                                    new_departure_date = latest_requested_date  # Keep existing check-out date
                                     logging.info(f"Check-in change detected: updating arrival date to: {new_arrival_date}, keeping check-out date as: {new_departure_date}")
-                                elif is_extension:
-                                    # For extension requests, only update the departure date
+                                elif is_checkout_change and not is_checkin_change:
+                                    # For extension or check-out requests, only update the departure date
                                     new_departure_date = earliest_requested_date
                                     new_arrival_date = current_arrival_date  # Keep existing check-in date
-                                    logging.info(f"Extension request detected: updating check-out date to: {new_departure_date}, keeping check-in date as: {new_arrival_date}")
-                                elif is_checkout_change:
-                                    # For check-out changes, only update the departure date
-                                    new_departure_date = earliest_requested_date
-                                    new_arrival_date = current_arrival_date  # Keep existing check-in date
-                                    logging.info(f"Check-out change detected: updating departure date to: {new_departure_date}, keeping check-in date as: {new_arrival_date}")
-                                else:
-                                    # For other date changes, check if it's check-in or check-out based on date
-                                    requested_date_obj = datetime.strptime(earliest_requested_date, "%Y-%m-%d")
-                                    current_arrival_obj = datetime.strptime(current_arrival_date, "%Y-%m-%d")
-                                    
-                                    # If the requested date is before the current departure, it's likely a check-in date
-                                    if requested_date_obj < datetime.strptime(current_departure_date, "%Y-%m-%d"):
-                                        new_arrival_date = earliest_requested_date
-                                        new_departure_date = current_departure_date  # Keep existing check-out date
-                                        logging.info(f"Date change detected: updating check-in date to: {new_arrival_date}, keeping check-out date as: {new_departure_date}")
-                                    else:
-                                        # Otherwise, it's a check-out date
-                                        new_departure_date = earliest_requested_date
-                                        new_arrival_date = current_arrival_date  # Keep existing check-in date
-                                        logging.info(f"Date change detected: updating check-out date to: {new_departure_date}, keeping check-in date as: {new_arrival_date}")
-                            
-                            if latest_requested_date and latest_requested_date != earliest_requested_date:
-                                # If we have a different latest date, it's definitely a check-out date
-                                new_departure_date = latest_requested_date
-                                new_arrival_date = current_arrival_date  # Keep existing check-in date
-                                logging.info(f"Multiple dates detected: updating check-out date to: {new_departure_date}, keeping check-in date as: {new_arrival_date}")
+                                elif not is_checkout_change and is_checkin_change:
+                                    new_arrival_date = earliest_requested_date
+                                    new_departure_date = current_departure_date
+                                # else:
+                                #     # If we have two different dates, assume it's a check-in and check-out change
+                                #     if latest_requested_date and latest_requested_date != earliest_requested_date:
+                                #         new_arrival_date = earliest_requested_date
+                                #         new_departure_date = latest_requested_date
+                                #         logging.info(f"Two distinct dates detected: updating check-in to {new_arrival_date} and check-out to {new_departure_date}")
+                                #     else:
+                                #         # For other single date changes, check if it's check-in or check-out based on date
+                                #         requested_date_obj = datetime.strptime(earliest_requested_date, "%Y-%m-%d")
+                                #         current_arrival_obj = datetime.strptime(current_arrival_date, "%Y-%m-%d")
+                                        
+                                #         # If the requested date is before or the same as the current departure, it's likely a check-in date
+                                #         if requested_date_obj <= datetime.strptime(current_departure_date, "%Y-%m-%d"):
+                                #             new_arrival_date = earliest_requested_date
+                                #             new_departure_date = current_departure_date  # Keep existing check-out date
+                                #             logging.info(f"Single date change detected (before or on current departure): updating check-in date to: {new_arrival_date}, keeping check-out date as: {new_departure_date}")
+                                #         else:
+                                #             # Otherwise, it's a check-out date
+                                #             new_departure_date = earliest_requested_date
+                                #             new_arrival_date = current_arrival_date  # Keep existing check-in date
+                                #             logging.info(f"Single date change detected (after current departure): updating check-out date to: {new_departure_date}, keeping check-in date as: {new_arrival_date}")
                             
                             # Get current reservation details
                             logging.info(f"Getting reservation details for ID: {reservation_id}")
@@ -513,23 +521,19 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                     "model": model_id,
                                     "answer": "I'm sorry, I couldn't find the details for your current reservation. Please try again later or contact customer service."
                                 }
-                            
+
                             # Prepare update payload
                             update_payload = current_res_details
                             update_payload['arrivalDate'] = new_arrival_date
                             update_payload['departureDate'] = new_departure_date
-                            
-                            # Log the request we're about to make
-                            logging.info(f"Sending update request for reservation {reservation_id} to change dates from {current_arrival_date}-{current_departure_date} to {new_arrival_date}-{new_departure_date}")
-                            
-                            # Try to update the reservation
+                            print("--------update_payload-----", update_payload)
+                            # Try to update the reservation                            
                             update_response = hostaway_put_request(
                                 hostaway_account.hostaway_token,
                                 f"/reservations/{reservation_id}",
                                 update_payload,
                                 force_overbooking=True
                             )
-                            
                             if not update_response:
                                 logging.error(f"No response received from update request for reservation {reservation_id}")
                                 return {
@@ -556,7 +560,10 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                     hostaway_account.hostaway_token,
                                     f"/reservations/{reservation_id}"
                                 )
-                                
+                                current_update_result = update_result.get('result', {})
+                                print("------current_update_result-------", current_update_result)
+                                updated_arrival_date = current_update_result["arrivalDate"]
+                                updated_departure_date = current_update_result["departureDate"]
                                 if not verification_response:
                                     logging.warning(f"Unable to verify reservation update - no response")
                                     # We'll still assume it worked since the update call succeeded
@@ -566,8 +573,8 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                     # Update via websocket if needed
                                     new_updated_data = {
                                         "reservation_id": reservation_id,
-                                        "new_arrival_date": new_arrival_date,
-                                        "new_departure_date": new_departure_date
+                                        "new_arrival_date": updated_arrival_date,
+                                        "new_departure_date": updated_departure_date
                                     }
                                     await update_checkout_date(new_updated_data)
                                     
@@ -593,14 +600,15 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                         # Update via websocket if needed
                                         new_updated_data = {
                                             "reservation_id": reservation_id,
-                                            "new_arrival_date": new_arrival_date,
-                                            "new_departure_date": new_departure_date
+                                            "new_arrival_date": updated_arrival_date,
+                                            "new_departure_date": updated_departure_date
                                         }
                                         await update_checkout_date(new_updated_data)
-                                        
+                                        split_keyword = "Your check-in date"
+                                        guest_message = gpt_response.split(split_keyword)[0].strip()
                                         return {
                                             "model": model_id,
-                                            "answer": f"I've updated your reservation. Your new check-in date is {new_arrival_formatted}, and your check-out date is {new_departure_formatted}. Let me know if you need anything else"
+                                            "answer": f"{guest_message}\nyour stay to start on {updated_arrival_date} and end on {updated_departure_date}"
                                         }
                                     else:
                                         # The API said success but the dates didn't update - try one more time
@@ -690,12 +698,12 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                 else:
                                     return {
                                         "model": model_id,
-                                        "answer": f"I encountered an issue while trying to update your reservation dates. The error was: {error_message}. Please contact customer service for assistance."
+                                        "answer": f"I encountered an issue while trying to update your reservation dates. {error_message} Please contact customer service for assistance."
                                     }
                         else:
                             return {
                                 "model": model_id, 
-                                "answer": "I couldn't find an active or upcoming reservation for the property you are querying about. Please make sure you have a confirmed booking for this property."
+                                "answer": "It looks like there’s no current reservation for this property, so there isn’t anything to extend at the moment. If you’d like to stay, feel free to go ahead and book a new reservation,  I’d be happy to assist if you need help with that."
                             }
                     else:
                         return {

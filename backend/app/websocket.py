@@ -15,7 +15,7 @@ async def disconnect(sid, reason):
     # print(f"Client disconnected: {sid}")
 
 async def handle_webhook(data):
-    send_auto_ai_messages(data)
+    await send_auto_ai_messages(data)
     await sio_server.emit("received_message", data)
 
 @sio_server.event

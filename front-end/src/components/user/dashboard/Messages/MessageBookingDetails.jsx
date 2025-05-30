@@ -8,6 +8,7 @@ import MessageRightSidebar from "../../../common/shimmer/MessageRightSidebr";
 import BookingDetails from "./BookingDetails";
 import BookingIssue from "./BookingIssue";
 import { io } from "socket.io-client";
+import { useParams } from "react-router-dom";
 
 const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo, sentimentLoading }) => {
   const [activeSession, setActiveSession] = useState("booking");
@@ -16,6 +17,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo, sentimen
   const [bookingDetails, setbookingDetails] = useState([]);
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
+  const { messageId } = useParams();
 
   const getReservations = async () => {
     const data = await getHostawayReservation();
@@ -51,7 +53,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo, sentimen
       return;
     }
     fetchReservations();
-  }, [chatInfo]);
+  }, [chatInfo, messageId]);
 
   useEffect(() => {
     const newSocket = io(import.meta.env.VITE_SOCKET_HOST, {

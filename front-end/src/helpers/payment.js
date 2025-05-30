@@ -1,8 +1,8 @@
 import api from "../api/api";
 
-export const checkout = async (chatId) => {
+export const checkout = async (chatId, listingCount) => {
   try {
-    const response = await api.get(`/payment/create-checkout-session?chatId=${chatId}`);
+    const response = await api.get(`/payment/create-checkout-session?chatId=${chatId}&quantity=${listingCount}`);
     return response.data;
   } catch (error) {
     console.log(error);

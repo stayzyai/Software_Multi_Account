@@ -13,14 +13,16 @@ from app.common.send_email import send_email
 import json
 from datetime import datetime
 import threading
+from app.common.ai_booking import update_booking
 
-def generate_prompt(previous_conversation, latest_message, property_details, amenities_detail):
+def generate_prompt(previous_conversation, latest_message, property_details, amenities_detail, reservation_details=None):
     try:
         return SYSTEM_PROMPT.format(
             previous_conversation=previous_conversation,
             latest_message=latest_message,
             property_details=property_details,
-            amenities_detail=amenities_detail
+            amenities_detail=amenities_detail,
+            reservation_details=reservation_details
         )
     except KeyError as e:
         return f"Error: Missing key {e} in formatting the prompt."
@@ -130,6 +132,23 @@ def get_ai_response(prompt, messsages, user_id):
         return {"model": model_id, "answer": gpt_response}
     except Exception as e:
         return {"model": model_id, "answer": ""}
+    
+def get_reservations (user_id, listingMapId):
+    try:
+        db = next(get_db())
+        account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
+        if not account or not account.hostaway_token:
+            raise HTTPException(status_code=404, detail="Hostaway account or token not found.")
+        response = hostaway_get_request(account.hostaway_token, "reservations")
+        data = json.loads(response)
+        reservations = []
+        if data['status'] == 'success':
+            all_reservations = data.get("result", [])
+            reservations = [res for res in all_reservations if res.get('listingMapId') == listingMapId]
+        return reservations
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail={"message": f"Error in get_all_reservations: {str(e)}"})
 
 def create_issue_ticket(new_message):
     try:
@@ -160,11 +179,12 @@ def create_issue_ticket(new_message):
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
-def send_message(new_message, gpt_response):
+async def send_message(new_message, gpt_response, latest_incoming, user_id, listingMapId):
     try:
         db = next(get_db())
         accountId = new_message.get("accountId")
         conversationId = new_message.get("conversationId")
+        reservationId = new_message.get("reservationId")
         hostaway_token = get_hostaway_token(accountId, db)
         answer_data = gpt_response.get("answer", "")
         if isinstance(answer_data, str):
@@ -182,7 +202,7 @@ def send_message(new_message, gpt_response):
         else:
             print("Error: Unexpected format for 'answer'.")
             return False
-
+        messageBody = await update_booking(messageBody, latest_incoming, listingMapId, reservationId, user_id, db)
         payload = {
             "body": messageBody,
             "communicationType": "channel"
@@ -200,11 +220,12 @@ def send_message(new_message, gpt_response):
     except Exception as e:
         print(f"Error sending message: {e}")
 
-def send_auto_ai_messages(new_messages):
+async def send_auto_ai_messages(new_messages):
     try:
         user_id = chack_ai_enable(new_messages, next(get_db()))
         if user_id:
             consversationsId = new_messages.get("conversationId")
+            listingMapId = new_messages.get("listingMapId")
             print(f"User ID: {user_id}, Conversation ID: {consversationsId}")
             is_ai_enabled = check_ai_status(user_id, consversationsId, next(get_db()))
             print(f"AI status for user {user_id} and conversation {consversationsId}: {is_ai_enabled}")
@@ -219,13 +240,16 @@ def send_auto_ai_messages(new_messages):
                     future_previous_conversation = executor.submit(get_previous_conversation, new_messages)
                     future_property_details = executor.submit(get_property_details, new_messages)
                     future_amenities_detail = executor.submit(get_amenities_detail, new_messages)
+                    reservation = executor.submit(get_reservations, user_id, listingMapId)
                     previous_conversation = future_previous_conversation.result()
                     property_details = future_property_details.result()
                     amenities_detail = future_amenities_detail.result()
+                    reservation_details = reservation.result()
 
-                prompt = generate_prompt(previous_conversation, latest_incoming, property_details, amenities_detail)
+                prompt = generate_prompt(previous_conversation, latest_incoming, property_details, amenities_detail, reservation_details)
                 gpt_response = get_ai_response(prompt, latest_incoming, user_id)
-                return send_message(new_messages, gpt_response)
+
+                return await send_message(new_messages, gpt_response, latest_incoming, user_id, listingMapId)
         else:
             print(f"AI is not Enable for Id: {consversationsId}")
             return False

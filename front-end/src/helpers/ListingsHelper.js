@@ -197,7 +197,8 @@ const formatReservations = (reservations, listingMapId) => {
       dateRanges.push(`${gapStart} - ${gapEnd}`);
     }
   }
-
+  console.log("----------bookings-------------", bookings)
+  console.log("---------------dateRanges---------", dateRanges)
   return { bookings, dateRanges };
 };
 
