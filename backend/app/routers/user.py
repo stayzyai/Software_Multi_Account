@@ -217,15 +217,18 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
         if gpt_response is None:
             raise HTTPException(status_code=400, detail="Some error occurred. Please try again.")
         # Record response timestamp
+        print("--gpt_response---------------gpt_response-=-", gpt_response)
         print("--gpt_response---------------type-=-",type(gpt_response))
         extension_request = False
         response_timestamp = datetime.now().isoformat()
+        available_dates = []
         if isinstance(gpt_response, str):
             try:
                 parsed = json.loads(gpt_response)
                 if isinstance(parsed, dict) and "response" in parsed:
                     gpt_response = parsed["response"]
                     extension_request = parsed.get("extension_request", "No") == "Yes"
+                    available_dates = parsed.get("available_dates")
             except json.JSONDecodeError:
                 # It's just a plain string, no need to change gpt_response
                 pass
@@ -361,15 +364,29 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
             earliest_requested_date = None
             latest_requested_date = None
             print("-------requested_dates------------", requested_dates)
-            if requested_dates:
+            print("------available_dates--------------", available_dates)
+            if requested_dates or available_dates:
+                if not requested_dates and  available_dates:
+                    requested_dates = available_dates
                 requested_dates.sort()
                 earliest_requested_date = requested_dates[0]
                 latest_requested_date = requested_dates[-1]
             else:
-                return {
-                    "model": model_id,
-                    "answer": f"Could you please let me know the exact checkin or checkout date you'd like to update? That’ll make it easier for me to check availability."
-                }
+                patterns = [
+                r"extend your stay for an additional night.*your stay to start on \d{4}-\d{2}-\d{2} and end on \d{4}-\d{2}-\d{2}",
+                r"yes.*updated.*check(?:in|out)",
+                r"i’ve updated.*check(?:in|out)",
+                r"i have updated.*check(?:in|out)"]
+                if any(re.search(pattern, gpt_response, re.IGNORECASE) for pattern in patterns):
+                    return {
+                        "model": model_id,
+                        "answer": f"Could you please let me know the exact checkin or checkout date you'd like to update? That’ll make it easier for me to check availability."
+                    }
+                else:
+                    return {
+                        "model": model_id,
+                        "answer": gpt_response
+                    }
 
             new_requested_dates = requested_dates
             # If we have user_id, try to update the reservation
@@ -478,28 +495,6 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                 elif not is_checkout_change and is_checkin_change:
                                     new_arrival_date = earliest_requested_date
                                     new_departure_date = current_departure_date
-                                # else:
-                                #     # If we have two different dates, assume it's a check-in and check-out change
-                                #     if latest_requested_date and latest_requested_date != earliest_requested_date:
-                                #         new_arrival_date = earliest_requested_date
-                                #         new_departure_date = latest_requested_date
-                                #         logging.info(f"Two distinct dates detected: updating check-in to {new_arrival_date} and check-out to {new_departure_date}")
-                                #     else:
-                                #         # For other single date changes, check if it's check-in or check-out based on date
-                                #         requested_date_obj = datetime.strptime(earliest_requested_date, "%Y-%m-%d")
-                                #         current_arrival_obj = datetime.strptime(current_arrival_date, "%Y-%m-%d")
-                                        
-                                #         # If the requested date is before or the same as the current departure, it's likely a check-in date
-                                #         if requested_date_obj <= datetime.strptime(current_departure_date, "%Y-%m-%d"):
-                                #             new_arrival_date = earliest_requested_date
-                                #             new_departure_date = current_departure_date  # Keep existing check-out date
-                                #             logging.info(f"Single date change detected (before or on current departure): updating check-in date to: {new_arrival_date}, keeping check-out date as: {new_departure_date}")
-                                #         else:
-                                #             # Otherwise, it's a check-out date
-                                #             new_departure_date = earliest_requested_date
-                                #             new_arrival_date = current_arrival_date  # Keep existing check-in date
-                                #             logging.info(f"Single date change detected (after current departure): updating check-out date to: {new_departure_date}, keeping check-in date as: {new_arrival_date}")
-                            
                             # Get current reservation details
                             logging.info(f"Getting reservation details for ID: {reservation_id}")
                             current_res_details_response = hostaway_get_request(
@@ -610,6 +605,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                             "new_arrival_date": updated_arrival_date,
                                             "new_departure_date": updated_departure_date
                                         }
+                                        print("------new_updated_data---------------", new_updated_data)
                                         await update_checkout_date(new_updated_data)
                                         split_keyword = "Your check-in date"
                                         guest_message = gpt_response.split(split_keyword)[0].strip()

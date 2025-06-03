@@ -22,6 +22,7 @@ async def update_booking(messageBody, latest_incoming, listingMapId, reservation
         # Record response timestamp
         print("--gpt_response---------------type-=-",type(gpt_response))
         extension_request = False
+        available_dates = []
         response_timestamp = datetime.now().isoformat()
         if isinstance(gpt_response, str):
             try:
@@ -29,6 +30,7 @@ async def update_booking(messageBody, latest_incoming, listingMapId, reservation
                 if isinstance(parsed, dict) and "response" in parsed:
                     gpt_response = parsed["response"]
                     extension_request = parsed.get("extension_request", "No") == "Yes"
+                    available_dates = parsed.get("available_dates")
             except json.JSONDecodeError:
                 # It's just a plain string, no need to change gpt_response
                 pass
@@ -164,13 +166,23 @@ async def update_booking(messageBody, latest_incoming, listingMapId, reservation
             earliest_requested_date = None
             latest_requested_date = None
             print("-------requested_dates------------", requested_dates)
-            if requested_dates:
+            print("------available_dates--------------", available_dates)
+            if requested_dates or available_dates:
+                if not requested_dates and  available_dates:
+                    requested_dates = available_dates
                 requested_dates.sort()
                 earliest_requested_date = requested_dates[0]
                 latest_requested_date = requested_dates[-1]
             else:
-                f"Could you please let me know the exact checkin or checkout date you'd like to update? That’ll make it easier for me to check availability."
-                
+                patterns = [
+                r"extend your stay for an additional night.*your stay to start on \d{4}-\d{2}-\d{2} and end on \d{4}-\d{2}-\d{2}",
+                r"yes.*updated.*check(?:in|out)",
+                r"i’ve updated.*check(?:in|out)",
+                r"i have updated.*check(?:in|out)"]
+                if any(re.search(pattern, gpt_response, re.IGNORECASE) for pattern in patterns):
+                    return "Could you please let me know the exact checkin or checkout date you'd like to update? That’ll make it easier for me to check availability."
+                else:
+                    return gpt_response
 
             new_requested_dates = requested_dates
             # If we have user_id, try to update the reservation
