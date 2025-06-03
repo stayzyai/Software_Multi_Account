@@ -1,219 +1,22 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, UploadFile, File
-from sqlalchemy.orm import Session
-from app.schemas.user import UserUpdate, ChangePasswordRequest, UserProfile, ChatRequest, Role
-from app.models.user import User, ChromeExtensionToken, Subscription, ChatAIStatus
-from app.service.chat_service import get_current_user, get_user_subscription, update_ai_status, get_active_ai_chats
-from app.models.user import ChromeExtensionToken, Subscription, HostawayAccount
-from app.database.db import get_db
-from app.common.auth import verify_password, get_password_hash, decode_access_token, get_token, get_hostaway_key
+from fastapi import HTTPException
+from app.models.user import  HostawayAccount
 from app.common.user_query import update_user_details
-from app.schemas.admin import UserList, UsersDetailResponse, UserResponse
 from app.common.chat_query import store_chat
-from app.common.chat_gpt_assistant import get_latest_model_id
-from dotenv import load_dotenv
 import logging
-from app.common.open_ai import get_gpt_response, nearby_spots_gpt_response
-import uuid
-from sqlalchemy.exc import NoResultFound
-import os
-import httpx
-from app.common.chat_query import haversine_distance
-from datetime import datetime, timedelta
+from datetime import datetime
 import threading
 import json
 import re
 from app.common.hostaway_setup import hostaway_put_request, hostaway_get_request
-from app.websocket import update_checkout_date
 import time
-from fastapi.responses import JSONResponse
-from app.service.s3_service import upload_or_replace_image
+from app.common.chat_gpt_assistant import get_latest_model_id
 from app.service.chat_service import is_update_possible
 
-load_dotenv()
-
-router = APIRouter(prefix="/user", tags=["users"])
-
-@router.post("/update")
-def update_user(user: UserUpdate, db: Session = Depends(get_db), token: str = Depends(get_token)):
+async def update_booking(messageBody, latest_incoming, listingMapId, reservationId, user_id, db):
     try:
-        decode_token = decode_access_token(token)
-        user_id = decode_token['sub']
-        db_user = db.query(User).filter(User.id == user_id).first()
-        if not db_user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        existing_user = db.query(User).filter(User.id == user.id).first()
-        if not existing_user:
-            raise HTTPException(status_code=404, detail="User not found")
-
-        if existing_user.role.value == Role.admin.value:    
-            user_details = db.query(User).filter(User.id == user.id).first()
-            if not user_details:
-                raise HTTPException(status_code=404, detail="User not found")
-            updated_details = update_user_details(user_details, user, db)
-        else:
-            updated_details = update_user_details(existing_user, user, db)
-        db.commit()
-        return {"detail": {"message": "User updated successfully", "data": updated_details}}
-
-    except HTTPException as exc:
-        logging.error(f"Error at update user {exc}")
-        raise exc
-
-    except Exception as e:
-        logging.error(f"*Error updating user** {str(e)}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error updating user: {str(e)}")
-
-@router.get("/all-users", response_model=UsersDetailResponse)
-def get_all_users(db: Session = Depends(get_db), token: str = Depends(get_token), page: int = Query(default=1, ge=1), page_size: int = Query(default=10, ge=1)
-):
-    try:
-        decode_token = decode_access_token(token)
-        user_id = decode_token['sub']
-
-        db_user = db.query(User).filter(User.id == user_id).first()
-        if not db_user:
-            raise HTTPException(status_code=404, detail={"message": "You must be registered as an admin first"})
-
-        if db_user.role.value != Role.admin.value:
-            raise HTTPException(status_code=403, detail={"message": "You must be an admin to view all users"})
-
-        offset = (page - 1) * page_size
-        users = db.query(User).filter(User.role != Role.admin).order_by(User.created_at.desc()).offset(offset).limit(page_size).all()
-        total_count = db.query(User).filter(User.role != Role.admin).count()
-
-        response = UsersDetailResponse(detail=UserResponse(message="User fetched successfully...", data=[UserList(id=user.id, firstname=user.firstname, 
-                        lastname=user.lastname, email=user.email, role=user.role, created_at=user.created_at)for user in users],total_count=total_count))
-        return response
-
-    except HTTPException as exc:
-        logging.error(f" An error occurred while retrieving users {exc}")
-        raise exc
-    except Exception as e:
-        logging.error(f" An error occurred while retrieving users {exc}")
-        raise HTTPException(status_code=500, detail={"message": f"An error occurred while retrieving users: {str(e)}"})
-
-@router.put("/change-password")
-def change_password(change_password_request: ChangePasswordRequest, db: Session = Depends(get_db), token: str = Depends(get_token)):
-    try:
-        decode_token = decode_access_token(token)
-        user_id = decode_token['sub']
-
-        db_user = db.query(User).filter(User.id == user_id).first()
-        if not db_user:
-            raise HTTPException(status_code=404, detail={"message": "User not found"})
-
-        if db_user.role.value == Role.admin.value:
-            user_details = db.query(User).filter(User.email == change_password_request.email).first()
-            logging.error(f" user not found {db_user}")
-            if not user_details:
-                raise HTTPException(status_code=404, detail="User not found")
-            if not verify_password(change_password_request.current_password, user_details.hashed_password):
-                raise HTTPException(status_code=401, detail={"message": "Current password is incorrect"})
-            if verify_password(change_password_request.new_password, user_details.hashed_password):
-                raise HTTPException(status_code=401, detail={"message": "Current password matches the old password"})
-            user_details.hashed_password = get_password_hash(change_password_request.new_password)
-            db.commit()
-            logging.info(f" Password changed successfully ")
-            return {"details": {"message": "Password changed successfully",}}
-        else:
-            if not verify_password(change_password_request.current_password, db_user.hashed_password):
-                raise HTTPException(status_code=401, detail={"message": "Current password is incorrect"})
-            if  verify_password(change_password_request.new_password, db_user.hashed_password):
-                raise HTTPException(status_code=401, detail={"message": "Current password matches the old password"})
-            db_user.hashed_password = get_password_hash(change_password_request.new_password)
-            db.commit()
-            return {"details": {"message": "Password changed successfully"}}
-
-    except HTTPException as exc:
-        logging.error(f" Error at change password {exc}")
-        raise exc
-    except Exception as e:
-        logging.error(f"An error occurred while changing the password: {str(e)}")
-        raise HTTPException(status_code=500, detail={"message": f"An error occurred while changing the password: {str(e)}"})
-
-@router.get("/profile", response_model=UserProfile)
-def get_user_profile(db: Session = Depends(get_db), token: str = Depends(get_token)):
-    try:
-        decode_token = decode_access_token(token)
-        user_id = decode_token['sub']
-
-        db_user = db.query(User).filter(User.id == user_id).first()
-        if not db_user:
-            raise HTTPException(status_code=404, detail={"message": "User not found"})
-        subscribed_user = db.query(Subscription).filter(Subscription.user_id == user_id).first()
-        is_premium_member = subscribed_user and  subscribed_user.is_active if True else False
-        ai_enable_list = db.query(ChatAIStatus).filter(ChatAIStatus.user_id == user_id).all()
-        image_url = db_user.profile_url if db_user.profile_url else None
-        return UserProfile(id=db_user.id, firstname=db_user.firstname, lastname=db_user.lastname, email=db_user.email, role=db_user.role,
-            created_at=db_user.created_at, ai_enable=is_premium_member, chat_list=ai_enable_list, image_url=image_url)
-
-    except HTTPException as exc:
-        logging.error(f"An error occurred while changing the password: {exc}")
-        raise exc
-    except Exception as e:
-        logging.error(f"An error occurred while retrieving user profile: {str(e)}")
-        raise HTTPException(status_code=500, detail={"message": f"An error occurred while retrieving user profile: {str(e)}"})
-
-@router.post("/upload-image")
-async def upload_image(file: UploadFile = File(...), db: Session = Depends(get_db), token: str = Depends(get_token)):
-    try:
-        decode_token = decode_access_token(token)
-        user_id = decode_token['sub']
-        db_user = db.query(User).filter(User.id == user_id).first()
-        if not db_user:
-            raise HTTPException(status_code=404, detail={"message": "User not found"})
-        # Upload image to S3 and get the file URL
-        file_url = upload_or_replace_image(file, user_id)
-        if file_url:
-            db_user.profile_url = file_url
-            db.commit()
-        return JSONResponse(content={"message": "Image uploaded successfully", "url": file_url}, status_code=200)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail={"message": f"An error occurred while upload profile image: {str(e)}"})
-
-@router.post("/ai-suggestion")
-async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key: str = Depends(get_hostaway_key)):
-    try:
-        logging.info(f"AI suggestion request received with key: {key[:10] if key else 'None'}")
-        
-        # Authenticate the user
-        token_record = db.query(ChromeExtensionToken).filter(ChromeExtensionToken.key == key).first()
-        user_id = None
-        if token_record is None:
-            logging.info("No extension token found, attempting to decode as JWT token")
-            try:
-                decode_token = decode_access_token(key)
-                user_id = decode_token['sub']
-                if user_id is None:
-                    logging.error("User ID not found in token after decoding")
-                    raise HTTPException(status_code=404, detail="User ID not found in token")
-                logging.info(f"Successfully decoded JWT token, user_id: {user_id}")
-                token_record = True
-            except Exception as decode_error:
-                logging.error(f"Error decoding token: {str(decode_error)}")
-                raise HTTPException(status_code=401, detail=f"Invalid authentication token: {str(decode_error)}")
-        else:
-            logging.info(f"Extension token found for user_id: {token_record.user_id}")
-            user_id = token_record.user_id
-            
-        if token_record is None:
-            logging.error("Extension key not found after token check")
-            raise HTTPException(status_code=404, detail="extension key not found")
-        
-        # Record the time when the message was received
         received_timestamp = datetime.now().isoformat()
-        
-        # Get model and generate response
         model_id = get_latest_model_id()
-        prompt = request.prompt
-        
-        if request.messsages is None:
-            request.messsages = ""
-            
-        gpt_response = get_gpt_response(model_id, prompt, request.messsages)
+        gpt_response = messageBody
         if gpt_response is None:
             raise HTTPException(status_code=400, detail="Some error occurred. Please try again.")
         # Record response timestamp
@@ -232,7 +35,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
         # Store interaction data
         print("--------gpt_response-----------", gpt_response)
         interaction_data = {
-            "prompt": request.messsages,
+            "prompt": latest_incoming,
             "completion": gpt_response,
             "received_timestamp": received_timestamp,
             "response_timestamp": response_timestamp,
@@ -257,12 +60,12 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
             pass
             
         # Check user message for date change keywords
-        user_message_lower = request.messsages.lower() if request.messsages else ""
+        user_message_lower = latest_incoming.lower() if latest_incoming else ""
         if re.search(r'(extend|extension|stay\s+(longer|more|extra)|book\s+more|change\s+date|move\s+date|update\s+date|from\s+\d{1,2}\s+\w+|upto\s+\d{1,2}\s+\w+|check[_\s]in|check[_\s]out)|checkout|checkin|check-in|check-out|book', user_message_lower):
             is_extension_request = True
 
         # Extract specified listing information
-        mentioned_listing_id = request.listingMapId
+        mentioned_listing_id = listingMapId
         print("--------------is_extension_request----------", is_extension_request)
         print("----------extension_request---------------", extension_request)
         if is_extension_request or extension_request and mentioned_listing_id:
@@ -277,7 +80,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
 
             # Extract dates from message
             for pattern in date_patterns:
-                date_matches = re.findall(pattern, request.messsages.lower())
+                date_matches = re.findall(pattern, latest_incoming.lower())
                 for match in date_matches:
                     try:
                         if len(match) == 3:
@@ -366,10 +169,8 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                 earliest_requested_date = requested_dates[0]
                 latest_requested_date = requested_dates[-1]
             else:
-                return {
-                    "model": model_id,
-                    "answer": f"Could you please let me know the exact checkin or checkout date you'd like to update? That’ll make it easier for me to check availability."
-                }
+                f"Could you please let me know the exact checkin or checkout date you'd like to update? That’ll make it easier for me to check availability."
+                
 
             new_requested_dates = requested_dates
             # If we have user_id, try to update the reservation
@@ -400,7 +201,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                         # ]
                         active_reservations = [
                             res for res in listing_reservations
-                            if (res.get('id') == request.reservationId)
+                            if (res.get('id') == reservationId)
                         ]
                         print("----------active_reservations------------", active_reservations)
                         upcoming_reservations = [
@@ -422,7 +223,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                             # We have a reservation to update
                             current_arrival_date = current_reservation.get('arrivalDate')
                             current_departure_date = current_reservation.get('departureDate')
-                            reservation_id = request.reservationId
+                            reservation_id = reservationId
                             logging.info(f"Current dates: arrival={current_arrival_date}, departure={current_departure_date}, reservation ID: {reservation_id}")
                             
                             # Determine the new dates
@@ -450,10 +251,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                     logging.info(f"Requested date: {earliest_requested_date}")
                                 except Exception as e:
                                     logging.error(f"Error parsing requested date: {str(e)}")
-                                    return {
-                                        "model": model_id,
-                                        "answer": "I'm sorry, I couldn't understand the date format. Please try again with a clear date format."
-                                    }
+                                    return "I'm sorry, I couldn't understand the date format. Please try again with a clear date format."
                                 if earliest_requested_date == latest_requested_date:
                                     if earliest_requested_date < current_arrival_date or latest_requested_date < current_arrival_date:
                                         is_checkin_change = True
@@ -509,26 +307,19 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                             
                             if not current_res_details_response:
                                 logging.error(f"Failed to get reservation details for ID: {reservation_id}")
-                                return {
-                                    "model": model_id,
-                                    "answer": "I'm sorry, I couldn't retrieve your current reservation details. Please try again later or contact customer service."
-                                }
+                                return "I'm sorry, I couldn't retrieve your current reservation details. Please try again later or contact customer service."
                             
                             current_res_details = json.loads(current_res_details_response).get('result', {})
                             
                             if not current_res_details:
                                 logging.error(f"Empty result when getting reservation details for ID: {reservation_id}")
-                                return {
-                                    "model": model_id,
-                                    "answer": "I'm sorry, I couldn't find the details for your current reservation. Please try again later or contact customer service."
-                                }
-                            possible_result = is_update_possible(listing_reservations, request.reservationId, new_arrival_date, new_departure_date)
+                                return"I'm sorry, I couldn't find the details for your current reservation. Please try again later or contact customer service."
+                            
+                            possible_result = is_update_possible(listing_reservations, reservationId, new_arrival_date, new_departure_date)
 
                             if not possible_result['success']:
-                                return {
-                                    "model": model_id,
-                                    "answer":  possible_result['message']
-                                }
+                                return possible_result['message']
+
                             # Prepare update payload
                             update_payload = current_res_details
                             update_payload['arrivalDate'] = new_arrival_date
@@ -543,21 +334,14 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                             )
                             if not update_response:
                                 logging.error(f"No response received from update request for reservation {reservation_id}")
-                                return {
-                                    "model": model_id,
-                                    "answer": "I tried to update your stay dates, but the system didn't respond. Please try again later or contact customer service."
-                                }
-                            
+                                return "I tried to update your stay dates, but the system didn't respond. Please try again later or contact customer service."
                             try:
                                 update_result = json.loads(update_response)
                                 logging.info(f"Update response status: {update_result.get('status')}")
                             except json.JSONDecodeError:
                                 logging.error(f"Invalid JSON response from update request: {update_response}")
-                                return {
-                                    "model": model_id,
-                                    "answer": "I encountered an error while processing your date change request. Please try again later or contact customer service."
-                                }
-                            
+                                return "I encountered an error while processing your date change request. Please try again later or contact customer service."
+
                             if update_result.get('status') == 'success':
                                 # Wait briefly for the system to process the change
                                 time.sleep(1)
@@ -571,6 +355,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                 print("------current_update_result-------", current_update_result)
                                 updated_arrival_date = current_update_result["arrivalDate"]
                                 updated_departure_date = current_update_result["departureDate"]
+                                from app.websocket import update_checkout_date
                                 if not verification_response:
                                     logging.warning(f"Unable to verify reservation update - no response")
                                     # We'll still assume it worked since the update call succeeded
@@ -585,10 +370,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                     }
                                     await update_checkout_date(new_updated_data)
                                     
-                                    return {
-                                        "model": model_id,
-                                        "answer": f"I've updated your stay dates. Your reservation has been changed to check in on {new_arrival_formatted} and check out on {new_departure_formatted}."
-                                    }
+                                    return f"I've updated your stay dates. Your reservation has been changed to check in on {new_arrival_formatted} and check out on {new_departure_formatted}."
                                 
                                 try:
                                     verification_result = json.loads(verification_response)
@@ -613,11 +395,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                         await update_checkout_date(new_updated_data)
                                         split_keyword = "Your check-in date"
                                         guest_message = gpt_response.split(split_keyword)[0].strip()
-                                        print("----------guest_message------------", guest_message)
-                                        return {
-                                            "model": model_id,
-                                            "answer": f"I've updated your reservation. Your new check-in date is {updated_arrival_date}, and your check-out date is {updated_departure_date}. Let me know if you need anything else"
-                                        }
+                                        return f"{guest_message}\nyour stay to start on {updated_arrival_date} and end on {updated_departure_date}"
                                     else:
                                         # The API said success but the dates didn't update - try one more time
                                         logging.warning(f"Verification failed - dates are {final_arrival_date}-{final_departure_date}, not {new_arrival_date}-{new_departure_date}")
@@ -664,16 +442,10 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                                         }
                                                         await update_checkout_date(new_updated_data)
                                                         
-                                                        return {
-                                                            "model": model_id,
-                                                            "answer": f"I've successfully updated your reservation. Your new check-in date is {new_arrival_formatted}, and your check-out date is {new_departure_formatted}. Let me know if you need anything else"
-                                                        }
+                                                        return f"I've successfully updated your reservation. Your new check-in date is {new_arrival_formatted}, and your check-out date is {new_departure_formatted}. Let me know if you need anything else"
                                         
                                         # If we got here, we couldn't update the reservation despite retries
-                                        return {
-                                            "model": model_id,
-                                            "answer": f"I submitted the date change request and the system accepted it, but I couldn't verify if it was fully processed. Please check your reservation status or contact customer service to confirm your new dates."
-                                        }
+                                        return f"I submitted the date change request and the system accepted it, but I couldn't verify if it was fully processed. Please check your reservation status or contact customer service to confirm your new dates."
                                 
                                 except json.JSONDecodeError:
                                     logging.error(f"Error parsing verification response: {verification_response}")
@@ -689,44 +461,25 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                     }
                                     await update_checkout_date(new_updated_data)
                                     
-                                    return {
-                                        "model": model_id,
-                                        "answer": f"I've updated your stay dates. Your reservation has been changed to check in on {new_arrival_formatted} and check out on {new_departure_formatted}."
-                                    }
+                                    return f"I've updated your stay dates. Your reservation has been changed to check in on {new_arrival_formatted} and check out on {new_departure_formatted}."
                             else:
-                                # Handle update failure
                                 error_message = update_result.get('message', '')
                                 logging.error(f"Date update failed: {error_message}")
-                                
+
                                 if error_message and 'booking' in error_message.lower():
-                                    return {
-                                        "model": model_id,
-                                        "answer": f"I tried to update your stay dates, but there appears to be a booking conflict. Please contact our support team for assistance with your date change request."
-                                    }
+                                    return  f"I tried to update your stay dates, but there appears to be a booking conflict. Please contact our support team for assistance with your date change request."
                                 else:
-                                    return {
-                                        "model": model_id,
-                                        "answer": f"I encountered an issue while trying to update your reservation dates. {error_message} Please contact customer service for assistance."
-                                    }
+                                    return f"I encountered an issue while trying to update your reservation dates. {error_message} Please contact customer service for assistance."
                         else:
-                            return {
-                                "model": model_id, 
-                                "answer": "It looks like there’s no current reservation for this property, so there isn’t anything to extend at the moment. If you’d like to stay, feel free to go ahead and book a new reservation,  I’d be happy to assist if you need help with that."
-                            }
+                            return "It looks like there’s no current reservation for this property, so there isn’t anything to extend at the moment. If you’d like to stay, feel free to go ahead and book a new reservation,  I’d be happy to assist if you need help with that."
                     else:
-                        return {
-                            "model": model_id,
-                            "answer": f"{gpt_response}\n\nI couldn't retrieve your reservation information. Please try again later or contact customer service."
-                        }
+                        return f"{gpt_response}\n\nI couldn't retrieve your reservation information. Please try again later or contact customer service."
                 else:
-                    return {
-                        "model": model_id,
-                        "answer": f"{gpt_response}\n\nYou need to connect your Hostaway account to use the booking date change feature."
-                    }
+                    return f"{gpt_response}\n\nYou need to connect your Hostaway account to use the booking date change feature."
         
         # If we didn't handle extension or there was no extension request, return the GPT response
-        return {"model": model_id, "answer": gpt_response}
-    
+        return gpt_response
+
     except HTTPException as he:
         logging.error(f"HTTP Exception in chat_with_gpt: {str(he)}")
         raise he
@@ -735,120 +488,3 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
         tb = traceback.format_exc()
         logging.error(f"Unhandled exception in chat_with_gpt: {str(e)}\n{tb}")
         raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
-
-@router.get("/genrate-extension-key")
-def genrate_extension_key(token: str = Depends(get_token), db: Session = Depends(get_db)):
-    try:
-        decode_token = decode_access_token(token)
-        user_id = decode_token['sub']
-        db_user = db.query(User).filter(User.id == user_id).first()
-        if db_user is None:
-            raise HTTPException(status_code=404, detail="User not found")
-        user_token = db.query(ChromeExtensionToken).filter(ChromeExtensionToken.user_id==user_id).first()
-        key = uuid.uuid4()
-        if user_token:
-            user_token.key = key
-            db.commit()
-            return {"detail": {"message": "Key genrated successfully", "key": key}}
-        new_key = ChromeExtensionToken(key=key, user_id=user_id)
-        db.add(new_key)
-        db.commit()
-        return {"detail": {"message": "Key genrated successfully", "key": key}}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail={"message": f"An error occurred at genrate token: {str(e)}"})
-
-@router.get("/get-extension-key")
-def get_extension_key(token: str = Depends(get_token), db: Session = Depends(get_db)):
-    try:
-        decode_token = decode_access_token(token)
-        user_id = decode_token['sub']
-        db_user = db.query(User).filter(User.id == user_id).first()
-        if db_user is None:
-            raise HTTPException(status_code=404, detail="User not found")
-        user_token = db.query(ChromeExtensionToken).filter(ChromeExtensionToken.user_id==user_id).first()
-        if user_token:
-            return {"detail": {"message": "Key fetched successfully", "key": user_token.key}}
-        return {"detail": {"message": "Key not found", "key": user_token}}
-    except Exception as e:
-        logging.error(f"Error at get extension key {str(e)}")
-        raise HTTPException(status_code=500, detail={"message": f"An error occurred at get token: {str(e)}"})
-
-@router.get("/validate-extension-token")
-def validate_token(key: str, db: Session = Depends(get_db)):
-    try:
-        token_record = db.query(ChromeExtensionToken).filter(ChromeExtensionToken.key == key.strip()).first()
-        if token_record:
-            return {"detail": {"message": "Token is valid", "status": True}}
-        else:
-            return {"detail": {"message": "Token is invalid", "status": False}}
-    except NoResultFound:
-        raise HTTPException(status_code=404, detail="Token not found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail={"message": f"An error occurred: {str(e)}"})
-
-@router.post("/nearby-places")
-async def get_nearby_places(request: Request, token: str = Depends(get_token), db: Session = Depends(get_db)):
-    try:
-        decode_token = decode_access_token(token)
-        user_id = decode_token['sub']
-        db_user = db.query(User).filter(User.id == user_id).first()
-        if db_user is None:
-            raise HTTPException(status_code=404, detail="User not found")
-        GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
-        MAP_URL = os.getenv("MAP_URL")
-        body = await request.json()
-        lat, lng = body.get("lat"), body.get("lng")
-        place_types = ["restaurant", "shopping_mall", "park", "tourist_attraction"]
-        all_results = {}
-        async with httpx.AsyncClient() as client:
-            for place_type in place_types:
-                params = {"location": f"{lat},{lng}", "radius": 500,
-                    "type": place_type,
-                    "key": GOOGLE_MAPS_API_KEY
-                }
-                response = await client.get(MAP_URL, params=params)
-                data = response.json()
-                if "results" in data:
-                    all_results[place_type] = [
-                        { "name": place["name"],
-                            "address": place.get("vicinity", "N/A"),
-                            "distance_meter": round(
-                                haversine_distance(lat, lng,
-                                    place["geometry"]["location"]["lat"],
-                                    place["geometry"]["location"]["lng"]
-                                ), 2
-                            )
-                        } for place in data["results"][:2]
-                    ]
-        nearby_spots = nearby_spots_gpt_response(all_results)
-        return {"results": nearby_spots}
-
-    except Exception as e:
-        logging.error(f"Error at get near places {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error fetching nearby places: {str(e)}")
-
-@router.get("/update-ai", response_model=UserProfile)
-def get_user_profile(
-    chatId: int = Query(..., description="Chat Id is for auto mode"),
-    db: Session = Depends(get_db),
-    token: str = Depends(get_token)
-):
-    try:
-        db_user = get_current_user(db, token)
-        subscription = get_user_subscription(db, db_user.id)
-        is_premium_member = update_ai_status(db, db_user.id, chatId, subscription)
-        active_ai_chats = get_active_ai_chats(db, db_user.id)
-
-        return UserProfile(
-            id=db_user.id,
-            firstname=db_user.firstname,
-            lastname=db_user.lastname,
-            email=db_user.email,
-            role=db_user.role,
-            created_at=db_user.created_at,
-            ai_enable=is_premium_member,
-            chat_list=active_ai_chats
-        )
-
-    except Exception as e:
-        raise HTTPException(status_code=500, detail={"message": str(e)})

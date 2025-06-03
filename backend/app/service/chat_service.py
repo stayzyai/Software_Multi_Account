@@ -1,6 +1,6 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 from app.models.user import User, Subscription, ChatAIStatus
 from app.common.auth import decode_access_token
@@ -58,3 +58,38 @@ def update_ai_status(db: Session, user_id: int, chat_id: int, subscription: Opti
 
 def get_active_ai_chats(db: Session, user_id: int):
     return db.query(ChatAIStatus).filter(ChatAIStatus.user_id == user_id).all()
+
+
+def is_update_possible(reservations, reservation_id, new_arrival, new_departure):
+    try:
+        new_arrival = datetime.strptime(new_arrival, "%Y-%m-%d").date()
+        new_departure = datetime.strptime(new_departure, "%Y-%m-%d").date()
+        
+        for res in reservations:
+            if res['id'] == reservation_id:
+                continue
+            arrival = datetime.strptime(res['arrivalDate'], "%Y-%m-%d").date()
+            departure = datetime.strptime(res['departureDate'], "%Y-%m-%d").date()
+
+            # Check for overlap
+            if not (new_departure <= arrival or new_arrival >= departure):
+                # Allow extension until the day before the next arrival
+                max_departure = arrival - timedelta(days=1)
+                return {
+                    "success": False,
+                    "message": (
+                        f"Sorry! Those dates overlap with an existing reservation from "
+                        f"{arrival} to {departure}. You can extend your stay up until {max_departure}."
+                    )
+                }
+
+        # No conflicts found
+        return {
+            "success": True,
+            "message": f" Update allowed. You can change the dates to {new_arrival} → {new_departure}."
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "message": f" An error occurred while checking availability: {str(e)}"
+        }

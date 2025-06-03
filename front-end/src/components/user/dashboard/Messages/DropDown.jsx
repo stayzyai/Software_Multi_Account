@@ -8,7 +8,7 @@ const Dropdown = ({ label, options, isOpen, onClick, onSelect, selectedValue }) 
   return (
     <div className="relative border border-gray-300 hover:border-gray-600 py-1.5 px-3 rounded-sm">
       <div
-        className="flex gap-2 text-[14px] cursor-pointer items-center"
+        className="flex md:gap-2 text-[14px] cursor-pointer items-center"
         onClick={onClick}
       >
         <button>{displayValue}</button>
@@ -24,7 +24,7 @@ const Dropdown = ({ label, options, isOpen, onClick, onSelect, selectedValue }) 
       </div>
 
       {isOpen && (
-        <div className={` absolute mt-2 w-28 scrollbar-hide bg-white shadow-lg border rounded-md p-2 z-10 max-h-60 overflow-y-scroll ${label === "Task" ? "-left-20" : "-left-4 md:-left-10"}`}>
+        <div className={`absolute mt-2 w-28 scrollbar-hide bg-white shadow-lg border rounded-md p-2 z-10 max-h-60 overflow-y-scroll ${label === "Task" ? "-left-20" : "-left-4 md:-left-10"}`}>
           <div
             className="p-2 text-red-500 hover:bg-red-50 cursor-pointer min-h-6"
             onClick={() => {

@@ -22,7 +22,7 @@ stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 webhook_secret = os.getenv("STRIPE_WEBHOOK_SECRET")
 
 @router.get("/create-checkout-session")
-def create_session(chatId: int = Query(..., description="Chat ID associated with the session"),  db: Session = Depends(get_db), token: str = Depends(get_token)):
+def create_session(chatId: int = Query(..., description="Chat ID associated with the session"), quantity: int = Query(..., description="Chat ID associated with the session"),  db: Session = Depends(get_db), token: str = Depends(get_token)):
     try:
         decode_token = decode_access_token(token)
         user_id = decode_token['sub']
@@ -32,9 +32,9 @@ def create_session(chatId: int = Query(..., description="Chat ID associated with
         user_email = db_user.email
         subscription = db.query(Subscription).filter(Subscription.user_id == user_id).first()
         if subscription:
-            session = create_checkout_session(user_email, chatId, subscription.stripe_customer_id)
+            session = create_checkout_session(user_email, chatId, subscription.stripe_customer_id, quantity)
         else: 
-            session = create_checkout_session(user_email, chatId)
+            session = create_checkout_session(user_email, chatId, quantity)
         return {"detail": {"message":"checkout session created", "checkout_url": session.url,
                 "customer_email": session.customer_email, "success_url": session.success_url,"cancel_url": session.cancel_url}}
 
