@@ -27,7 +27,7 @@ app.include_router(main_router)
 
 def start_scheduler():
     scheduler = BackgroundScheduler()
-    scheduler.add_job(check_and_send_upsells, 'cron', hour=00, minute=00)
+    scheduler.add_job(check_and_send_upsells, 'cron', hour=11, minute=00)
     scheduler.start()
 
 @app.on_event("startup")

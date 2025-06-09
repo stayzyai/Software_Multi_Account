@@ -1,9 +1,6 @@
 const VARIABLES = [
   { label: "Guest name", value: "guest_name" },
-  { label: "Listing name", value: "listing_name" },
-  { label: "Listing address", value: "listing_address" },
   { label: "Discount", value: "discount" },
-  { label: "Listing city", value: "listing_city" },
   { label: "Old check-in date", value: "old_check_in_date" },
   { label: "Old check-out date", value: "old_check_out_date" },
   { label: "New check-in date", value: "new_check_in_date" },

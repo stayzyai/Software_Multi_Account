@@ -88,7 +88,8 @@ def delete_authentication(db: Session = Depends(get_db), token: str = Depends(ge
             raise HTTPException(status_code=400, detail={"message": "hostaway account not found"})
         # response = revoke_hostaway_authentication(access_token)
         db.delete(account)
-        db.delete(chrome_extension)
+        if chrome_extension:
+            db.delete(chrome_extension)
         db.commit()
         return {"detail": {"message": " Hostaway account has been successfully removed"}}
     except HTTPException as exc:
