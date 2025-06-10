@@ -76,7 +76,6 @@ def process_upsell_opportunities(reservations, upsells, today, hostaway_token):
                             message = upsell.upsell_message.format(
                                 guest_name=guest_name,
                                 discount=f"{upsell.discount}%",
-                                listing_city=res.get('city', 'your city')
                             )
                             print(f"📩 LATE CHECKOUT upsell to {guest_name}: {message}")
                             conversations_response = hostaway_get_request(hostaway_token, "conversations")
