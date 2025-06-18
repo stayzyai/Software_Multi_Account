@@ -44,7 +44,7 @@ const DetectUpsell = ({
             {periodDropdownOpen && (
               <div className="absolute z-10 mt-1 w-full bg-white border rounded-md shadow-lg">
                 <ul className="py-1">
-                  {["1 day", "2 days", "3 days", "5 days", "7 days"].map((period) => (
+                  {["1 day", "2 days", "3 days","4 days", "5 days","6 days", "7 days"].map((period) => (
                     <li
                       key={period}
                       className="px-3 py-1 hover:bg-gray-100 cursor-pointer"
