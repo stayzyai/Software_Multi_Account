@@ -20,7 +20,6 @@ async def update_booking(messageBody, latest_incoming, listingMapId, reservation
         if gpt_response is None:
             raise HTTPException(status_code=400, detail="Some error occurred. Please try again.")
         # Record response timestamp
-        print("--gpt_response---------------type-=-",type(gpt_response))
         extension_request = False
         available_dates = []
         response_timestamp = datetime.now().isoformat()
@@ -35,7 +34,6 @@ async def update_booking(messageBody, latest_incoming, listingMapId, reservation
                 # It's just a plain string, no need to change gpt_response
                 pass
         # Store interaction data
-        print("--------gpt_response-----------", gpt_response)
         interaction_data = {
             "prompt": latest_incoming,
             "completion": gpt_response,
@@ -68,16 +66,14 @@ async def update_booking(messageBody, latest_incoming, listingMapId, reservation
 
         # Extract specified listing information
         mentioned_listing_id = listingMapId
-        print("--------------is_extension_request----------", is_extension_request)
-        print("----------extension_request---------------", extension_request)
         if is_extension_request or extension_request and mentioned_listing_id:
             # Extract dates from user message
             requested_dates = []
             date_patterns = [
-                r'\b(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?(?:,\s*|\s+)?(\d{4})?\b',             # April 7 2025 or April 7
-                r'\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)(?:,\s*|\s+)?(\d{4})?\b',   # 7th of April, 2025 or 7 April
-                r'\b(\d{1,2})/(\d{1,2})/(\d{4})\b',                                        # 07/04/2025
-                r'\b(\d{4})-(\d{1,2})-(\d{1,2})\b'                                         # 2025-04-07
+                r'\b(\w+)\s+(\d{1,2})(?:st|nd|rd|th)?(?:,\s*|\s+)?(\d{4})?\b',
+                r'\b(\d{1,2})(?:st|nd|rd|th)?\s+(?:of\s+)?(\w+)(?:,\s*|\s+)?(\d{4})?\b',
+                r'\b(\d{1,2})/(\d{1,2})/(\d{4})\b',
+                r'\b(\d{4})-(\d{1,2})-(\d{1,2})\b'
             ]
 
             # Extract dates from message
@@ -151,8 +147,6 @@ async def update_booking(messageBody, latest_incoming, listingMapId, reservation
                             # Build date
                             date_obj = datetime(year_int, month_int, day_int)
                             date_str = date_obj.strftime("%Y-%m-%d")
-                            print("-----------date_str--------------", date_str)
-                            print("------date_obj--------------------", date_obj)
                             if date_str not in requested_dates:
                                 requested_dates.append(date_str)
                                 dates_specified = True
@@ -162,11 +156,8 @@ async def update_booking(messageBody, latest_incoming, listingMapId, reservation
                         continue
 
             # Get the earliest and latest requested dates
-            print("--------gpt_response---------------", gpt_response)
             earliest_requested_date = None
             latest_requested_date = None
-            print("-------requested_dates------------", requested_dates)
-            print("------available_dates--------------", available_dates)
             if requested_dates or available_dates:
                 if not requested_dates and  available_dates:
                     requested_dates = available_dates
@@ -215,12 +206,10 @@ async def update_booking(messageBody, latest_incoming, listingMapId, reservation
                             res for res in listing_reservations
                             if (res.get('id') == reservationId)
                         ]
-                        print("----------active_reservations------------", active_reservations)
                         upcoming_reservations = [
                             res for res in listing_reservations
                             if res.get('arrivalDate') > current_date
                         ]
-                        print("----------upcoming_reservations--------------", upcoming_reservations)
                         # Use active reservation if available, otherwise use upcoming
                         if active_reservations:
                             current_reservation = active_reservations[0]
@@ -230,7 +219,6 @@ async def update_booking(messageBody, latest_incoming, listingMapId, reservation
                             upcoming_reservations.sort(key=lambda x: x.get('arrivalDate'))
                             current_reservation = upcoming_reservations[0]
                             logging.info(f"Found upcoming reservation: {current_reservation.get('id')}")
-                        print("------current_reservation-----------------", current_reservation)
                         if current_reservation:
                             # We have a reservation to update
                             current_arrival_date = current_reservation.get('arrivalDate')
@@ -269,14 +257,8 @@ async def update_booking(messageBody, latest_incoming, listingMapId, reservation
                                         is_checkin_change = True
                                     if latest_requested_date > current_departure_date or earliest_requested_date > current_departure_date:
                                         is_checkout_change = True
-                                print("----------earliest_requested_date----------", earliest_requested_date)
-                                print("--------latest_requested_date---------", latest_requested_date)
-                                print("------is_checkin_change--------------", is_checkin_change)
-                                print("-----------------is_checkout_change--------", is_checkout_change)
-                                print("--------requested_date----------------", requested_date)
                                 
                                 if (is_checkin_change and is_checkout_change) or len(new_requested_dates) == 2:
-                                    print("---------len(new_requested_dates)--------", len(new_requested_dates))
                                     # For check-in changes, only update the arrival date
                                     new_arrival_date = earliest_requested_date
                                     new_departure_date = latest_requested_date  # Keep existing check-out date
@@ -288,29 +270,7 @@ async def update_booking(messageBody, latest_incoming, listingMapId, reservation
                                 elif not is_checkout_change and is_checkin_change:
                                     new_arrival_date = earliest_requested_date
                                     new_departure_date = current_departure_date
-                                # else:
-                                #     # If we have two different dates, assume it's a check-in and check-out change
-                                #     if latest_requested_date and latest_requested_date != earliest_requested_date:
-                                #         new_arrival_date = earliest_requested_date
-                                #         new_departure_date = latest_requested_date
-                                #         logging.info(f"Two distinct dates detected: updating check-in to {new_arrival_date} and check-out to {new_departure_date}")
-                                #     else:
-                                #         # For other single date changes, check if it's check-in or check-out based on date
-                                #         requested_date_obj = datetime.strptime(earliest_requested_date, "%Y-%m-%d")
-                                #         current_arrival_obj = datetime.strptime(current_arrival_date, "%Y-%m-%d")
-                                        
-                                #         # If the requested date is before or the same as the current departure, it's likely a check-in date
-                                #         if requested_date_obj <= datetime.strptime(current_departure_date, "%Y-%m-%d"):
-                                #             new_arrival_date = earliest_requested_date
-                                #             new_departure_date = current_departure_date  # Keep existing check-out date
-                                #             logging.info(f"Single date change detected (before or on current departure): updating check-in date to: {new_arrival_date}, keeping check-out date as: {new_departure_date}")
-                                #         else:
-                                #             # Otherwise, it's a check-out date
-                                #             new_departure_date = earliest_requested_date
-                                #             new_arrival_date = current_arrival_date  # Keep existing check-in date
-                                #             logging.info(f"Single date change detected (after current departure): updating check-out date to: {new_departure_date}, keeping check-in date as: {new_arrival_date}")
-                            
-                            # Get current reservation details
+
                             logging.info(f"Getting reservation details for ID: {reservation_id}")
                             current_res_details_response = hostaway_get_request(
                                 hostaway_account.hostaway_token, 
@@ -336,7 +296,6 @@ async def update_booking(messageBody, latest_incoming, listingMapId, reservation
                             update_payload = current_res_details
                             update_payload['arrivalDate'] = new_arrival_date
                             update_payload['departureDate'] = new_departure_date
-                            print("--------update_payload-----", update_payload)
                             # Try to update the reservation                            
                             update_response = hostaway_put_request(
                                 hostaway_account.hostaway_token,
@@ -364,7 +323,6 @@ async def update_booking(messageBody, latest_incoming, listingMapId, reservation
                                     f"/reservations/{reservation_id}"
                                 )
                                 current_update_result = update_result.get('result', {})
-                                print("------current_update_result-------", current_update_result)
                                 updated_arrival_date = current_update_result["arrivalDate"]
                                 updated_departure_date = current_update_result["departureDate"]
                                 from app.websocket import update_checkout_date

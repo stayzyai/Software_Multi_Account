@@ -149,7 +149,6 @@ def get_all_tasks(all_accounts):
                     try:
                         task_date = datetime.strptime(task_time, "%Y-%m-%d %H:%M:%S")
                     except ValueError:
-                        print(f"Invalid datetime format: {task_time}")
                         continue
 
                     if cutoff <= task_date < mid_point:
@@ -158,7 +157,7 @@ def get_all_tasks(all_accounts):
                         recent_count += 1
 
             except Exception as e:
-                print(f"Error fetching tasks for user {user_id}: {e}")
+                print(f"Error fetching tasks for user: {e}")
                 continue
 
         percentage_change, is_increase = calculate_percentage_change(previous_count, recent_count)

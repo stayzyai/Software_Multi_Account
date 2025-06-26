@@ -100,8 +100,7 @@ const DetectUpsell = ({
       </div>
 
       <p className="text-sm text-gray-800 mt-4">
-        If the gap night is detected within {detectPeriod}, the offer is detected immediately.
-        immediately.
+        If the gap night is detected within {detectPeriod}, the offer is applied immediately.
       </p>
     </div>
   );

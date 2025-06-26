@@ -63,6 +63,10 @@ const ListingBookingDetails = ({ calenderDetails }) => {
       </p>
     );
   }
+
+  const reversedDateRanges = [...dateRanges].reverse();
+  const reverseBookings = [...bookings].reverse();
+
   return (
     <div className="w-full mt-7">
       {guestOpen ? (
@@ -75,14 +79,12 @@ const ListingBookingDetails = ({ calenderDetails }) => {
         <main>
           <div>
             <div className="md:p-6 p-2 space-y-8">
-              {calenderDetails.dateRanges?.map((range, index) => (
+              {reversedDateRanges?.map((range, index) => (
                 <BookingGroup
                   key={range}
                   dateRange={range}
                   bookings={
-                    calenderDetails?.bookings[index]
-                      ? [calenderDetails.bookings[index]]
-                      : null
+                    reverseBookings[index] ? [reverseBookings[index]] : null
                   }
                   setGuestOpen={setGuestOpen}
                   setGuestInfo={setGuestInfo}

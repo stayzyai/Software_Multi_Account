@@ -8,6 +8,7 @@ import json
 
 load_dotenv()
 url = os.getenv('HOSTAWAY_URL')
+provider = '?&provider=stayzy'
 
 def hostaway_get_request(token, endpoint, id=None, limit=None, offset=None, includeResources=None, max_retries=3):
     """
@@ -56,7 +57,7 @@ def hostaway_get_request(token, endpoint, id=None, limit=None, offset=None, incl
             # Log the request we're about to make
             logging.info(f"Making Hostaway GET request to: {api_url}")
             logging.debug(f"Hostaway request details - URL: {hostaway_url}, Endpoint: {endpoint}, Final URL: {api_url}")
-            
+            api_url = api_url+provider
             # Increase timeout to handle potential slow connections
             response = requests.request(
                 "GET", 
@@ -168,6 +169,7 @@ def hostaway_post_request(token, endpoint, data):
                 'Cache-control': "no-cache"
         }
         api_url = f"/v1/{endpoint}"
+        api_url = api_url+provider
         conn.request("POST", api_url, payload, headers)
         res = conn.getresponse()
         data = res.read()
@@ -201,6 +203,7 @@ def hostaway_put_request(token, endpoint, data, id=None, force_overbooking=False
         logging.info(f"Making Hostaway PUT request to: {api_url}")
         
         # The critical change: conn.request passes the full path including query parameters
+        api_url = api_url+provider
         conn.request("PUT", api_url, payload, headers)
         res = conn.getresponse()
         data = res.read()
@@ -216,13 +219,14 @@ def hostaway_delete_request(token, endpoint, id=None):
         api_url = f"/v1{endpoint}"
         if id:
             api_url = f"{api_url}/{id}"
-        api_url = api_url+"&provider=stayzy"
+        api_url = api_url+provider
 
         headers = {
                 'Authorization': f"Bearer {token}",
                 'Content-Type': 'application/json',
                 'Cache-control': "no-cache"
         }
+        api_url = api_url+provider
         conn.request("DELETE", api_url, headers)
         res = conn.getresponse()
         data = res.read()
@@ -242,6 +246,7 @@ def hostaway_get_list_request(token, endpoint, lastEndpoint, id=None):
             'Authorization': f"Bearer {token}",
             'Cache-control': "no-cache",
             }
+        api_url = api_url+provider
         response = requests.request("GET", api_url, headers=headers, params=querystring)
         return response.text
     except Exception as e:

@@ -327,12 +327,9 @@ def store_evaluation_results(prompt, completion, results, user_id=None):
             else:
                 result_items.append(f"{k}: {v}")
         
-        print(f"Evaluation results summary: {', '.join(result_items)}")
     except Exception as e:
         logger.error(f"Error storing evaluation results: {str(e)}")
-        logger.debug(f"Store results exception traceback: {traceback.format_exc()}")
-        logger.debug(f"Was trying to write to: {os.path.abspath(EVAL_RESULTS_FILE)}")
-        
+
         # Check if directory exists and is writable
         eval_dir = os.path.dirname(EVAL_RESULTS_FILE)
         logger.debug(f"Evaluation directory exists: {os.path.exists(eval_dir)}")
@@ -346,11 +343,7 @@ def get_current_time():
     return datetime.now().isoformat()
 
 def haversine_distance(lat1, lon1, lat2, lon2):
-    """
-    Calculate the great-circle distance between two points
-    on the Earth (specified in decimal degrees).
-    Returns distance in meters.
-    """
+
     R = 6371000
     lat1, lon1, lat2, lon2 = map(math.radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1

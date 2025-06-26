@@ -216,9 +216,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
         gpt_response = get_gpt_response(model_id, prompt, request.messsages)
         if gpt_response is None:
             raise HTTPException(status_code=400, detail="Some error occurred. Please try again.")
-        # Record response timestamp
-        print("--gpt_response---------------gpt_response-=-", gpt_response)
-        print("--gpt_response---------------type-=-",type(gpt_response))
+
         extension_request = False
         response_timestamp = datetime.now().isoformat()
         available_dates = []
@@ -233,7 +231,6 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                 # It's just a plain string, no need to change gpt_response
                 pass
         # Store interaction data
-        print("--------gpt_response-----------", gpt_response)
         interaction_data = {
             "prompt": request.messsages,
             "completion": gpt_response,
@@ -266,8 +263,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
 
         # Extract specified listing information
         mentioned_listing_id = request.listingMapId
-        print("--------------is_extension_request----------", is_extension_request)
-        print("----------extension_request---------------", extension_request)
+
         if is_extension_request or extension_request and mentioned_listing_id:
             # Extract dates from user message
             requested_dates = []
@@ -349,8 +345,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                             # Build date
                             date_obj = datetime(year_int, month_int, day_int)
                             date_str = date_obj.strftime("%Y-%m-%d")
-                            print("-----------date_str--------------", date_str)
-                            print("------date_obj--------------------", date_obj)
+
                             if date_str not in requested_dates:
                                 requested_dates.append(date_str)
                                 dates_specified = True
@@ -360,11 +355,9 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                         continue
 
             # Get the earliest and latest requested dates
-            print("--------gpt_response---------------", gpt_response)
             earliest_requested_date = None
             latest_requested_date = None
-            print("-------requested_dates------------", requested_dates)
-            print("------available_dates--------------", available_dates)
+
             if requested_dates or available_dates:
                 if not requested_dates and  available_dates:
                     requested_dates = available_dates
@@ -419,12 +412,10 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                             res for res in listing_reservations
                             if (res.get('id') == request.reservationId)
                         ]
-                        print("----------active_reservations------------", active_reservations)
                         upcoming_reservations = [
                             res for res in listing_reservations
                             if res.get('arrivalDate') > current_date
                         ]
-                        print("----------upcoming_reservations--------------", upcoming_reservations)
                         # Use active reservation if available, otherwise use upcoming
                         if active_reservations:
                             current_reservation = active_reservations[0]
@@ -434,7 +425,6 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                             upcoming_reservations.sort(key=lambda x: x.get('arrivalDate'))
                             current_reservation = upcoming_reservations[0]
                             logging.info(f"Found upcoming reservation: {current_reservation.get('id')}")
-                        print("------current_reservation-----------------", current_reservation)
                         if current_reservation:
                             # We have a reservation to update
                             current_arrival_date = current_reservation.get('arrivalDate')
@@ -476,14 +466,8 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                         is_checkin_change = True
                                     if latest_requested_date > current_departure_date or earliest_requested_date > current_departure_date:
                                         is_checkout_change = True
-                                print("----------earliest_requested_date----------", earliest_requested_date)
-                                print("--------latest_requested_date---------", latest_requested_date)
-                                print("------is_checkin_change--------------", is_checkin_change)
-                                print("-----------------is_checkout_change--------", is_checkout_change)
-                                print("--------requested_date----------------", requested_date)
                                 
                                 if (is_checkin_change and is_checkout_change) or len(new_requested_dates) == 2:
-                                    print("---------len(new_requested_dates)--------", len(new_requested_dates))
                                     # For check-in changes, only update the arrival date
                                     new_arrival_date = earliest_requested_date
                                     new_departure_date = latest_requested_date  # Keep existing check-out date
@@ -528,7 +512,6 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                             update_payload = current_res_details
                             update_payload['arrivalDate'] = new_arrival_date
                             update_payload['departureDate'] = new_departure_date
-                            print("--------update_payload-----", update_payload)
                             # Try to update the reservation                            
                             update_response = hostaway_put_request(
                                 hostaway_account.hostaway_token,
@@ -563,7 +546,7 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                     f"/reservations/{reservation_id}"
                                 )
                                 current_update_result = update_result.get('result', {})
-                                print("------current_update_result-------", current_update_result)
+
                                 updated_arrival_date = current_update_result["arrivalDate"]
                                 updated_departure_date = current_update_result["departureDate"]
                                 if not verification_response:
@@ -605,11 +588,9 @@ async def chat_with_gpt(request: ChatRequest, db: Session = Depends(get_db), key
                                             "new_arrival_date": updated_arrival_date,
                                             "new_departure_date": updated_departure_date
                                         }
-                                        print("------new_updated_data---------------", new_updated_data)
                                         await update_checkout_date(new_updated_data)
                                         split_keyword = "Your check-in date"
                                         guest_message = gpt_response.split(split_keyword)[0].strip()
-                                        print("----------guest_message------------", guest_message)
                                         return {
                                             "model": model_id,
                                             "answer": f"I've updated your reservation. Your new check-in date is {updated_arrival_date}, and your check-out date is {updated_departure_date}. Let me know if you need anything else"

@@ -47,7 +47,6 @@ def chack_ai_enable(new_messages, db: Session):
 def check_ai_status(user_id, chat_id, db: Session):
     try:
         chat_status = db.query(ChatAIStatus).filter(ChatAIStatus.user_id == user_id, ChatAIStatus.chat_id == chat_id).first()
-        print(f"Chat status for user {user_id} and chat {chat_id}: {chat_status}")
         if chat_status and chat_status.ai_enabled:
             return True
         return False
@@ -169,13 +168,10 @@ def create_issue_ticket(new_message):
         task_response = json.loads(task_response)
         email_data = task_response.get("email")
         task_data = {key: value for key, value in task_response.items() if key != "email"}
-        print("Task data ready to create task:\n", task_data)
         create_task = hostaway_post_request(hostaway_token, "tasks", task_data)
-        print("Task create successfully....", create_task)
         task_data = json.loads(create_task)
         if task_data['status'] == 'success':
             email_response = send_email(email_data["userEmail"], email_data["subject"], email_data["body"])
-            print("Email send successfully....", email_response)
     except Exception as e:
         return {"status": "error", "message": str(e)}
 
@@ -200,7 +196,6 @@ async def send_message(new_message, gpt_response, latest_incoming, user_id, list
                 messageBody = answer_data
                 issue_detected = False
         else:
-            print("Error: Unexpected format for 'answer'.")
             return False
         messageBody = await update_booking(messageBody, latest_incoming, listingMapId, reservationId, user_id, db)
         payload = {
@@ -210,12 +205,10 @@ async def send_message(new_message, gpt_response, latest_incoming, user_id, list
         response = hostaway_post_request(hostaway_token, f"conversations/{conversationId}/messages", payload)
         data = json.loads(response)
         if data.get("status") == "success":
-            print("Message sent successfully.")
             if issue_detected:
                 create_issue_ticket(new_message)
             return True
         else:
-            print("Some error occurred while sending the message.")
             return True
     except Exception as e:
         print(f"Error sending message: {e}")
@@ -226,14 +219,10 @@ async def send_auto_ai_messages(new_messages):
         if user_id:
             consversationsId = new_messages.get("conversationId")
             listingMapId = new_messages.get("listingMapId")
-            print(f"User ID: {user_id}, Conversation ID: {consversationsId}")
             is_ai_enabled = check_ai_status(user_id, consversationsId, next(get_db()))
-            print(f"AI status for user {user_id} and conversation {consversationsId}: {is_ai_enabled}")
             if not is_ai_enabled:
-                print(f"AI is not Enable for Id: {consversationsId}")
                 return False
             else :
-                print(f"AI is Enable for Id: {consversationsId}")
                 latest_incoming = new_messages.get("body", "")
 
                 with ThreadPoolExecutor() as executor:
@@ -251,7 +240,6 @@ async def send_auto_ai_messages(new_messages):
 
                 return await send_message(new_messages, gpt_response, latest_incoming, user_id, listingMapId)
         else:
-            print(f"AI is not Enable for Id: {consversationsId}")
             return False
 
     except Exception as e:

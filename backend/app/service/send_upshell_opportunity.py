@@ -48,36 +48,6 @@ def check_and_send_upsells():
                         res['arrivalDate'] = datetime.strptime(res['arrivalDate'], "%Y-%m-%d")
                         res['departureDate'] = datetime.strptime(res['departureDate'], "%Y-%m-%d")
                     process_upsell_opportunities(listing_reservations, upsells, today, account.hostaway_token)
-                    #     arrival = res['arrivalDate'].date()
-                    #     departure = res['departureDate'].date()
-                    #     if arrival <= today < departure:
-                    #         print(f"✅ Current staying guest-------: {guest_name} | Check-in: {arrival} | Check-out: {departure}")
-
-                    # # Sort by arrivalDate
-                    # listing_reservations.sort(key=lambda r: r['arrivalDate'])
-                    # print("Booking lead time (reservation date to check-in):")
-                    # for res in listing_reservations:
-                    #     gap = (res['arrivalDate'] - res['reservationDate']).days
-                    #     print(f"Guest========: {res['guestName']} - Booked {gap} days before check-in========")
-                    
-                    # listing_reservations.sort(key=lambda x: x['arrivalDate'])
-                    # print("\nGap Analysis Per Reservation:")
-                    # for i, res in enumerate(listing_reservations):
-                    #     guest_name = res['guestName']
-                    #     arrival = res['arrivalDate']
-                    #     departure = res['departureDate']
-                    #     gap_before = None
-                    #     gap_after = None
-                    #     if i > 0:
-                    #         prev_departure = listing_reservations[i - 1]['departureDate']
-                    #         gap_before = (arrival - prev_departure).days
-                    #         if gap_before > 0:
-                    #             print(f"Gap before=== {guest_name}'s check-in---: {gap_before} day(s) (from-- {listing_reservations[i-1]['guestName']}  stay)")
-                    #     if i < len(listing_reservations) - 1:
-                    #         next_arrival = listing_reservations[i + 1]['arrivalDate']
-                    #         gap_after = (next_arrival - departure).days
-                    #         if gap_after > 0:
-                    #             print(f"Gap after-- {guest_name}'s checkout==: {gap_after} day(s) (before {listing_reservations[i+1]['guestName']}'s stay)")
             except Exception as e:
                 logging.error(f"Error processing account {account.user_id}: {str(e)}")
                 continue  # Continue with next user
