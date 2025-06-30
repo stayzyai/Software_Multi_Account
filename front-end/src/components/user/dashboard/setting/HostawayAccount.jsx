@@ -44,6 +44,7 @@ const HostawayAccount = ({ setOpenModal }) => {
         setHostawayAccount({ account_id: "", secret_id: "" });
         toast.success(response?.data?.detail?.message);
         removeItem("isHostwayAccount");
+        window.location.reload();
       }
     } catch (error) {
       console.log("Some error occred at delete hostaway account", error);
