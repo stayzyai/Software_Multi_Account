@@ -89,6 +89,7 @@ def activate_ai_for_chats(db: Session, chat_ids: list[int], user_id: int):
     return chat_ids
 
 def upadate_subscription(db: Session, customer_id):
+    subscription = None
     try:
         subscription = db.query(Subscription).filter(Subscription.stripe_customer_id==customer_id).first()
         if subscription:
