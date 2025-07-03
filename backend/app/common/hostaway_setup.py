@@ -170,6 +170,7 @@ def hostaway_post_request(token, endpoint, data):
         }
         api_url = f"/v1/{endpoint}"
         api_url = api_url+provider
+        logging.info("Hostaway url: ", api_url)
         conn.request("POST", api_url, payload, headers)
         res = conn.getresponse()
         data = res.read()
@@ -204,6 +205,7 @@ def hostaway_put_request(token, endpoint, data, id=None, force_overbooking=False
         
         # The critical change: conn.request passes the full path including query parameters
         api_url = api_url+provider
+        logging.info("Hostaway url: ", api_url)
         conn.request("PUT", api_url, payload, headers)
         res = conn.getresponse()
         data = res.read()
@@ -227,6 +229,7 @@ def hostaway_delete_request(token, endpoint, id=None):
                 'Cache-control': "no-cache"
         }
         api_url = api_url+provider
+        logging.info("Hostaway url: ", api_url)
         conn.request("DELETE", api_url, headers)
         res = conn.getresponse()
         data = res.read()
@@ -247,6 +250,7 @@ def hostaway_get_list_request(token, endpoint, lastEndpoint, id=None):
             'Cache-control': "no-cache",
             }
         api_url = api_url+provider
+        logging.info("Hostaway url: ", api_url)
         response = requests.request("GET", api_url, headers=headers, params=querystring)
         return response.text
     except Exception as e:
