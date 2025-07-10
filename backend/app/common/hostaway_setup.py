@@ -8,7 +8,8 @@ import json
 
 load_dotenv()
 url = os.getenv('HOSTAWAY_URL')
-provider = '?&provider=stayzy'
+provider_id=os.getenv('PROVIDER_ID')
+provider = f'?&provider={provider_id}'
 
 def hostaway_get_request(token, endpoint, id=None, limit=None, offset=None, includeResources=None, max_retries=3):
     """
