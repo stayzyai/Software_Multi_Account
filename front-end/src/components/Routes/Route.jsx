@@ -7,8 +7,7 @@ import UserLogin from "../../components/user/auth/login";
 import SignUp from "../../components/user/auth/signup";
 import { ProtectedRoute } from "../../helpers/ProtectedRoute";
 import { UserDashboardComponent } from "../../pages/userdashboard";
-import PaymentSuccess from "../../pages/payment/paymentSuccess";
-import PaymentDeclined from "../../pages/payment/paymentDeclined";
+// Payment components removed - not needed
 import ForgotPassword from "../../components/user/auth/forgot-password";
 import ResetPassword from "../../components/user/auth/reset-password";
 
@@ -82,8 +81,7 @@ function AppRoutes() {
           />
         }
       />
-      <Route path="/payment-success" element={<PaymentSuccess />} />
-      <Route path="/payment-declined" element={<PaymentDeclined />} />
+      {/* Payment routes removed - not needed */}
       <Route
         path="/user/*"
         element={

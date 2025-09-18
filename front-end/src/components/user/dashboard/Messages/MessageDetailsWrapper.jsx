@@ -38,6 +38,7 @@ const MessageDetailsWrapper = () => {
   const conversation = useSelector((state) => state.conversation.conversations);
   const users = useSelector((state) => state.hostawayUser.users);
   const tasks = useSelector((state) => state.tasks.tasks);
+  const userProfile = useSelector((state) => state.user);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -80,6 +81,22 @@ const MessageDetailsWrapper = () => {
 
   const getSentimentSummary = async (messageId) => {
     setLoading(true);
+    
+    // Check if master AI is disabled
+    if (!userProfile.master_ai_enabled) {
+      setChatInfo((prevChatInfo) => {
+        const updatedChatInfo = prevChatInfo.map((chat) => {
+          if (chat.id == messageId) {
+            return { ...chat, summary: "AI features disabled", icon: "" };
+          }
+          return chat;
+        });
+        return updatedChatInfo;
+      });
+      setLoading(false);
+      return;
+    }
+    
     if(sentimentsummary?.messageId == messageId){
       const { icon, summary } = sentimentsummary;
       setChatInfo((prevChatInfo) => {

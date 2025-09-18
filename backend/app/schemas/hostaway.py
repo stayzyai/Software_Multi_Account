@@ -1,9 +1,19 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 class HostawayAuthentication(BaseModel):
     account_id: str
     secret_id: str
+    account_name: Optional[str] = None  # User-friendly name
+
+class HostawayAccountResponse(BaseModel):
+    id: int
+    account_id: str
+    secret_id: str
+    account_name: Optional[str]
+    is_active: bool
+    created_at: str
+    expires_at: str
 
 class UpsellData(BaseModel):
     id: Optional[int] = None

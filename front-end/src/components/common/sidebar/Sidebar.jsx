@@ -43,7 +43,8 @@ const Sidebar = ({ role = "admin", setShowPopup }) => {
     <aside style={{height:"-webkit-fill-available"}}
       className={`min-h-fit z-50 
       fixed inset-y-0 ${iconToggle? "px-4": "px-6"}
-      bg-gradient-to-r to-[#2D8062] from-[#0E2E23] text-white
+      {/* bg-gradient-to-r to-[#2D8062] from-[#0E2E23] text-white */}
+      bg-gradient-to-r to-[#2563eb] from-[#1e40af] text-white
       transform transition-transform duration-300 ease-in-out
       ${isOpen ? "translate-x-0" : "-translate-x-full"}
       md:relative md:translate-x-0

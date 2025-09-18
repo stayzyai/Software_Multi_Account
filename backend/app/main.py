@@ -33,8 +33,28 @@ def start_scheduler():
 async def startup_event():
     start_scheduler()
 
-app.mount("/", sio_app)
+# Mount Socket.IO on a subpath so it doesn't shadow FastAPI routes
+app.mount("/ws", sio_app)
 
 @app.get("/api")
 async def root():
    return {"message": "working"}
+
+@app.get("/health/db")
+async def db_health():
+    """Check database connection pool health"""
+    try:
+        from app.database.db import engine
+        pool = engine.pool
+        return {
+            "status": "healthy",
+            "pool_size": pool.size(),
+            "checked_out": pool.checkedout(),
+            "overflow": pool.overflow(),
+            "total_connections": pool.size() + pool.overflow()
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e)
+        }

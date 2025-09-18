@@ -35,11 +35,13 @@ class HostawayAccount(Base):
     secret_id = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
     hostaway_token = Column(String, nullable=False)
+    account_name = Column(String, nullable=True)  # User-friendly name for the account
+    is_active = Column(Boolean, default=True, nullable=False)  # Active/inactive status
     created_at = Column(DateTime, default=func.now(), nullable=False)
     expires_at = Column(DateTime, nullable=False)
 
     def __repr__(self):
-        return f"<HostawayAccount(id={self.id}, account_id={self.account_id}, user_id={self.user_id})>"
+        return f"<HostawayAccount(id={self.id}, account_id={self.account_id}, user_id={self.user_id}, account_name={self.account_name})>"
     
 # class Listings(Base):
 #     __tablename__ = "listings"

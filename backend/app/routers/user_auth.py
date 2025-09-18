@@ -87,8 +87,11 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
             data={"sub": db_user.id},
             expires_delta=refresh_token_expires
         )
-        db_user.refresh_token = refresh_token  # Save refresh token in the database
-        db.commit()
+        # In read-only mode, avoid writing anything to the database
+        READ_ONLY_MODE = os.getenv("READ_ONLY_MODE", "false").lower() == "true"
+        if not READ_ONLY_MODE:
+            db_user.refresh_token = refresh_token  # Save refresh token in the database
+            db.commit()
 
         return {"detail": {
             "message": "User login successfully",

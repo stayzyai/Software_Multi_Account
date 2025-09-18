@@ -16,6 +16,7 @@ const HostawayConnectModal = () => {
   const [formFields, setFormFields] = useState({
     account_id: "",
     secret_id: "",
+    account_name: "",
   });
   const ishostawayAccount = useSelector((state) => state.sidebar.isHostawayModel);
   const [isLoading, setIsLoading] = useState(false);
@@ -56,7 +57,14 @@ const HostawayConnectModal = () => {
       if (response.status === 200) {
         toast.success("Hostaway account connected successfully!");
         setItem("isHostwayAccount", true);
-        dispatch(setHostawayModal(false))
+        dispatch(setHostawayModal(false));
+        // Reset form
+        setFormFields({
+          account_id: "",
+          secret_id: "",
+          account_name: "",
+        });
+        // Refresh the page to show the new account
         window.location.reload();
       }
       setIsLoading(false);
@@ -117,6 +125,21 @@ const HostawayConnectModal = () => {
                 type="text"
                 placeholder="Enter your hostaway secret Id"
                 value={formFields.secret_id}
+                onChange={(e) => handleInputChange(e)}
+              />
+            </div>
+            <div className="md:flex items-center gap-4 pb-6">
+              <Label
+                htmlFor="account_name"
+                className="text-nowrap font-medium mr-3"
+              >
+                Account Name
+              </Label>
+              <Input
+                id="account_name"
+                type="text"
+                placeholder="Enter a name for this account (optional)"
+                value={formFields.account_name}
                 onChange={(e) => handleInputChange(e)}
               />
             </div>

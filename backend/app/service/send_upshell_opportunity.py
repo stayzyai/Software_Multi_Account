@@ -9,6 +9,7 @@ from app.common.send_email import send_email
 from app.service.find_upsell import process_upsell_opportunities
 
 def check_and_send_upsells():
+    db = None
     try:
         today = datetime.now().date()
         db = next(get_db())
@@ -53,5 +54,8 @@ def check_and_send_upsells():
                 continue  # Continue with next user
 
     except Exception as e:
-        # logging.error(f"Error in check_and_send_upsells: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error processing upsells: {str(e)}")
+        logging.error(f"Error in check_and_send_upsells: {str(e)}")
+        # Don't raise HTTPException in background task, just log
+    finally:
+        if db:
+            db.close()  # Ensure database connection is properly closed

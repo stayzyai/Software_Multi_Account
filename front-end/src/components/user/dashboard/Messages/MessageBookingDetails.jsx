@@ -13,6 +13,7 @@ import { useParams } from "react-router-dom";
 const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo, sentimentLoading }) => {
   const [activeSession, setActiveSession] = useState("booking");
   const reservation = useSelector((state) => state.reservations.reservations);
+  const listings = useSelector((state) => state.listings.listings);
   const [timeDetails, setTimeDetails] = useState([]);
   const [bookingDetails, setbookingDetails] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +34,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo, sentimen
       (item) => item.id == reservationId
     );
     const timeData = getTimeDetails(reservationData);
-    const bookingdata = getBookingdetails(reservationData);
+    const bookingdata = getBookingdetails(reservationData, listings);
     setbookingDetails(bookingdata);
     setTimeDetails(timeData);
     setLoading(false);
@@ -46,14 +47,14 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo, sentimen
         (item) => item.id == reservationId
       );
       const timeData = getTimeDetails(reservationData);
-      const bookingdata = getBookingdetails(reservationData);
+      const bookingdata = getBookingdetails(reservationData, listings);
       setbookingDetails(bookingdata);
       setTimeDetails(timeData);
       setLoading(false);
       return;
     }
     fetchReservations();
-  }, [chatInfo, messageId]);
+  }, [chatInfo, messageId, listings]);
 
   useEffect(() => {
     const newSocket = io(import.meta.env.VITE_SOCKET_HOST, {

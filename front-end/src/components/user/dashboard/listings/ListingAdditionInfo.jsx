@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import { Pencil } from "lucide-react";
 import { formatedFAQ, updateListings} from "../../../../helpers/ListingsHelper";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setListings } from "../../../../store/listingSlice";
+import { updatePropertyAIStatus } from "../../../../store/userSlice";
+import { toast } from "sonner";
 
 const ListingAdditionalInfo = ({ listings, listingId }) => {
   const dispatch = useDispatch();
+  const userProfile = useSelector((state) => state.user);
   const [loading, setLoading] = useState({
     faq: false,
     nearby: false,
@@ -82,8 +85,92 @@ const ListingAdditionalInfo = ({ listings, listingId }) => {
     }));
   };
 
+  // Property AI toggle functionality
+  const isPropertyAIEnabled = (propertyId) => {
+    // First check if master AI is enabled
+    if (!userProfile.master_ai_enabled) {
+      return false;
+    }
+    
+    // If master AI is enabled, check property-specific setting
+    const propertyStatus = userProfile.property_ai_status?.[propertyId];
+    return propertyStatus?.ai_enabled ?? true; // Default to enabled if not set
+  };
+
+  const handlePropertyAIToggle = () => {
+    // Check if master AI is disabled
+    if (!userProfile.master_ai_enabled) {
+      toast.error("Enable Master AI in Settings to control property AI");
+      return;
+    }
+    
+    const currentStatus = isPropertyAIEnabled(listingId);
+    const newStatus = !currentStatus;
+    
+    dispatch(updatePropertyAIStatus({
+      propertyId: listingId,
+      ai_enabled: newStatus
+    }));
+    
+    toast.success(
+      newStatus 
+        ? "Property AI features enabled for all chats" 
+        : "Property AI features disabled for all chats"
+    );
+  };
+
+  // Switch component for property AI toggle
+  const PropertyAISwitch = () => {
+    const isDisabled = !userProfile.master_ai_enabled;
+    return (
+      <label className={`inline-flex items-center ${isDisabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
+        <input
+          checked={isPropertyAIEnabled(listingId)}
+          onChange={isDisabled ? undefined : handlePropertyAIToggle}
+          type="checkbox"
+          disabled={isDisabled}
+          className="sr-only peer"
+        />
+        <div className={`relative w-12 h-7 bg-gray-200 peer-focus:outline-none peer-focus:ring-0 peer-focus:ring-[#34C759] dark:peer-focus:ring-[#34C759] rounded-full peer dark:bg-white peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-[#34C759] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border after:rounded-full after:h-[24px] after:w-[22px] after:transition-all dark:border-[#34C759] peer-checked:bg-[#34C759] ${isDisabled ? 'opacity-50' : ''}`}></div>
+      </label>
+    );
+  };
+
   return (
     <div className="w-full px-1 md:px-10 mx-auto p-4 mt-8 overflow-hidden md:overflow-auto">
+      {/* Property AI Control Section */}
+      <div className="mb-10">
+        <div className="flex justify-between items-center mb-5">
+          <h1 className="font-medium text-xl">Property AI Control</h1>
+        </div>
+        <div className="bg-gray-100 rounded-3xl p-6 min-h-[120px] w-full">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-medium mb-2">AI Features for This Property</h3>
+              <p className="text-gray-600 text-sm">
+                {isPropertyAIEnabled(listingId) 
+                  ? "AI features are enabled for all chats in this property" 
+                  : "AI features are disabled for all chats in this property"
+                }
+              </p>
+            </div>
+            <div className="flex items-center space-x-3">
+              <span className="text-sm font-medium">
+                {isPropertyAIEnabled(listingId) ? "Enabled" : "Disabled"}
+              </span>
+              <PropertyAISwitch />
+            </div>
+          </div>
+          {!userProfile.master_ai_enabled && (
+            <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <p className="text-sm text-amber-700">
+                <span className="font-medium">Master AI is disabled.</span> Enable Master AI in Settings to control property AI features.
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="mb-10">
         <div className="flex justify-between items-center mb-5">
           <h1 className="font-medium text-xl">FAQ</h1>
