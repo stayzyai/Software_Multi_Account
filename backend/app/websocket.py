@@ -1,8 +1,14 @@
 import socketio
 from app.service.ai_enable import send_auto_ai_messages
 
-# sio_server = socketio.AsyncServer(async_mode='asgi',cors_allowed_origins='*')
-sio_server = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins="*")
+# Configure Socket.IO with explicit CORS settings
+sio_server = socketio.AsyncServer(
+    async_mode='asgi',
+    cors_allowed_origins="*",
+    cors_credentials=True,
+    logger=True,
+    engineio_logger=True
+)
 sio_app = socketio.ASGIApp(sio_server)
 
 @sio_server.event

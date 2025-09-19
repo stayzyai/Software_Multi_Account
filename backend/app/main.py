@@ -33,8 +33,8 @@ def start_scheduler():
 async def startup_event():
     start_scheduler()
 
-# Mount Socket.IO on a subpath so it doesn't shadow FastAPI routes
-app.mount("/ws", sio_app)
+# Mount Socket.IO on /socket.io path
+app.mount("/socket.io", sio_app)
 
 @app.get("/api")
 async def root():

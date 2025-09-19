@@ -7,8 +7,11 @@ import { setReservations } from "../../../../store/reservationSlice";
 import MessageRightSidebar from "../../../common/shimmer/MessageRightSidebr";
 import BookingDetails from "./BookingDetails";
 import BookingIssue from "./BookingIssue";
-import { io } from "socket.io-client";
+// import { io } from "socket.io-client"; // COMMENTED OUT - WebSocket disabled
 import { useParams } from "react-router-dom";
+// NEW IMPORTS FOR POLLING
+import { useSmartPolling } from "../../../../hooks/useSmartPolling";
+import StatusIndicator from "../../../common/StatusIndicator";
 
 const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo, sentimentLoading }) => {
   const [activeSession, setActiveSession] = useState("booking");
@@ -19,6 +22,13 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo, sentimen
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
   const { messageId } = useParams();
+
+  // POLLING HOOKS
+  const pollReservations = async () => {
+    console.log('Polling reservations...');
+    await fetchReservations();
+  };
+  const { isActive, pollingInterval, lastUpdate, error, isPolling, triggerUpdate } = useSmartPolling(pollReservations, 30000);
 
   const getReservations = async () => {
     const data = await getHostawayReservation();
@@ -56,6 +66,8 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo, sentimen
     fetchReservations();
   }, [chatInfo, messageId, listings]);
 
+  // COMMENTED OUT - WebSocket code disabled, using polling instead
+  /*
   useEffect(() => {
     const newSocket = io(import.meta.env.VITE_SOCKET_HOST, {
       transports: ["websocket"],
@@ -73,6 +85,7 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo, sentimen
       newSocket.disconnect();
     };
   }, []);
+  */
 
   if (loading)
     return (

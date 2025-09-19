@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import MessageShimmer from "../../../common/shimmer/MessageShimmer";
 import { useDispatch, useSelector } from "react-redux";
 import { setConversations } from "../../../../store/conversationSlice";
-import { io } from "socket.io-client";
+// import { io } from "socket.io-client"; // COMMENTED OUT - WebSocket disabled
 import {
   filterMessages,
   getAllListings,
@@ -17,6 +17,10 @@ import MessageList from "./MessageList";
 import { getHostawayTask } from "../../../../helpers/TaskHelper";
 import TaskMultiSelect from "./TaskMultiSelect";
 import MultipleSelectListing from "./MultiselectorListing"
+// NEW IMPORTS FOR POLLING
+import { useDataPolling } from "../../../../hooks/useDataPolling";
+import { useSmartPolling } from "../../../../hooks/useSmartPolling";
+import StatusIndicator from "../../../common/StatusIndicator";
 
 const Messages = ({ handleClickMessages, title }) => {
   const [simplifiedConversation, setSimplifiedConversation] = useState([]);
@@ -38,6 +42,10 @@ const Messages = ({ handleClickMessages, title }) => {
   const tasks = useSelector((state) => state.tasks.tasks);
   const listings = useSelector((state) => state.listings);
 
+  // POLLING HOOKS
+  const { pollAllData } = useDataPolling();
+  const { isActive, pollingInterval, lastUpdate, error, isPolling, triggerUpdate } = useSmartPolling(pollAllData, 30000);
+
   const fetchedEmptyData = async () => {
     const listingData = await getAllListings();
     const taskData = await getHostawayTask();
@@ -56,6 +64,8 @@ const Messages = ({ handleClickMessages, title }) => {
       dispatch(setUnreadChat({ chatId: newMessage?.conversationId }));
   };
 
+  // COMMENTED OUT - WebSocket code disabled, using polling instead
+  /*
   useEffect(() => {
     const newSocket = io(import.meta.env.VITE_SOCKET_HOST, {
       transports: ["websocket"],
@@ -81,6 +91,7 @@ const Messages = ({ handleClickMessages, title }) => {
       newSocket.disconnect();
     };
   }, []);
+  */
 
   useEffect(() => {
     if (conversation?.length !== 0 && listings?.length !== 0 && tasks?.length) {
@@ -114,7 +125,16 @@ const Messages = ({ handleClickMessages, title }) => {
         <div className="flex flex-col space-y-6 py-4">
           <div className="overflow-hidden bg-white rounded-[14px] shadow-md mx-1 border-[0.2px] border-gray-400">
             <div className="flex flex-col gap-2 justify-between md:flex-row md:gap-0 p-5">
-              <h2 className="text-lg font-semibold">Latest Messages</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-semibold">Latest Messages</h2>
+                <StatusIndicator 
+                  isPolling={isPolling}
+                  lastUpdate={lastUpdate}
+                  error={error}
+                  isActive={isActive}
+                  pollingInterval={pollingInterval}
+                />
+              </div>
               <div className="flex gap-6 mr-4">
                 <div className="flex items-center gap-4 text-[14px] cursor-pointer">
                   {["Date"].map((label, index) => (

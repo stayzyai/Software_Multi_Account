@@ -15,7 +15,7 @@ import {
 } from "../../../../helpers/Message";
 import { useNavigate } from "react-router-dom";
 import ChatShimmer from "../../../common/shimmer/ChatShimmer";
-import { io } from "socket.io-client";
+// import { io } from "socket.io-client"; // COMMENTED OUT - WebSocket disabled
 import { setUnreadChat } from "../../../../store/notificationSlice";
 import {
   getHostawayUser,
@@ -24,6 +24,10 @@ import {
 import { setHostawayUsers } from "../../../../store/hostawayUserSlice";
 import { toast } from "sonner";
 import { setTasks } from "../../../../store/taskSlice";
+// NEW IMPORTS FOR POLLING
+import { useConversationPolling } from "../../../../hooks/useConversationPolling";
+import { useSmartPolling } from "../../../../hooks/useSmartPolling";
+import StatusIndicator from "../../../common/StatusIndicator";
 
 const MessageDetailsWrapper = () => {
   const { messageId } = useParams();
@@ -42,6 +46,10 @@ const MessageDetailsWrapper = () => {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  // POLLING HOOKS
+  const pollConversations = useConversationPolling();
+  const { isActive, pollingInterval, lastUpdate, error, isPolling, triggerUpdate } = useSmartPolling(pollConversations, 30000);
 
   const handleSendMessage = async (chat_id) => {
     const messageBody = input[chat_id]?.trim();
@@ -148,6 +156,8 @@ const MessageDetailsWrapper = () => {
     setLoading(false);
   };
 
+  // COMMENTED OUT - WebSocket code disabled, using polling instead
+  /*
   useEffect(() => {
     const newSocket = io(import.meta.env.VITE_SOCKET_HOST, {
       transports: ["websocket"],
@@ -173,6 +183,23 @@ const MessageDetailsWrapper = () => {
     return () => {
       newSocket.disconnect();
     };
+  }, []);
+  */
+
+  // NEW POLLING-BASED DATA FETCHING
+  useEffect(() => {
+    const fetchData = async () => {
+      if (fromatedConversation.length == 0 && chatInfo.length == 0) {
+        const data = await getConversationData();
+        setChatInfo(data?.filter((msg) => msg.id == messageId));
+        getSentimentSummary(messageId);
+      }
+      const userData = users?.length === 0 ? await getHostawayUser() : users;
+      if (users?.length === 0) dispatch(setHostawayUsers(userData));
+      const tasksData = tasks?.length === 0 ? await getHostawayTask() : tasks;
+      dispatch(setTasks(tasksData));
+    };
+    fetchData();
   }, []);
 
   useEffect(() => {
