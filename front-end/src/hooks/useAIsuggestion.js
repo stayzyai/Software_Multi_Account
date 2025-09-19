@@ -27,8 +27,8 @@ const useAISuggestion = (setInput, chatInfo, amenity, tasks, setIsAISuggestion) 
   }, [allReservations, listings])
 
   const handleAISuggestion = async (messages) => {
-    if(!userProfile?.ai_enable){
-      toast.info("Upgrade your plan to unlock AI-powered responses. To upgrade, simply toggle the AI button")
+    if(!userProfile?.master_ai_enabled){
+      toast.info("AI is disabled. Please enable AI in settings to use this feature.")
       return
     }
 

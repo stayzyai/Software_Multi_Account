@@ -31,7 +31,7 @@ const getListingstatus = async () => {
 const formattedListing = (data, reservations, userData=null, issues= []) => {
   const listings = data?.map((item) => {
     const occupancy = getOccupancy(reservations, item.id);
-    const aiStatus = userData?.ai_enable
+    const aiStatus = userData?.master_ai_enabled
     const hasIssue = issues?.some((issue) => issue?.listingMapId === item?.id);
     return {
       id: item.id,
