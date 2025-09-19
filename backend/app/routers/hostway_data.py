@@ -111,10 +111,12 @@ async def post_data(request: Request ,params:str, id: int, params2:str, token: s
 async def webhook_messages(request: Request):
     try:
         body = await request.json()
+        print(f"📨 Webhook endpoint received: {body}")
         logging.debug(f"Webhook received: {body}")
         await handle_webhook(body)
         return {"detail": {"message": "new messages received", "received": body}}
     except Exception as e:
+        print(f"❌ Webhook error: {e}")
         raise HTTPException(status_code=500, detail=f"Error at messages webhook: {str(e)}")
 
 @router.post("/reservation/webhook")

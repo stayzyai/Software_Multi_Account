@@ -215,15 +215,23 @@ async def send_message(new_message, gpt_response, latest_incoming, user_id, list
 
 async def send_auto_ai_messages(new_messages):
     try:
-        user_id = chack_ai_enable(new_messages, next(get_db()))
+        print(f"🤖 Processing AI message: {new_messages}")
+        db = next(get_db())
+        user_id = chack_ai_enable(new_messages, db)
+        print(f"🔍 User ID found: {user_id}")
+        
         if user_id:
             consversationsId = new_messages.get("conversationId")
             listingMapId = new_messages.get("listingMapId")
-            is_ai_enabled = check_ai_status(user_id, consversationsId, next(get_db()))
+            is_ai_enabled = check_ai_status(user_id, consversationsId, db)
+            print(f"🤖 AI enabled for chat {consversationsId}: {is_ai_enabled}")
+            
             if not is_ai_enabled:
+                print(f"❌ AI not enabled for chat {consversationsId}")
                 return False
-            else :
+            else:
                 latest_incoming = new_messages.get("body", "")
+                print(f"📝 Processing message: {latest_incoming}")
 
                 with ThreadPoolExecutor() as executor:
                     future_previous_conversation = executor.submit(get_previous_conversation, new_messages)
@@ -236,11 +244,18 @@ async def send_auto_ai_messages(new_messages):
                     reservation_details = reservation.result()
 
                 prompt = generate_prompt(previous_conversation, latest_incoming, property_details, amenities_detail, reservation_details)
+                print(f"🎯 Generated prompt length: {len(prompt)}")
+                
                 gpt_response = get_ai_response(prompt, latest_incoming, user_id)
+                print(f"🤖 GPT Response: {gpt_response}")
 
-                return await send_message(new_messages, gpt_response, latest_incoming, user_id, listingMapId)
+                result = await send_message(new_messages, gpt_response, latest_incoming, user_id, listingMapId)
+                print(f"📤 Message sent result: {result}")
+                return result
         else:
+            print(f"❌ No user ID found for account: {new_messages.get('accountId')}")
             return False
 
     except Exception as e:
+        print(f"❌ Error in send_auto_ai_messages: {e}")
         return f"Error: {e}"

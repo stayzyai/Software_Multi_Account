@@ -20,7 +20,9 @@ async def disconnect(sid, reason):
     await sio_server.emit("user_disconnected", {"sid": sid}, skip_sid=sid)
 
 async def handle_webhook(data):
-    await send_auto_ai_messages(data)
+    print(f"📨 Webhook received: {data}")
+    result = await send_auto_ai_messages(data)
+    print(f"🤖 AI processing result: {result}")
     await sio_server.emit("received_message", data)
 
 @sio_server.event
