@@ -92,7 +92,7 @@ useEffect(()=> {
           return;
         }
         
-        const dateLabel = formatDateWithTimezone(messageDate.toISOString());
+        const dateLabel = formatDateWithTimezone(dateString);
         
         // If this is the first message or the date has changed, add a date label
         if (currentDate !== dateLabel) {

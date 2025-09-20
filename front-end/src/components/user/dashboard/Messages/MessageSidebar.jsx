@@ -1,6 +1,7 @@
 import { markChatAsRead } from "../../../../store/notificationSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
+import { formatSidebarTime } from "../../../../helpers/Message";
 
 const ChatSidebar = ({
   handleClickMessages,
@@ -67,7 +68,7 @@ const ChatSidebar = ({
                     : "Click here to reply"}
                 </div>
               </div>
-              <div className="text-xs">{item?.latestMessageTime}</div>
+              <div className="text-xs">{formatSidebarTime(item?.latestMessageTime)}</div>
             </div>
           </div>
         ))}
