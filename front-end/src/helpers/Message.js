@@ -268,6 +268,144 @@ const formatDateTime = (date) => {
   return date.toISOString().replace("T", " ").split(".")[0];
 };
 
+// Timezone Helper Functions
+const getUserTimezone = () => {
+  try {
+    // Try to get browser timezone
+    const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (browserTimezone) {
+      return browserTimezone;
+    }
+  } catch (error) {
+    console.log("Could not detect browser timezone:", error);
+  }
+  
+  // Fallback to Central Time
+  return "America/Chicago";
+};
+
+const getTimezoneAbbreviation = (timezone) => {
+  const timezoneAbbreviations = {
+    "America/New_York": "EST",
+    "America/Chicago": "CT", 
+    "America/Denver": "MST",
+    "America/Los_Angeles": "PST",
+    "America/Phoenix": "MST",
+    "Europe/London": "GMT",
+    "Europe/Paris": "CET",
+    "Asia/Kolkata": "IST",
+    "Asia/Tokyo": "JST",
+    "Asia/Shanghai": "CST",
+    "Australia/Sydney": "AEST",
+    "Pacific/Auckland": "NZST"
+  };
+  
+  return timezoneAbbreviations[timezone] || "CT";
+};
+
+const formatTimeWithTimezone = (dateString, timezone = null) => {
+  try {
+    const timezoneToUse = timezone || getUserTimezone();
+    const date = new Date(dateString);
+    
+    // Format time in 12-hour format with timezone
+    const timeOptions = {
+      timeZone: timezoneToUse,
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    };
+    
+    const timeStr = date.toLocaleTimeString('en-US', timeOptions);
+    const timezoneAbbr = getTimezoneAbbreviation(timezoneToUse);
+    
+    return `${timeStr} ${timezoneAbbr}`;
+  } catch (error) {
+    console.log("Error formatting time with timezone:", error);
+    // Fallback to simple format
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit', 
+      hour12: true 
+    }) + " CT";
+  }
+};
+
+const formatDateWithTimezone = (dateString, timezone = null) => {
+  try {
+    const timezoneToUse = timezone || getUserTimezone();
+    const date = new Date(dateString);
+    const now = new Date();
+    
+    // Check if it's today
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    
+    if (messageDate.getTime() === today.getTime()) {
+      return "Today";
+    }
+    
+    // Check if it's yesterday
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (messageDate.getTime() === yesterday.getTime()) {
+      return "Yesterday";
+    }
+    
+    // Check if it's this week (within 7 days)
+    const weekAgo = new Date(today);
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    
+    if (messageDate > weekAgo) {
+      // Show day name
+      return date.toLocaleDateString('en-US', { 
+        timeZone: timezoneToUse,
+        weekday: 'long' 
+      });
+    }
+    
+    // For older dates, show month and day
+    return date.toLocaleDateString('en-US', { 
+      timeZone: timezoneToUse,
+      month: 'short',
+      day: 'numeric'
+    });
+  } catch (error) {
+    console.log("Error formatting date with timezone:", error);
+    // Fallback
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  }
+};
+
+const formatSidebarTime = (dateString, timezone = null) => {
+  try {
+    const timezoneToUse = timezone || getUserTimezone();
+    const date = new Date(dateString);
+    const now = new Date();
+    
+    // Check if it's today
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const messageDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    
+    if (messageDate.getTime() === today.getTime()) {
+      // Show time for today
+      return formatTimeWithTimezone(dateString, timezoneToUse);
+    }
+    
+    // Show date for other days
+    return formatDateWithTimezone(dateString, timezoneToUse);
+  } catch (error) {
+    console.log("Error formatting sidebar time:", error);
+    return "Invalid Date";
+  }
+};
+
 const ticketCreateByAI = async (
   message,
   listingMapId,
@@ -653,4 +791,9 @@ export {
   getSentiment,
   assignSentiment,
   getReservationsGap,
+  // Timezone functions
+  getUserTimezone,
+  formatTimeWithTimezone,
+  formatDateWithTimezone,
+  formatSidebarTime,
 };

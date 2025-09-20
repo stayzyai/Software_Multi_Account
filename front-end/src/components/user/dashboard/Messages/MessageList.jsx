@@ -2,6 +2,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { markChatAsRead } from "../../../../store/notificationSlice";
 import { useState, useEffect } from "react";
+import { formatSidebarTime } from "../../../../helpers/Message";
 
 const MessageList = ({
   title,
@@ -75,9 +76,14 @@ const MessageList = ({
                   }}
                   className="cursor-pointer w-full"
                 >
-                  <p className="font-medium text-gray-800">
-                    {item?.recipientName}
-                  </p>
+                  <div className="flex justify-between items-start">
+                    <p className="font-medium text-gray-800">
+                      {item?.recipientName}
+                    </p>
+                    <p className="text-xs text-gray-500 ml-2">
+                      {formatSidebarTime(item?.messageReceivedOn || item?.messageSentOn || new Date().toISOString())}
+                    </p>
+                  </div>
                   <p
                     className={`text-sm text-[#7F7F7F] hidden md:block ${
                       item?.isIncoming && "font-semibold text-gray-700"
