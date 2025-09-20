@@ -108,7 +108,10 @@ def hostaway_authentication(account_id, secret_id):
     try:
         hostaway_account_id = account_id
         client_secret = secret_id
-        conn = http.client.HTTPSConnection(url)
+        
+        # Extract hostname from URL (remove https://)
+        hostname = url.replace('https://', '').replace('http://', '')
+        conn = http.client.HTTPSConnection(hostname)
         payload = f"grant_type=client_credentials&client_id={hostaway_account_id}&client_secret={client_secret}&scope=general"
         headers = {
             'Content-type': "application/x-www-form-urlencoded",
@@ -134,7 +137,9 @@ def hostaway_authentication(account_id, secret_id):
 
 def revoke_hostaway_authentication(token):
     try:
-        conn = http.client.HTTPSConnection(url)
+        # Extract hostname from URL (remove https://)
+        hostname = url.replace('https://', '').replace('http://', '')
+        conn = http.client.HTTPSConnection(hostname)
         payload = ""
         revoke_url = f"/v1/accessTokens?token={token}"
 
