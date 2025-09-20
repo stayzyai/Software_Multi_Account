@@ -305,8 +305,18 @@ const getTimezoneAbbreviation = (timezone) => {
 
 const formatTimeWithTimezone = (dateString, timezone = null) => {
   try {
+    // Validate input
+    if (!dateString) {
+      return "Invalid Time";
+    }
+    
     const timezoneToUse = timezone || getUserTimezone();
     const date = new Date(dateString);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return "Invalid Time";
+    }
     
     // Format time in 12-hour format with timezone
     const timeOptions = {
@@ -322,20 +332,25 @@ const formatTimeWithTimezone = (dateString, timezone = null) => {
     return `${timeStr} ${timezoneAbbr}`;
   } catch (error) {
     console.log("Error formatting time with timezone:", error);
-    // Fallback to simple format
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', { 
-      hour: 'numeric', 
-      minute: '2-digit', 
-      hour12: true 
-    }) + " CT";
+    return "Invalid Time";
   }
 };
 
 const formatDateWithTimezone = (dateString, timezone = null) => {
   try {
+    // Validate input
+    if (!dateString) {
+      return "Invalid Date";
+    }
+    
     const timezoneToUse = timezone || getUserTimezone();
     const date = new Date(dateString);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return "Invalid Date";
+    }
+    
     const now = new Date();
     
     // Check if it's today
@@ -374,19 +389,25 @@ const formatDateWithTimezone = (dateString, timezone = null) => {
     });
   } catch (error) {
     console.log("Error formatting date with timezone:", error);
-    // Fallback
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    });
+    return "Invalid Date";
   }
 };
 
 const formatSidebarTime = (dateString, timezone = null) => {
   try {
+    // Validate input
+    if (!dateString) {
+      return "Invalid Date";
+    }
+    
     const timezoneToUse = timezone || getUserTimezone();
     const date = new Date(dateString);
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      return "Invalid Date";
+    }
+    
     const now = new Date();
     
     // Check if it's today

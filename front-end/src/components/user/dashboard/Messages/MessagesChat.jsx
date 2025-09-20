@@ -65,25 +65,60 @@ useEffect(()=> {
     let currentDate = null;
     
     messages.forEach((msg, index) => {
-      const messageDate = new Date(msg?.time || msg?.createdAt || new Date().toISOString());
-      const dateLabel = formatDateWithTimezone(messageDate.toISOString());
-      
-      // If this is the first message or the date has changed, add a date label
-      if (currentDate !== dateLabel) {
+      try {
+        // Get the date string, with fallbacks
+        const dateString = msg?.time || msg?.createdAt || msg?.date;
+        
+        if (!dateString) {
+          // Skip messages without valid date
+          grouped.push({
+            type: 'message',
+            ...msg,
+            key: `msg-${index}`
+          });
+          return;
+        }
+        
+        const messageDate = new Date(dateString);
+        
+        // Check if date is valid
+        if (isNaN(messageDate.getTime())) {
+          // Skip invalid dates
+          grouped.push({
+            type: 'message',
+            ...msg,
+            key: `msg-${index}`
+          });
+          return;
+        }
+        
+        const dateLabel = formatDateWithTimezone(messageDate.toISOString());
+        
+        // If this is the first message or the date has changed, add a date label
+        if (currentDate !== dateLabel) {
+          grouped.push({
+            type: 'dateLabel',
+            date: dateLabel,
+            key: `date-${index}`
+          });
+          currentDate = dateLabel;
+        }
+        
+        // Add the message
         grouped.push({
-          type: 'dateLabel',
-          date: dateLabel,
-          key: `date-${index}`
+          type: 'message',
+          ...msg,
+          key: `msg-${index}`
         });
-        currentDate = dateLabel;
+      } catch (error) {
+        console.log("Error processing message date:", error);
+        // Add message without date label if there's an error
+        grouped.push({
+          type: 'message',
+          ...msg,
+          key: `msg-${index}`
+        });
       }
-      
-      // Add the message
-      grouped.push({
-        type: 'message',
-        ...msg,
-        key: `msg-${index}`
-      });
     });
     
     return grouped;
@@ -118,7 +153,9 @@ return (
                     </div>
                     <p className="p-2 py-4">{item.body}</p>
                     <div className="flex justify-end mt-2">
-                      <p className="text-xs text-gray-500">{formatTimeWithTimezone(item?.time || item?.createdAt || new Date().toISOString())}</p>
+                      <p className="text-xs text-gray-500">
+                        {formatTimeWithTimezone(item?.time || item?.createdAt || item?.date)}
+                      </p>
                     </div>
                   </div>
                 </div>

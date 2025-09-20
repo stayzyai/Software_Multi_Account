@@ -81,7 +81,7 @@ const MessageList = ({
                       {item?.recipientName}
                     </p>
                     <p className="text-xs text-gray-500 ml-2">
-                      {formatSidebarTime(item?.messageReceivedOn || item?.messageSentOn || new Date().toISOString())}
+                      {formatSidebarTime(item?.messageReceivedOn || item?.messageSentOn || item?.latestMessageTime)}
                     </p>
                   </div>
                   <p
