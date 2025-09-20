@@ -227,6 +227,31 @@ async def debug_trigger_ai(request: Request, db: Session = Depends(get_db)):
         print(f"❌ Debug trigger AI error: {e}")
         return {"error": str(e)}
 
+@router.get("/debug/test-ai/{conversation_id}")
+async def debug_test_ai(conversation_id: int, db: Session = Depends(get_db)):
+    try:
+        from app.service.ai_enable import send_auto_ai_messages
+        
+        # Create a test webhook message
+        test_message = {
+            "accountId": "test-account",
+            "conversationId": conversation_id,
+            "body": "Hello, this is a test message for AI response",
+            "listingMapId": 12345,
+            "reservationId": 67890
+        }
+        
+        print(f"🧪 Testing AI with conversation ID: {conversation_id}")
+        result = await send_auto_ai_messages(test_message)
+        print(f"🧪 Test result: {result}")
+        
+        return {"message": "AI test completed", "conversation_id": conversation_id, "result": result}
+    except Exception as e:
+        print(f"❌ Debug test AI error: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"error": str(e)}
+
 @router.post("/update-reservation")
 async def update_checkin_checkout(request: Request, token: str = Depends(get_token), db: Session = Depends(get_db)):
     try:

@@ -39,18 +39,30 @@ def get_hostaway_token(account_id, db: Session):
 def chack_ai_enable(new_messages, db: Session):
     try:
         accountId = new_messages.get("accountId")
+        print(f"🔍 Checking AI enable for accountId: {accountId}")
         hostaway_account = db.query(HostawayAccount).filter(HostawayAccount.account_id == str(accountId)).first()
-        return hostaway_account.user_id if hostaway_account else None
+        if hostaway_account:
+            print(f"✅ Found Hostaway account: {hostaway_account.account_id}, user_id: {hostaway_account.user_id}")
+            return hostaway_account.user_id
+        else:
+            print(f"❌ No Hostaway account found for accountId: {accountId}")
+            return None
     except Exception as e:
+        print(f"❌ Error in chack_ai_enable: {e}")
         return None
 
 def check_ai_status(user_id, chat_id, db: Session):
     try:
+        print(f"🔍 Checking AI status for user_id: {user_id}, chat_id: {chat_id}")
         chat_status = db.query(ChatAIStatus).filter(ChatAIStatus.user_id == user_id, ChatAIStatus.chat_id == chat_id).first()
-        if chat_status and chat_status.ai_enabled:
-            return True
-        return False
+        if chat_status:
+            print(f"📊 Chat AI Status found: ai_enabled={chat_status.ai_enabled}, is_active={chat_status.is_active}")
+            return chat_status.ai_enabled
+        else:
+            print(f"❌ No ChatAIStatus record found for user_id: {user_id}, chat_id: {chat_id}")
+            return False
     except Exception as e:
+        print(f"❌ Error in check_ai_status: {e}")
         return False
 
 def get_parsed_conversation(response):
@@ -112,11 +124,20 @@ def get_amenities_detail(new_messages):
 
 def get_ai_response(prompt, messsages, user_id):
     try:
+        print(f"🤖 Generating AI response for user_id: {user_id}")
         received_timestamp = datetime.now().isoformat()
         model_id = get_latest_model_id()
+        print(f"🤖 Using model: {model_id}")
+        print(f"🤖 Prompt length: {len(prompt)}")
+        print(f"🤖 Message: {messsages}")
+        
         gpt_response = get_gpt_response(model_id, prompt, messsages)
+        print(f"🤖 GPT Response received: {gpt_response}")
+        
         if gpt_response is None:
+            print(f"❌ GPT response is None")
             raise HTTPException(status_code=400, detail="Some error occurred. Please try again.")
+        
         response_timestamp = datetime.now().isoformat()
         interaction_data = {
             "prompt": messsages,
@@ -128,8 +149,10 @@ def get_ai_response(prompt, messsages, user_id):
         # store_chat(interaction_data)
         threading.Thread(target=store_chat, args=(interaction_data,), daemon=True).start()
         
+        print(f"✅ AI response generated successfully")
         return {"model": model_id, "answer": gpt_response}
     except Exception as e:
+        print(f"❌ Error in get_ai_response: {e}")
         return {"model": model_id, "answer": ""}
     
 def get_reservations (user_id, listingMapId):
@@ -177,41 +200,70 @@ def create_issue_ticket(new_message):
 
 async def send_message(new_message, gpt_response, latest_incoming, user_id, listingMapId):
     try:
+        print(f"📤 Starting to send AI message")
         db = next(get_db())
         accountId = new_message.get("accountId")
         conversationId = new_message.get("conversationId")
         reservationId = new_message.get("reservationId")
+        print(f"📤 Message details: accountId={accountId}, conversationId={conversationId}, reservationId={reservationId}")
+        
         hostaway_token = get_hostaway_token(accountId, db)
+        if not hostaway_token:
+            print(f"❌ No Hostaway token found for accountId: {accountId}")
+            return False
+        print(f"✅ Hostaway token found")
+        
         answer_data = gpt_response.get("answer", "")
+        print(f"📤 GPT answer data: {answer_data}")
+        
         if isinstance(answer_data, str):
             try:
                 parsed_answer = json.loads(answer_data)
                 if isinstance(parsed_answer, dict) and "response" in parsed_answer:
                     messageBody = parsed_answer["response"]
                     issue_detected = parsed_answer.get("issues") == "Yes, issue detected"
+                    print(f"📤 Parsed JSON response: {messageBody}, issue_detected: {issue_detected}")
                 else:
                     messageBody = answer_data
                     issue_detected = False
+                    print(f"📤 Using raw answer as message body: {messageBody}")
             except json.JSONDecodeError:
                 messageBody = answer_data
                 issue_detected = False
+                print(f"📤 JSON decode failed, using raw answer: {messageBody}")
         else:
+            print(f"❌ Answer data is not a string: {type(answer_data)}")
             return False
+            
+        print(f"📤 Processing message body through update_booking")
         messageBody = await update_booking(messageBody, latest_incoming, listingMapId, reservationId, user_id, db)
+        print(f"📤 Final message body: {messageBody}")
+        
         payload = {
             "body": messageBody,
             "communicationType": "channel"
         }
+        print(f"📤 Sending to Hostaway API: {payload}")
+        
         response = hostaway_post_request(hostaway_token, f"conversations/{conversationId}/messages", payload)
+        print(f"📤 Hostaway API response: {response}")
+        
         data = json.loads(response)
         if data.get("status") == "success":
+            print(f"✅ Message sent successfully")
             if issue_detected:
+                print(f"🎫 Creating issue ticket")
                 create_issue_ticket(new_message)
             return True
         else:
+            print(f"⚠️ Hostaway API returned non-success status: {data}")
             return True
+
     except Exception as e:
-        print(f"Error sending message: {e}")
+        print(f"❌ Error sending message: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
 
 async def send_auto_ai_messages(new_messages):
     try:
