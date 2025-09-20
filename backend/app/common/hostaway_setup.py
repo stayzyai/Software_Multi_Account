@@ -171,8 +171,12 @@ def hostaway_post_request(token, endpoint, data):
             raise Exception("HOSTAWAY_URL environment variable is not set")
         if not provider_id:
             raise Exception("PROVIDER_ID environment variable is not set")
+        
+        # Extract hostname from URL (remove https://)
+        hostname = url.replace('https://', '').replace('http://', '')
+        print(f"🌐 Hostname for connection: {hostname}")
             
-        conn = http.client.HTTPSConnection(url)
+        conn = http.client.HTTPSConnection(hostname)
         payload = json.dumps(data)
         headers = {
                 'Authorization': f"Bearer {token}",
@@ -197,7 +201,9 @@ def hostaway_post_request(token, endpoint, data):
 
 def hostaway_put_request(token, endpoint, data, id=None, force_overbooking=False):
     try:
-        conn = http.client.HTTPSConnection(url)
+        # Extract hostname from URL (remove https://)
+        hostname = url.replace('https://', '').replace('http://', '')
+        conn = http.client.HTTPSConnection(hostname)
         payload = json.dumps(data)
         
         # Build the API URL path correctly
