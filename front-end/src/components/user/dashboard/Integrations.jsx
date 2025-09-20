@@ -5,7 +5,6 @@ import Header from "./Header";
 import { getItem } from "../../../helpers/localstorage";
 import { ExternalLink } from "lucide-react";
 import { FaRegCopy } from "react-icons/fa";
-import HostawayAccount from "./setting/HostawayAccount";
 import SettingShimmer from "../../common/shimmer/settingShimmer";
 
 const Integrations = () => {
@@ -58,9 +57,6 @@ const Integrations = () => {
       <Header title={"Integrations"} role={"user"} />
       {!loading ? (
         <div>
-          <div>
-            <HostawayAccount />
-          </div>
           <div className="flex justify-center pt-3 mx-8">
             <div className="w-full mx-auto p-7 bg-white shadow-md rounded-md border">
               <span className="text-2xl font-semibold text-gray-800 mb-4">
