@@ -57,7 +57,7 @@ const Integrations = () => {
       <Header title={"Integrations"} role={"user"} />
       {!loading ? (
         <div>
-          <div className="flex justify-center pt-3 mx-8">
+          <div className="flex justify-center pt-8 mx-8">
             <div className="w-full mx-auto p-7 bg-white shadow-md rounded-md border">
               <span className="text-2xl font-semibold text-gray-800 mb-4">
                 Extension
