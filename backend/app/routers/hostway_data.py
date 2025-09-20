@@ -89,23 +89,63 @@ def get_all_list(params:str, id: int, params2:str, token: str = Depends(get_toke
 @router.post("/post-data/{params}/{id}/{params2}")
 async def post_data(request: Request ,params:str, id: int, params2:str, token: str = Depends(get_token), db: Session = Depends(get_db)):
     try:
-        body = await request.json()
-        decode_token = decode_access_token(token)
-        user_id = decode_token['sub']
-        account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
-        if not account:
-            raise HTTPException(status_code = 404, detail="Hostaway account not found")
-        response = hostaway_post_request(account.hostaway_token, f"{params}/{id}/{params2}", body)
-        data = json.loads(response)
-        if data['status'] == 'success':
-            return {"detail": {"message": "data post successfully..", "data":  data}}
-        return {"detail": {"message": "Some error occured at post request.. ", "data": data}}
+        print(f"📤 Starting message send request: params={params}, id={id}, params2={params2}")
+        
+        # Step 1: Parse request body
+        try:
+            body = await request.json()
+            print(f"📤 Request body parsed: {body}")
+        except Exception as parse_error:
+            print(f"❌ Error parsing request body: {parse_error}")
+            raise HTTPException(status_code=400, detail=f"Invalid JSON in request body: {str(parse_error)}")
+        
+        # Step 2: Decode token
+        try:
+            decode_token = decode_access_token(token)
+            user_id = decode_token['sub']
+            print(f"👤 User ID from token: {user_id}")
+        except Exception as token_error:
+            print(f"❌ Error decoding token: {token_error}")
+            raise HTTPException(status_code=401, detail=f"Token validation failed: {str(token_error)}")
+        
+        # Step 3: Get Hostaway account
+        try:
+            account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
+            if not account:
+                print(f"❌ Hostaway account not found for user {user_id}")
+                raise HTTPException(status_code=404, detail="Hostaway account not found")
+            print(f"✅ Hostaway account found: {account.account_id}")
+        except Exception as db_error:
+            print(f"❌ Database error: {db_error}")
+            raise HTTPException(status_code=500, detail=f"Database error: {str(db_error)}")
+        
+        # Step 4: Make Hostaway API call
+        try:
+            print(f"🌐 Making Hostaway API call to: {params}/{id}/{params2}")
+            response = hostaway_post_request(account.hostaway_token, f"{params}/{id}/{params2}", body)
+            print(f"📨 Raw Hostaway response: {response}")
+            
+            data = json.loads(response)
+            print(f"📨 Parsed Hostaway response: {data}")
+            
+            if data.get('status') == 'success':
+                return {"detail": {"message": "data post successfully..", "data": data}}
+            else:
+                return {"detail": {"message": "Some error occurred at post request.. ", "data": data}}
+                
+        except Exception as hostaway_error:
+            print(f"❌ Hostaway API error: {hostaway_error}")
+            raise HTTPException(status_code=500, detail=f"Hostaway API error: {str(hostaway_error)}")
 
     except HTTPException as exc:
+        print(f"❌ HTTP Exception in post_data: {exc}")
         logging.error(f"****some error at hostaway post request*****{exc}")
         raise exc
     except Exception as e:
-        raise HTTPException(status_code = 500, detail=f"Error at hostaway post request: {str(e)}")
+        print(f"❌ General Exception in post_data: {e}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
 
 @router.post("/messages/webhook")
 async def webhook_messages(request: Request):
@@ -128,6 +168,64 @@ async def webhook_reservation(request: Request):
         return {"detail": {"message": "new reservation received", "received": body}}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error at reservation webhook: {str(e)}")
+
+@router.get("/debug/ai-status/{conversation_id}")
+async def debug_ai_status(conversation_id: int, db: Session = Depends(get_db)):
+    try:
+        from app.service.ai_enable import chack_ai_enable, check_ai_status
+        from app.models.user import HostawayAccount, ChatAIStatus
+        
+        # Get all accounts to test
+        accounts = db.query(HostawayAccount).all()
+        print(f"🔍 Found {len(accounts)} Hostaway accounts")
+        
+        results = []
+        for account in accounts:
+            test_message = {
+                "accountId": account.account_id,
+                "conversationId": conversation_id,
+                "body": "test message"
+            }
+            
+            user_id = chack_ai_enable(test_message, db)
+            if user_id:
+                is_ai_enabled = check_ai_status(user_id, conversation_id, db)
+                ai_status = db.query(ChatAIStatus).filter(
+                    ChatAIStatus.user_id == user_id, 
+                    ChatAIStatus.chat_id == conversation_id
+                ).first()
+                
+                results.append({
+                    "account_id": account.account_id,
+                    "user_id": user_id,
+                    "ai_enabled": is_ai_enabled,
+                    "ai_status_record": {
+                        "exists": ai_status is not None,
+                        "ai_enabled": ai_status.ai_enabled if ai_status else None,
+                        "is_active": ai_status.is_active if ai_status else None
+                    }
+                })
+        
+        return {"conversation_id": conversation_id, "results": results}
+    except Exception as e:
+        print(f"❌ Debug AI status error: {e}")
+        return {"error": str(e)}
+
+@router.post("/debug/trigger-ai")
+async def debug_trigger_ai(request: Request, db: Session = Depends(get_db)):
+    try:
+        from app.websocket import handle_webhook
+        
+        body = await request.json()
+        print(f"🧪 Manual AI trigger test: {body}")
+        
+        result = await handle_webhook(body)
+        print(f"🧪 Manual AI trigger result: {result}")
+        
+        return {"message": "AI trigger test completed", "result": result}
+    except Exception as e:
+        print(f"❌ Debug trigger AI error: {e}")
+        return {"error": str(e)}
 
 @router.post("/update-reservation")
 async def update_checkin_checkout(request: Request, token: str = Depends(get_token), db: Session = Depends(get_db)):

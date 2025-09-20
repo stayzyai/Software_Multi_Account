@@ -162,6 +162,16 @@ def revoke_hostaway_authentication(token):
 
 def hostaway_post_request(token, endpoint, data):
     try:
+        print(f"🌐 hostaway_post_request called with endpoint: {endpoint}")
+        print(f"🌐 HOSTAWAY_URL: {url}")
+        print(f"🌐 PROVIDER_ID: {provider_id}")
+        print(f"🌐 Provider string: {provider}")
+        
+        if not url:
+            raise Exception("HOSTAWAY_URL environment variable is not set")
+        if not provider_id:
+            raise Exception("PROVIDER_ID environment variable is not set")
+            
         conn = http.client.HTTPSConnection(url)
         payload = json.dumps(data)
         headers = {
@@ -171,13 +181,17 @@ def hostaway_post_request(token, endpoint, data):
         }
         api_url = f"/v1/{endpoint}"
         api_url = api_url+provider
+        print(f"🌐 Final API URL: {api_url}")
         logging.info("Hostaway url: ", api_url)
         conn.request("POST", api_url, payload, headers)
         res = conn.getresponse()
         data = res.read()
-        return data.decode("utf-8")
+        response_text = data.decode("utf-8")
+        print(f"🌐 Hostaway response: {response_text}")
+        return response_text
 
     except Exception as e:
+        print(f"❌ Error in hostaway_post_request: {e}")
         logging.error(f"Error at hostaway post request {str(e)}")
         raise HTTPException(status_code=500, detail=f"An error occurred at hostaway post request: {str(e)}")
 

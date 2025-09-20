@@ -54,8 +54,11 @@ def decode_access_token(token):
         )
     except Exception as e:
         logging.error("Error decoding token:", str(e))
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate token",
-            headers={"WWW-Authenticate": "Bearer"},)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 def get_token(authorization: str = Header(None)):
     if authorization is None:
