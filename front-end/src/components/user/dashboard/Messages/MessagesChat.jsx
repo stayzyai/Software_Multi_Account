@@ -67,7 +67,7 @@ useEffect(()=> {
     messages.forEach((msg, index) => {
       try {
         // Get the date string, with fallbacks
-        const dateString = msg?.time || msg?.createdAt || msg?.date;
+        const dateString = msg?.date || msg?.createdAt || msg?.time;
         
         if (!dateString) {
           // Skip messages without valid date
@@ -154,7 +154,7 @@ return (
                     <p className="p-2 py-4">{item.body}</p>
                     <div className="flex justify-end mt-2">
                       <p className="text-xs text-gray-500">
-                        {formatTimeWithTimezone(item?.time || item?.createdAt || item?.date)}
+                        {formatTimeWithTimezone(item?.date || item?.createdAt || item?.time)}
                       </p>
                     </div>
                   </div>

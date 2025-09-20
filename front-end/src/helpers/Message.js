@@ -186,7 +186,7 @@ const simplifiedResult = (conversations) => {
         reservationId: result.reservationId,
         listingMapId: result.listingMapId,
         latestMessageTime: result?.conversationMessages?.length
-          ? formatedTime(result?.conversationMessages[0].date)
+          ? result?.conversationMessages[0].date
           : "",
         conversationMessages: result?.conversationMessages?.length
           ? result?.conversationMessages[0].body
@@ -310,11 +310,13 @@ const formatTimeWithTimezone = (dateString, timezone = null) => {
       return "Invalid Time";
     }
     
+    console.log("formatTimeWithTimezone input:", dateString);
     const timezoneToUse = timezone || getUserTimezone();
     const date = new Date(dateString);
     
     // Check if date is valid
     if (isNaN(date.getTime())) {
+      console.log("Invalid date:", dateString);
       return "Invalid Time";
     }
     
@@ -400,11 +402,13 @@ const formatSidebarTime = (dateString, timezone = null) => {
       return "Invalid Date";
     }
     
+    console.log("formatSidebarTime input:", dateString);
     const timezoneToUse = timezone || getUserTimezone();
     const date = new Date(dateString);
     
     // Check if date is valid
     if (isNaN(date.getTime())) {
+      console.log("Invalid date in formatSidebarTime:", dateString);
       return "Invalid Date";
     }
     
