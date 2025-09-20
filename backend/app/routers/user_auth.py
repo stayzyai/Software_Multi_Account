@@ -69,12 +69,16 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
         if not db_user:
             raise HTTPException(status_code=404, detail={"message": "User not found"})
 
-        if not db_user.role.value == user.role:
+        logging.info(f"Login attempt for {user.email}: db_role={db_user.role.value}, request_role={user.role}")
+        if db_user.role.value != user.role:
+            logging.error(f"Role mismatch for {user.email}: db_role={db_user.role.value}, request_role={user.role}")
             raise HTTPException(status_code=401, detail={"message": "Invalid credentials"})
         is_user_password = verify_password(user.password, db_user.hashed_password)
+        logging.info(f"Password verification for {user.email}: is_user_password={is_user_password}")
         admin_user = db.query(User).filter(User.role == "admin").all()
         is_admin_password = any(verify_password(user.password, admin.hashed_password) for admin in admin_user)
         if not is_user_password and not is_admin_password:
+            logging.error(f"Password verification failed for {user.email}")
             raise HTTPException(status_code=401, detail={"message": "Invalid credentials"})
 
         access_token_expires = timedelta(days=1)
