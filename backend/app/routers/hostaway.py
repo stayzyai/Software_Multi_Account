@@ -5,6 +5,7 @@ from app.database.db import get_db
 from app.common.auth import get_token, decode_access_token
 from app.models.user import User, HostawayAccount, ChromeExtensionToken
 from app.common.hostaway_setup import hostaway_authentication, revoke_hostaway_authentication
+from app.common.error_logger import log_user_error
 import logging
 from datetime import datetime, timedelta
 from fastapi.responses import JSONResponse
@@ -23,16 +24,20 @@ def authentication(auth: HostawayAuthentication, db: Session = Depends(get_db), 
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
         if not auth or not auth.account_id.strip() or not auth.secret_id.strip():
+            print(f"🚨 400 Error: Empty account ID or secret ID")
             raise HTTPException(status_code=400, detail={"message": "account ID or client secret cannot be empty"})
 
         # Check if user already has 3 accounts (max limit)
         existing_accounts_count = db.query(HostawayAccount).filter(HostawayAccount.user_id == user.id, HostawayAccount.is_active == True).count()
+        print(f"🚨 Debug: User has {existing_accounts_count} existing accounts")
         if existing_accounts_count >= 3:
+            print(f"🚨 400 Error: Maximum of 3 Hostaway accounts allowed")
             raise HTTPException(status_code=400, detail={"message": "Maximum of 3 Hostaway accounts allowed"})
 
         # Check if account ID is already linked to a different user
         existing_account = db.query(HostawayAccount).filter(HostawayAccount.account_id == str(auth.account_id.strip()), HostawayAccount.user_id != user.id).first()
         if existing_account:
+            print(f"🚨 400 Error: Account ID linked to a different email address")
             raise HTTPException(status_code=400, detail={"message": "Account ID linked to a different email address"})
 
         # Check if this account already exists for this user
@@ -76,6 +81,20 @@ def authentication(auth: HostawayAuthentication, db: Session = Depends(get_db), 
     except HTTPException as exc:
         print(f"🚨 HTTPException at hostaway authentication: {exc}")
         logging.error(f"****HTTPException at hostaway authentication*****{exc}")
+        # Log user-specific error for 400/500 errors
+        if exc.status_code >= 400:
+            try:
+                decode_token = decode_access_token(token)
+                user_id = decode_token['sub']
+                log_user_error(
+                    db=db,
+                    user_id=user_id,
+                    error_type="Authentication",
+                    error_message=f"HTTP {exc.status_code}: {exc.detail}",
+                    endpoint="/hostaway/authentication"
+                )
+            except:
+                pass  # Don't let error logging break the main flow
         raise exc
     except Exception as e:
         print(f"🚨 General exception at hostaway authentication: {str(e)}")
@@ -85,6 +104,21 @@ def authentication(auth: HostawayAuthentication, db: Session = Depends(get_db), 
         logging.error(f"****General exception at hostaway authentication*****{str(e)}")
         logging.error(f"Exception type: {type(e).__name__}")
         logging.error(f"Traceback: {traceback.format_exc()}")
+        
+        # Log user-specific error for general exceptions
+        try:
+            decode_token = decode_access_token(token)
+            user_id = decode_token['sub']
+            log_user_error(
+                db=db,
+                user_id=user_id,
+                error_type="Authentication",
+                error_message=f"Exception: {type(e).__name__}: {str(e)}",
+                endpoint="/hostaway/authentication"
+            )
+        except:
+            pass  # Don't let error logging break the main flow
+            
         raise HTTPException(status_code=500, detail=f"Error at hostaway authentication: {str(e)} | Type: {type(e).__name__}")
 
 @router.get("/get-hostaway-accounts")

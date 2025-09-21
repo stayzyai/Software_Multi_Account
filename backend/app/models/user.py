@@ -94,4 +94,18 @@ class ChatAIStatus(Base):
     is_active = Column(Boolean, default=False, nullable=False)
     ai_enabled = Column(Boolean, default=False)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
+
+class UserError(Base):
+    __tablename__ = "user_errors"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete="CASCADE"), nullable=False)
+    error_type = Column(String, nullable=False)  # e.g., "Authentication", "API", "Data Sync"
+    error_message = Column(String, nullable=False)
+    endpoint = Column(String, nullable=True)  # Which API endpoint had the error
+    is_resolved = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    resolved_at = Column(DateTime, nullable=True)
+
+    def __repr__(self):
+        return f"<UserError(id={self.id}, user_id={self.user_id}, error_type={self.error_type}, is_resolved={self.is_resolved})>"
     
