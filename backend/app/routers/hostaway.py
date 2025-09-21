@@ -74,14 +74,18 @@ def authentication(auth: HostawayAuthentication, db: Session = Depends(get_db), 
             return JSONResponse(content={"detail": {"message": "User authenticated successfully on hostaway", "data": response}}, status_code=200)
 
     except HTTPException as exc:
+        print(f"🚨 HTTPException at hostaway authentication: {exc}")
         logging.error(f"****HTTPException at hostaway authentication*****{exc}")
         raise exc
     except Exception as e:
+        print(f"🚨 General exception at hostaway authentication: {str(e)}")
+        print(f"🚨 Exception type: {type(e).__name__}")
+        import traceback
+        print(f"🚨 Traceback: {traceback.format_exc()}")
         logging.error(f"****General exception at hostaway authentication*****{str(e)}")
         logging.error(f"Exception type: {type(e).__name__}")
-        import traceback
         logging.error(f"Traceback: {traceback.format_exc()}")
-        raise HTTPException(status_code=500, detail=f"Error at hostaway authentication: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error at hostaway authentication: {str(e)} | Type: {type(e).__name__}")
 
 @router.get("/get-hostaway-accounts")
 def get_hostaway_accounts(db: Session = Depends(get_db), token: str = Depends(get_token)):
