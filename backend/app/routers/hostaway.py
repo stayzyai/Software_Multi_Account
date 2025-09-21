@@ -15,6 +15,8 @@ router = APIRouter(prefix="/hostaway", tags=["hostaway"])
 @router.post("/authentication")
 def authentication(auth: HostawayAuthentication, db: Session = Depends(get_db), token: str = Depends(get_token)):
     try:
+        logging.info(f"Authentication request received: account_id={auth.account_id}, secret_id={'*' * len(auth.secret_id) if auth.secret_id else 'None'}")
+        
         decode_token = decode_access_token(token)
         user_id = decode_token['sub']
         user = db.query(User).filter(User.id == user_id).first()
@@ -37,6 +39,7 @@ def authentication(auth: HostawayAuthentication, db: Session = Depends(get_db), 
         account = db.query(HostawayAccount).filter(HostawayAccount.account_id == str(auth.account_id.strip()), HostawayAccount.user_id == user.id).first()
         if account:
             # Re-authenticate existing account
+            logging.info("Re-authenticating existing account")
             response = hostaway_authentication(auth.account_id, auth.secret_id)
             if 'access_token' in response:
                 token = response['access_token']
@@ -50,6 +53,7 @@ def authentication(auth: HostawayAuthentication, db: Session = Depends(get_db), 
                 return JSONResponse(content={"detail": {"message": "User reauthenticated successfully on hostaway", "data": response}}, status_code=200)
 
         # Create new account
+        logging.info("Creating new account")
         response = hostaway_authentication(auth.account_id, auth.secret_id)
         if 'access_token' in response:
             token = response['access_token']
@@ -70,9 +74,13 @@ def authentication(auth: HostawayAuthentication, db: Session = Depends(get_db), 
             return JSONResponse(content={"detail": {"message": "User authenticated successfully on hostaway", "data": response}}, status_code=200)
 
     except HTTPException as exc:
-        logging.error(f"****some error at hostaway authentication*****{exc}")
+        logging.error(f"****HTTPException at hostaway authentication*****{exc}")
         raise exc
     except Exception as e:
+        logging.error(f"****General exception at hostaway authentication*****{str(e)}")
+        logging.error(f"Exception type: {type(e).__name__}")
+        import traceback
+        logging.error(f"Traceback: {traceback.format_exc()}")
         raise HTTPException(status_code=500, detail=f"Error at hostaway authentication: {str(e)}")
 
 @router.get("/get-hostaway-accounts")
