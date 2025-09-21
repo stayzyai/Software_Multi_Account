@@ -231,29 +231,6 @@ def remove_specific_account(account_id: int, db: Session = Depends(get_db), toke
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error at remove specific account: {str(e)}")
 
-@router.put("/set-primary/{account_id}")
-def set_primary_account(account_id: int, db: Session = Depends(get_db), token: str = Depends(get_token)):
-    try:
-        decode_token = decode_access_token(token)
-        user_id = decode_token['sub']
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        
-        account = db.query(HostawayAccount).filter(HostawayAccount.id == account_id, HostawayAccount.user_id == user_id, HostawayAccount.is_active == True).first()
-        if not account:
-            raise HTTPException(status_code=404, detail="Account not found")
-        
-        # No primary account logic needed - all accounts are equal
-        db.commit()
-        
-        return JSONResponse(content={"detail": {"message": "Primary account updated successfully"}}, status_code=200)
-    except HTTPException as exc:
-        logging.error(f"****error at set primary account*****{exc}")
-        raise exc
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error at set primary account: {str(e)}")
-
 @router.put("/rename-account/{account_id}")
 def rename_account(account_id: int, new_name: str, db: Session = Depends(get_db), token: str = Depends(get_token)):
     try:
