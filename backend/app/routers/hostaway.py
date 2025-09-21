@@ -29,8 +29,8 @@ def authentication(auth: HostawayAuthentication, db: Session = Depends(get_db), 
             raise HTTPException(status_code=400, detail={"message": "Maximum of 3 Hostaway accounts allowed"})
 
         # Check if account ID is already linked to a different user
-        exisiting_account = db.query(HostawayAccount).filter(HostawayAccount.account_id == str(auth.account_id.strip()), HostawayAccount.user_id != user.id).first()
-        if exisiting_account:
+        existing_account = db.query(HostawayAccount).filter(HostawayAccount.account_id == str(auth.account_id.strip()), HostawayAccount.user_id != user.id).first()
+        if existing_account:
             raise HTTPException(status_code=400, detail={"message": "Account ID linked to a different email address"})
 
         # Check if this account already exists for this user
