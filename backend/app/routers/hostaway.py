@@ -166,8 +166,8 @@ def get_hostaway_account(db: Session = Depends(get_db), token: str = Depends(get
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        # Get primary account for backward compatibility
-        account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user.id, HostawayAccount.is_primary == True, HostawayAccount.is_active == True).first()
+        # Get first active account for backward compatibility
+        account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user.id, HostawayAccount.is_active == True).first()
         current_time = datetime.now()
         if not account:
             return JSONResponse(content={"detail": {"valid": False, "message": "hostaway account does not exist"}}, status_code=404)
@@ -218,16 +218,7 @@ def remove_specific_account(account_id: int, db: Session = Depends(get_db), toke
         if not account:
             raise HTTPException(status_code=404, detail="Account not found")
         
-        # If removing primary account, set another account as primary
-        if account.is_primary:
-            other_account = db.query(HostawayAccount).filter(
-                HostawayAccount.user_id == user_id, 
-                HostawayAccount.id != account_id,
-                HostawayAccount.is_active == True
-            ).first()
-            if other_account:
-                other_account.is_primary = True
-                db.commit()
+        # No primary account logic needed
         
         # Soft delete by setting is_active to False
         account.is_active = False
@@ -253,15 +244,7 @@ def set_primary_account(account_id: int, db: Session = Depends(get_db), token: s
         if not account:
             raise HTTPException(status_code=404, detail="Account not found")
         
-        # Remove primary status from all other accounts
-        db.query(HostawayAccount).filter(
-            HostawayAccount.user_id == user_id,
-            HostawayAccount.id != account_id,
-            HostawayAccount.is_active == True
-        ).update({"is_primary": False})
-        
-        # Set this account as primary
-        account.is_primary = True
+        # No primary account logic needed - all accounts are equal
         db.commit()
         
         return JSONResponse(content={"detail": {"message": "Primary account updated successfully"}}, status_code=200)
