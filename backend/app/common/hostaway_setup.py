@@ -109,8 +109,13 @@ def hostaway_authentication(account_id, secret_id):
         hostaway_account_id = account_id
         client_secret = secret_id
         
+        # Get hostname from environment variable
+        hostaway_url = os.getenv('HOSTAWAY_URL')
+        if not hostaway_url:
+            raise HTTPException(status_code=500, detail="HOSTAWAY_URL environment variable is not set")
+        
         # Extract hostname from URL (remove https://)
-        hostname = url.replace('https://', '').replace('http://', '')
+        hostname = hostaway_url.replace('https://', '').replace('http://', '')
         conn = http.client.HTTPSConnection(hostname)
         payload = f"grant_type=client_credentials&client_id={hostaway_account_id}&client_secret={client_secret}&scope=general"
         headers = {
