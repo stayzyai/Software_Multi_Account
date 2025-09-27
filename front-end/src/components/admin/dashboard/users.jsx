@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { Pencil, Trash2, AlertCircle } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +21,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Header from "./Header";
-import UserErrors from "./UserErrors";
 import api from "@/api/api";
 import Shimmer from "../../common/shimmer/userShimmer";
 import Pagination from "@/components/ui/pagination";
@@ -29,7 +28,6 @@ import { toast } from "sonner";
 
 export default function Users({ setOpenModal }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isErrorsModalOpen, setIsErrorsModalOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
   const [editedUser, setEditedUser] = useState({
     firstname: "",
@@ -78,16 +76,6 @@ export default function Users({ setOpenModal }) {
     setIsModalOpen(false);
     setCurrentUser(null);
     setEditedUser({ firstname: "", lastname: "", email: "", password: "" });
-  };
-
-  const openErrorsModal = (user) => {
-    setCurrentUser(user);
-    setIsErrorsModalOpen(true);
-  };
-
-  const closeErrorsModal = () => {
-    setIsErrorsModalOpen(false);
-    setCurrentUser(null);
   };
 
   const handleInputChange = (e) => {
@@ -157,24 +145,13 @@ export default function Users({ setOpenModal }) {
                           {new Date(user.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openModal(user)}
-                              title="Edit User"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => openErrorsModal(user)}
-                              title="View Errors"
-                            >
-                              <AlertCircle className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openModal(user)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -280,14 +257,6 @@ export default function Users({ setOpenModal }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* User Errors Modal */}
-      <UserErrors
-        userId={currentUser?.id}
-        userName={currentUser?.firstname}
-        isOpen={isErrorsModalOpen}
-        onClose={closeErrorsModal}
-      />
     </div>
   );
 }

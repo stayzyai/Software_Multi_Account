@@ -85,3 +85,4 @@ def get_user_errors(db: Session, user_id: int, limit: int = 10):
         print(f"❌ Failed to get user errors: {str(e)}")
         logging.error(f"Failed to get user errors: {str(e)}")
         return []
+
