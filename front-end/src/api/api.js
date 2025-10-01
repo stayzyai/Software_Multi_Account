@@ -5,7 +5,7 @@ import { getItem } from "../helpers/localstorage";
 import { jwtDecode } from "jwt-decode";
 
 //const baseURL = import.meta.env.VITE_API_HOST;
-const baseURL = import.meta.env.VITE_API_HOST || "http://3.82.36.110";
+const baseURL = import.meta.env.VITE_API_HOST || "http://3.82.36.110:8000";
 
 
 
