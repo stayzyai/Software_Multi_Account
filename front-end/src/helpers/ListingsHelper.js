@@ -1,5 +1,6 @@
 import api from "@/api/api";
 import { toast } from "sonner";
+import { getUserTimezone } from "./Message";
 
 const getOccupancy = (reservations, id) => {
   const filteredReservations = reservations.filter(
@@ -164,11 +165,14 @@ const formatReservations = (reservations, listingMapId) => {
     const res = sortedReservations[i];
     const nextRes = sortedReservations[i + 1];
 
+    const userTimezone = getUserTimezone();
     const startDate = new Date(res?.arrivalDate).toLocaleDateString("en-US", {
+      timeZone: userTimezone,
       month: "short",
       day: "numeric",
     });
     const endDate = new Date(res?.departureDate).toLocaleDateString("en-US", {
+      timeZone: userTimezone,
       month: "short",
       day: "numeric",
     });
@@ -190,7 +194,7 @@ const formatReservations = (reservations, listingMapId) => {
       const gapStart = endDate;
       const gapEnd = new Date(nextRes?.arrivalDate).toLocaleDateString(
         "en-US",
-        { month: "short", day: "numeric" }
+        { timeZone: userTimezone, month: "short", day: "numeric" }
       );
 
       bookings.push(null);

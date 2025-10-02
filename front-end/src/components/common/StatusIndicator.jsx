@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatTimeWithTimezone } from '../../helpers/Message';
 
 /**
  * Status indicator component for polling status
@@ -11,7 +12,7 @@ const StatusIndicator = ({ isPolling, lastUpdate, error, isActive, pollingInterv
     
     if (diff < 60) return `${diff}s ago`;
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    return date.toLocaleTimeString();
+    return formatTimeWithTimezone(date.toISOString());
   };
 
   const getStatusColor = () => {

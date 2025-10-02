@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
-import { createTicket, updateTask } from "../../../../helpers/Message";
+import { createTicket, updateTask, getUserTimezone } from "../../../../helpers/Message";
 import { toast } from "sonner";
 import {  getHostawayTask, getHostawayUser} from "../../../../helpers/TaskHelper";
 import { setHostawayUsers } from "../../../../store/hostawayUserSlice";
@@ -68,7 +68,16 @@ const AddTask = ({
       priority: urgency,
       reservationId: chatInfo ? (chatInfo[0]?.reservationId || null) :editedData && editedData?.reservationId,
       listingMapId: chatInfo ? (chatInfo[0]?.listingMapId || null) :editedData && editedData?.listingMapId,
-      canStartFrom: new Date().toISOString().slice(0, 19).replace("T", " "),
+      canStartFrom: new Date().toLocaleString('en-CA', {
+        timeZone: getUserTimezone(),
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      }).replace(',', ''),
     };
     let response;
 

@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Pencil, Trash2 } from "lucide-react";
+import { getUserTimezone } from "../../../helpers/Message";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,7 +143,12 @@ export default function Users({ setOpenModal }) {
                         <TableCell>{user.firstname}</TableCell>
                         <TableCell>{user.email}</TableCell>
                         <TableCell>
-                          {new Date(user.created_at).toLocaleDateString()}
+                          {new Date(user.created_at).toLocaleDateString('en-US', {
+                            timeZone: getUserTimezone(),
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric'
+                          })}
                         </TableCell>
                         <TableCell>
                           <Button

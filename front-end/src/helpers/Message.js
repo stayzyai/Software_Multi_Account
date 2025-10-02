@@ -557,10 +557,22 @@ const getTimeDetails = (currentReservation) => {
   };
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
-    const [year, month, day] = dateString
-      ? dateString.split("-")
-      : ["", "", ""];
-    return `${month}/${day}/${year}`;
+    try {
+      const userTimezone = getUserTimezone();
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', {
+        timeZone: userTimezone,
+        month: '2-digit',
+        day: '2-digit',
+        year: 'numeric'
+      });
+    } catch (error) {
+      // Fallback to original format if there's an error
+      const [year, month, day] = dateString
+        ? dateString.split("-")
+        : ["", "", ""];
+      return `${month}/${day}/${year}`;
+    }
   };
   const timeDetails = [
     {
@@ -580,8 +592,17 @@ const getTimeDetails = (currentReservation) => {
 const getBookingdetails = (currentReservation) => {
   const { departureDate, channelName, numberOfGuests, nights, totalPrice } =
     currentReservation;
-  const reservationStatus =
-    new Date(departureDate) < new Date() ? "Not checked in" : "Checked in";
+  
+  // Use timezone-aware date comparison
+  const userTimezone = getUserTimezone();
+  const now = new Date();
+  const departure = new Date(departureDate);
+  
+  // Convert both dates to the user's timezone for comparison
+  const nowInUserTz = new Date(now.toLocaleString('en-US', { timeZone: userTimezone }));
+  const departureInUserTz = new Date(departure.toLocaleString('en-US', { timeZone: userTimezone }));
+  
+  const reservationStatus = departureInUserTz < nowInUserTz ? "Not checked in" : "Checked in";
   const channel = channelName === "direct" ? "Hostaway" : channelName;
   const bookingDetails = [
     { label: "Resrevation", value: reservationStatus },

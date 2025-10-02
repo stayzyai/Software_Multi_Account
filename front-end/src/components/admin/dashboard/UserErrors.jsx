@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { getUserTimezone } from "../../../helpers/Message";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -184,7 +185,12 @@ export default function UserErrors({ userId, userName, isOpen, onClose }) {
                           </TableCell>
                           <TableCell>
                             <span className="text-sm">
-                              {new Date(error.created_at).toLocaleDateString()}
+                              {new Date(error.created_at).toLocaleDateString('en-US', {
+                                timeZone: getUserTimezone(),
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })}
                             </span>
                           </TableCell>
                           <TableCell>

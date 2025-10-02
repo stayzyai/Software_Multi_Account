@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { getUserTimezone } from "../../../helpers/Message";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart, Users, Ticket } from "lucide-react";
 import Header from "./Header";
@@ -131,7 +132,12 @@ const Home = ({ setOpenModal }) => {
                             <TableCell>{user.firstname}</TableCell>
                             <TableCell>{user.email}</TableCell>
                             <TableCell>
-                              {new Date(user.created_at).toLocaleDateString()}
+                              {new Date(user.created_at).toLocaleDateString('en-US', {
+                                timeZone: getUserTimezone(),
+                                year: 'numeric',
+                                month: 'short',
+                                day: 'numeric'
+                              })}
                             </TableCell>
                           </TableRow>
                         ))}
