@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.schemas.user import UserUpdate, ChangePasswordRequest, UserProfile, ChatRequest, Role
 from app.models.user import User, ChromeExtensionToken, Subscription, ChatAIStatus
 from app.service.chat_service import get_current_user, get_user_subscription, update_ai_status, get_active_ai_chats
+from app.service.ai_catchup import ai_catchup_service
 from app.models.user import ChromeExtensionToken, Subscription, HostawayAccount
 from app.database.db import get_db
 from app.common.auth import verify_password, get_password_hash, decode_access_token, get_token, get_hostaway_key
@@ -829,3 +830,56 @@ def get_user_profile(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail={"message": str(e)})
+
+@router.post("/ai-catchup/{chat_id}")
+async def trigger_ai_catchup(
+    chat_id: int,
+    db: Session = Depends(get_db),
+    token: str = Depends(get_token)
+):
+    """
+    Trigger AI catchup when AI is toggled back on for a chat.
+    This will analyze recent unanswered messages and respond appropriately.
+    """
+    try:
+        # Get current user
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail={"message": "User not found"})
+        
+        # Check if AI is actually enabled for this chat
+        chat_status = db.query(ChatAIStatus).filter(
+            ChatAIStatus.user_id == user_id,
+            ChatAIStatus.chat_id == chat_id
+        ).first()
+        
+        if not chat_status or not chat_status.ai_enabled:
+            raise HTTPException(status_code=400, detail={"message": "AI is not enabled for this chat"})
+        
+        # Trigger the catchup process
+        print(f"🔄 Triggering AI catchup for user {user_id}, chat {chat_id}")
+        results = await ai_catchup_service.trigger_ai_catchup(user_id, chat_id)
+        
+        if results.get("success"):
+            return {
+                "detail": {
+                    "message": "AI catchup completed successfully",
+                    "data": results
+                }
+            }
+        else:
+            return {
+                "detail": {
+                    "message": f"AI catchup completed with issues: {results.get('message', 'Unknown error')}",
+                    "data": results
+                }
+            }
+            
+    except HTTPException as exc:
+        raise exc
+    except Exception as e:
+        print(f"❌ Error in AI catchup endpoint: {e}")
+        raise HTTPException(status_code=500, detail={"message": f"Error triggering AI catchup: {str(e)}"})

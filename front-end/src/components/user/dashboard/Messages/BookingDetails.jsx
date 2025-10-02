@@ -5,6 +5,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { toast } from "sonner";
 import { setUser } from "../../../../store/userSlice";
 import { useEffect } from "react";
+import { triggerAICatchup } from "../../../../api/api";
 import {getAllListings} from "../../../../helpers/Message"
 import { useNavigate } from "react-router-dom";
 
@@ -133,9 +134,24 @@ const BookingDetails = ({
         chat_list: updatedChatList
       }));
       
-      // Show appropriate message
+      // Show appropriate message and trigger catchup if enabling AI
       if (!isCurrentlyEnabled) {
         toast.success("AI enabled for this chat");
+        
+        // Trigger AI catchup for unanswered messages
+        try {
+          console.log("🔄 Triggering AI catchup for chat:", chatId);
+          const catchupResult = await triggerAICatchup(chatId);
+          
+          if (catchupResult?.detail?.data?.sent_responses > 0) {
+            toast.info(`AI caught up and sent ${catchupResult.detail.data.sent_responses} response(s) to recent messages`);
+          } else if (catchupResult?.detail?.data?.processed_conversations > 0) {
+            console.log("✅ AI catchup completed - no responses needed");
+          }
+        } catch (error) {
+          console.error("❌ AI catchup failed:", error);
+          // Don't show error to user as the main toggle still worked
+        }
       } else {
         toast.info("AI disabled for this chat");
       }

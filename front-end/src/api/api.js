@@ -110,4 +110,15 @@ export const api = {
   delete: (url, data) => axiosInstance.delete(url, data),
 };
 
+// AI Catchup API function
+export const triggerAICatchup = async (chatId) => {
+  try {
+    const response = await axiosInstance.post(`/user/ai-catchup/${chatId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error triggering AI catchup:", error);
+    throw error;
+  }
+};
+
 export default api;
