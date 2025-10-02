@@ -24,6 +24,13 @@ const mapStatus = (status) => {
   return statusMap[status] || "Pending";
 };
 
+const getUrgencyText = (priority) => {
+  if (priority === 1 || priority === "1") return "Urgent";
+  if (priority === 2 || priority === "2") return "Normal";
+  if (priority === 3 || priority === "3") return "Low";
+  return "Normal"; // Default fallback
+};
+
 const transformData = (tasks, userData) => {
   return tasks.map((task) => {
     const user = userData.find((item) => item.id === task.assigneeUserId);
@@ -57,10 +64,10 @@ const getAllTask = (tasks, listings, users) => {
 
     return {
       id: task.id,
-      title: task?.title,
-      address: listing?.address,
-      urgency: task?.priority ? task.priority : "Normal",
-      assigned: user ? user.firstName : "Unassigned",
+      title: task?.title || "Untitled Task",
+      address: listing?.address || listing?.name || "No address available",
+      urgency: getUrgencyText(task?.priority),
+      assigned: user ? `${user.firstName} ${user.lastName || ''}`.trim() : "Unassigned",
       date: formatDate(task.canStartFrom?.split(" ")[0]),
     };
   });
@@ -77,10 +84,10 @@ const getCompletedTasks = (tasks, listings, users) => {
 
       return {
         id: task.id,
-        title: task?.title,
-        address: listing?.address || "No address available",
-        urgency: task?.priority ? (task.priority === 1 ?"Urgent" :"Normal") : "Normal",
-        assigned: user ? user.firstName : "Unassigned",
+        title: task?.title || "Untitled Task",
+        address: listing?.address || listing?.name || "No address available",
+        urgency: getUrgencyText(task?.priority),
+        assigned: user ? `${user.firstName} ${user.lastName || ''}`.trim() : "Unassigned",
         date: formatDate(task.canStartFrom?.split(" ")[0]),
       };
     });
@@ -96,10 +103,10 @@ const getNonCompletedTasks = (tasks, listings, users) => {
       const user = users?.find((item) => item.id === task?.assigneeUserId);
       return {
         id: task.id,
-        title: task?.title,
-        address: listing?.address || "No address available",
-        urgency: task?.priority ? (task.priority === 1 ?"Urgent" :"Normal") : "Normal",
-        assigned: user ? user.firstName : "Unassigned",
+        title: task?.title || "Untitled Task",
+        address: listing?.address || listing?.name || "No address available",
+        urgency: getUrgencyText(task?.priority),
+        assigned: user ? `${user.firstName} ${user.lastName || ''}`.trim() : "Unassigned",
         date: formatDate(task.canStartFrom?.split(" ")[0]),
       };
     });
@@ -164,16 +171,16 @@ const formatedTaskDetails = async (
 
   return {
     id: task?.id,
-    title: task?.title,
-    status: task?.status === "inProgress" ? "In Progress" : task.status,
+    title: task?.title || "Untitled Task",
+    status: task?.status === "inProgress" ? "In Progress" : mapStatus(task?.status),
     startTime: formatDate(date),
-    priority: task?.priority || "Normal",
-    listingName: listing ? listing.name : "Unknown Listing",
-    listingAddress: listing?.address,
+    priority: getUrgencyText(task?.priority),
+    listingName: listing?.name || "Unknown Listing",
+    listingAddress: listing?.address || "No address available",
     reservationId: task?.reservationId,
-    description: task?.description,
-    assignedName: user ? user?.firstName : "Unassigned",
-    assigned: task && task?.assigneeUserId ? task?.assigneeUserId : user && user?.firstName,
+    description: task?.description || "No description available",
+    assignedName: user ? `${user.firstName} ${user.lastName || ''}`.trim() : "Unassigned",
+    assigned: user ? `${user.firstName} ${user.lastName || ''}`.trim() : "Unassigned",
     chatId: conversation?.id,
   };
 };

@@ -55,6 +55,39 @@ def get_all_list(params:str, limit: Optional[int] = None, includeResources: Opti
             raise HTTPException(status_code = 404, detail="Hostaway account not found")
         response = hostaway_get_request(account.hostaway_token, params, None, limit, None, includeResources)
         data = json.loads(response)
+        
+        # Filter tasks to only show those created/scheduled after account integration
+        if data['status'] == 'success' and params == 'tasks':
+            # Get all active accounts for the user to find the earliest integration date
+            all_accounts = db.query(HostawayAccount).filter(
+                HostawayAccount.user_id == user_id, 
+                HostawayAccount.is_active == True
+            ).all()
+            
+            if all_accounts:
+                # Use the earliest integration date among all accounts
+                integration_date = min(account.created_at for account in all_accounts)
+                filtered_tasks = []
+                
+                for task in data.get('result', []):
+                    task_time = task.get("canStartFrom", None)
+                    if task_time:
+                        try:
+                            from datetime import datetime
+                            task_date = datetime.strptime(task_time, "%Y-%m-%d %H:%M:%S")
+                            # Only include tasks that are scheduled after the earliest account integration
+                            if task_date >= integration_date:
+                                filtered_tasks.append(task)
+                        except ValueError:
+                            # If we can't parse the date, include the task to be safe
+                            filtered_tasks.append(task)
+                    else:
+                        # If no date, include the task to be safe
+                        filtered_tasks.append(task)
+                
+                # Update the data with filtered tasks
+                data['result'] = filtered_tasks
+        
         if data['status'] == 'success':
             return {"detail": {"message": "User authenticated successfully on hostaway", "data":  data}}
         return {"detail": {"message": "Some error occured... ", "data": data}}
