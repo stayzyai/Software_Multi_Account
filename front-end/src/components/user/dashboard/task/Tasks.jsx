@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { updateTask } from "../../../../helpers/Message";
@@ -11,6 +11,34 @@ const Tasks = ({ tasks, showCompleted = false, onTasksUpdate }) => {
   const [dateFilter, setDateFilter] = useState("All");
   const [selectedTasks, setSelectedTasks] = useState(new Set());
   const [isLoading, setIsLoading] = useState(false);
+
+  const filterByDate = (taskDate) => {
+    const today = dayjs();
+    const taskDay = dayjs(taskDate, "YYYY-MM-DD");
+
+    switch (dateFilter) {
+      case "Today":
+        return taskDay.isSame(today, "day");
+      case "Yesterday":
+        return taskDay.isSame(today.subtract(1, "day"), "day");
+      case "Last 7 Days":
+        return taskDay.isAfter(today.subtract(7, "day"));
+      case "Last Month":
+        return taskDay.isAfter(today.subtract(1, "month"));
+      default:
+        return true;
+    }
+  };
+
+  const filteredTasks = useMemo(() => {
+    return tasks?.filter((task) => {
+      return (
+        (urgencyFilter === "All" || task.urgency === urgencyFilter) &&
+        (assignedFilter === "All" || task.assigned === assignedFilter) &&
+        filterByDate(task.date)
+      );
+    });
+  }, [tasks, urgencyFilter, assignedFilter, dateFilter]);
 
   const handleClick = (id, event) => {
     // Don't navigate if clicking on checkbox
@@ -108,32 +136,6 @@ const Tasks = ({ tasks, showCompleted = false, onTasksUpdate }) => {
       setIsLoading(false);
     }
   };
-
-  const filterByDate = (taskDate) => {
-    const today = dayjs();
-    const taskDay = dayjs(taskDate, "YYYY-MM-DD");
-
-    switch (dateFilter) {
-      case "Today":
-        return taskDay.isSame(today, "day");
-      case "Yesterday":
-        return taskDay.isSame(today.subtract(1, "day"), "day");
-      case "Last 7 Days":
-        return taskDay.isAfter(today.subtract(7, "day"));
-      case "Last Month":
-        return taskDay.isAfter(today.subtract(1, "month"));
-      default:
-        return true;
-    }
-  };
-
-  const filteredTasks = tasks?.filter((task) => {
-    return (
-      (urgencyFilter === "All" || task.urgency === urgencyFilter) &&
-      (assignedFilter === "All" || task.assigned === assignedFilter) &&
-      filterByDate(task.date)
-    );
-  });
 
   return (
     <div className="overflow-x-auto px-4 pt-16 md:pl-10 md:pr-4 w-full">
