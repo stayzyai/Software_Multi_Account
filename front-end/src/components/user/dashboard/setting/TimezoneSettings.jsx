@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { updateUserTimezone } from "../../../../store/userSlice";
+import { notifyTimezoneChange } from "../../../../helpers/Message";
 import { toast } from "sonner";
 import { Clock } from "lucide-react";
 
@@ -101,6 +102,9 @@ const TimezoneSettings = () => {
     
     // Update Redux store immediately for better UX
     dispatch(updateUserTimezone(timezone));
+    
+    // Notify all components that timezone has changed
+    notifyTimezoneChange();
     
     // Show success message
     toast.success(`Timezone updated to ${timezones.find(tz => tz.value === timezone)?.label}`);

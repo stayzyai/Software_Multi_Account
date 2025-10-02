@@ -5,7 +5,8 @@ from typing import List, Dict, Optional, Tuple
 from sqlalchemy.orm import Session
 from app.database.db import get_db
 from app.models.user import ChatAIStatus, HostawayAccount
-from app.common.hostaway_setup import hostaway_get_request, get_hostaway_token
+from app.common.hostaway_setup import hostaway_get_request
+from app.service.ai_enable import get_hostaway_token
 from app.service.ai_enable import (
     get_parsed_conversation, 
     get_ai_response, 

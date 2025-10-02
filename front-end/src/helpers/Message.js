@@ -269,8 +269,22 @@ const formatDateTime = (date) => {
 };
 
 // Timezone Helper Functions
+// Timezone change event for triggering re-renders
+let timezoneChangeListeners = [];
+
+export const addTimezoneChangeListener = (callback) => {
+  timezoneChangeListeners.push(callback);
+};
+
+export const removeTimezoneChangeListener = (callback) => {
+  timezoneChangeListeners = timezoneChangeListeners.filter(listener => listener !== callback);
+};
+
+export const notifyTimezoneChange = () => {
+  timezoneChangeListeners.forEach(listener => listener());
+};
+
 const getUserTimezone = () => {
-  try {
     // Try to get timezone from Redux store (if available)
     const storedState = localStorage.getItem('persist:user');
     if (storedState) {
