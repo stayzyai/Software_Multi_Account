@@ -291,24 +291,29 @@ const getUserTimezone = () => {
     if (storedState) {
       const parsedState = JSON.parse(storedState);
       if (parsedState.timezone) {
-        const timezone = JSON.parse(parsedState.timezone);
+        // The timezone might be stored as a string or JSON string
+        let timezone;
+        try {
+          timezone = JSON.parse(parsedState.timezone);
+        } catch {
+          // If it's not JSON, use it directly
+          timezone = parsedState.timezone;
+        }
+        
         if (timezone && typeof timezone === 'string') {
+          console.log('Using stored timezone:', timezone);
           return timezone;
         }
       }
     }
     
-    // Fallback: Try to get browser timezone
-    const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    if (browserTimezone) {
-      return browserTimezone;
-    }
+    console.log('No stored timezone found, using Central Time as default');
+    // Don't fall back to browser timezone - use Central Time as default
+    return "America/Chicago";
   } catch (error) {
     console.log("Could not detect timezone:", error);
+    return "America/Chicago";
   }
-  
-  // Final fallback to Central Time
-  return "America/Chicago";
 };
 
 const getTimezoneAbbreviation = (timezone) => {
