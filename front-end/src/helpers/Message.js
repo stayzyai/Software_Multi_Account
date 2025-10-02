@@ -271,16 +271,28 @@ const formatDateTime = (date) => {
 // Timezone Helper Functions
 const getUserTimezone = () => {
   try {
-    // Try to get browser timezone
+    // Try to get timezone from Redux store (if available)
+    const storedState = localStorage.getItem('persist:user');
+    if (storedState) {
+      const parsedState = JSON.parse(storedState);
+      if (parsedState.timezone) {
+        const timezone = JSON.parse(parsedState.timezone);
+        if (timezone && typeof timezone === 'string') {
+          return timezone;
+        }
+      }
+    }
+    
+    // Fallback: Try to get browser timezone
     const browserTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (browserTimezone) {
       return browserTimezone;
     }
   } catch (error) {
-    console.log("Could not detect browser timezone:", error);
+    console.log("Could not detect timezone:", error);
   }
   
-  // Fallback to Central Time
+  // Final fallback to Central Time
   return "America/Chicago";
 };
 

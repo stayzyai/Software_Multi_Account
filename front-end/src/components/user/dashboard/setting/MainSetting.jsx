@@ -1,6 +1,7 @@
 import Header from "../Header";
 import HostawayAccount from "./HostawayAccount";
 import UserProfile from "./Userprofile";
+import TimezoneSettings from "./TimezoneSettings";
 import { useSelector, useDispatch } from "react-redux";
 import { updateMasterAIStatus } from "../../../../store/userSlice";
 import { toast } from "sonner";
@@ -63,6 +64,9 @@ const MainSetting = () => {
           </div>
         </div>
       </div>
+
+      {/* Timezone Settings - Separate section */}
+      <TimezoneSettings />
 
       {/* Hostaway Account - Separate section */}
       <HostawayAccount />
