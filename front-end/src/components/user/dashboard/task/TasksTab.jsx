@@ -52,6 +52,25 @@ const TasksTab = () => {
     }
   };
 
+  const handleTasksUpdate = async () => {
+    // Refresh tasks data after bulk operations
+    try {
+      const taskData = await getHostawayTask();
+      dispatch(setTasks(taskData));
+      
+      const listingData = listings.length === 0 ? await getAllListings() : listings;
+      const userData = users.length === 0 ? await getHostawayUser() : users;
+
+      const allTask = getNonCompletedTasks(taskData, listingData, userData);
+      const allCompletedTask = getCompletedTasks(taskData, listingData, userData);
+      
+      setCompletedTask(allCompletedTask);
+      setFormatedTask(allTask);
+    } catch (error) {
+      console.error("Error refreshing tasks: ", error);
+    }
+  };
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -62,9 +81,17 @@ const TasksTab = () => {
         <Header title={"Tasks"} />
         {!loading ? (
           <>
-            <Tasks tasks={formatedTask} />
+            <Tasks 
+              tasks={formatedTask} 
+              showCompleted={false}
+              onTasksUpdate={handleTasksUpdate}
+            />
             {showCompeltedTask && (
-              <Tasks tasks={completedTask} />
+              <Tasks 
+                tasks={completedTask} 
+                showCompleted={true}
+                onTasksUpdate={handleTasksUpdate}
+              />
             )}
             <div className="flex text-base w-full justify-center py-4 cursor-pointer">
               <button

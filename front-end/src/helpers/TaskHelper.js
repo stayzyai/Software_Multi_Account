@@ -68,7 +68,7 @@ const getAllTask = (tasks, listings, users) => {
       address: listing?.address || listing?.name || "No address available",
       urgency: getUrgencyText(task?.priority),
       assigned: user ? `${user.firstName} ${user.lastName || ''}`.trim() : "Unassigned",
-      date: formatDate(task.canStartFrom?.split(" ")[0]),
+      date: getTaskDate(task),
     };
   });
 };
@@ -88,7 +88,7 @@ const getCompletedTasks = (tasks, listings, users) => {
         address: listing?.address || listing?.name || "No address available",
         urgency: getUrgencyText(task?.priority),
         assigned: user ? `${user.firstName} ${user.lastName || ''}`.trim() : "Unassigned",
-        date: formatDate(task.canStartFrom?.split(" ")[0]),
+        date: getTaskDate(task),
       };
     });
 };
@@ -107,7 +107,7 @@ const getNonCompletedTasks = (tasks, listings, users) => {
         address: listing?.address || listing?.name || "No address available",
         urgency: getUrgencyText(task?.priority),
         assigned: user ? `${user.firstName} ${user.lastName || ''}`.trim() : "Unassigned",
-        date: formatDate(task.canStartFrom?.split(" ")[0]),
+        date: getTaskDate(task),
       };
     });
 };
@@ -152,6 +152,59 @@ const formatDate = (dateString) => {
   return `${month}/${day}/${year}`;
 };
 
+const getTaskDate = (task) => {
+  // Try multiple date fields in order of preference
+  const dateFields = [
+    task?.canStartFrom,
+    task?.createdAt,
+    task?.created_at,
+    task?.dateCreated,
+    task?.date_created,
+    task?.startDate,
+    task?.start_date
+  ];
+  
+  for (const dateField of dateFields) {
+    if (dateField) {
+      // Handle different date formats
+      let dateStr = dateField;
+      
+      // If it's a full datetime string, extract just the date part
+      if (dateStr.includes(' ')) {
+        dateStr = dateStr.split(' ')[0];
+      }
+      
+      // If it's an ISO string, extract just the date part
+      if (dateStr.includes('T')) {
+        dateStr = dateStr.split('T')[0];
+      }
+      
+      // Handle different date formats more flexibly
+      // Try to parse as a date first
+      try {
+        const parsedDate = new Date(dateField);
+        if (!isNaN(parsedDate.getTime())) {
+          // If it's a valid date, format it properly
+          const year = parsedDate.getFullYear();
+          const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+          const day = String(parsedDate.getDate()).padStart(2, '0');
+          return formatDate(`${year}-${month}-${day}`);
+        }
+      } catch (e) {
+        // Continue to regex check
+      }
+      
+      // If we have a valid date string in YYYY-MM-DD format, format it
+      if (dateStr && dateStr.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        return formatDate(dateStr);
+      }
+    }
+  }
+  
+  // If no valid date found, return "Today" for tasks created recently
+  return "Today";
+};
+
 const formatedTaskDetails = async (
   listings,
   tasks,
@@ -164,7 +217,6 @@ const formatedTaskDetails = async (
     (listing) => listing?.id == task?.listingMapId
   );
   const user = users?.find((item) => item.id == task.assigneeUserId);
-  const date = task?.canStartFrom?.split(" ")[0];
   const conversation = conversations.find(
     (item) => item.reservationId === task.reservationId
   );
@@ -173,7 +225,7 @@ const formatedTaskDetails = async (
     id: task?.id,
     title: task?.title || "Untitled Task",
     status: task?.status === "inProgress" ? "In Progress" : mapStatus(task?.status),
-    startTime: formatDate(date),
+    startTime: getTaskDate(task),
     priority: getUrgencyText(task?.priority),
     listingName: listing?.name || "Unknown Listing",
     listingAddress: listing?.address || "No address available",
