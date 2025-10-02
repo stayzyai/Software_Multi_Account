@@ -285,6 +285,7 @@ export const notifyTimezoneChange = () => {
 };
 
 const getUserTimezone = () => {
+  try {
     // Try to get timezone from Redux store (if available)
     const storedState = localStorage.getItem('persist:user');
     if (storedState) {
