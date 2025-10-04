@@ -42,6 +42,7 @@ const EditUserDetails = ({
           const { ...updatedInfo } = data;
           dispatch(
             setUser({
+              ...user, // Preserve all existing state including master_ai_enabled
               ...updatedInfo,
               chat_list: user.chat_list,
               role: user.role,

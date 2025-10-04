@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import { updateTask } from "../../../../helpers/Message";
+import { updateTask, deleteTask } from "../../../../helpers/Message";
 import { toast } from "react-hot-toast";
 
 const Tasks = ({ tasks, showCompleted = false, onTasksUpdate }) => {
@@ -120,15 +120,26 @@ const Tasks = ({ tasks, showCompleted = false, onTasksUpdate }) => {
     try {
       for (const taskId of selectedTasks) {
         try {
-          // Note: We'll need to implement deleteTask function
-          // const response = await deleteTask(taskId);
-          // For now, let's just show a message
-          toast.error("Delete functionality not yet implemented");
-          return;
+          const response = await deleteTask(taskId);
+          if (response) {
+            results.success++;
+          } else {
+            results.failed++;
+          }
         } catch (error) {
           console.error(`Failed to delete task ${taskId}:`, error);
           results.failed++;
         }
+      }
+      
+      if (results.success > 0) {
+        toast.success(`${results.success} task(s) deleted successfully`);
+        setSelectedTasks(new Set());
+        onTasksUpdate && onTasksUpdate();
+      }
+      
+      if (results.failed > 0) {
+        toast.error(`${results.failed} task(s) failed to delete`);
       }
     } catch (error) {
       toast.error("Error deleting tasks");

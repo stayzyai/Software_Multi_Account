@@ -53,10 +53,13 @@ const TaskDetail = ({ setOpenTaskChat, openTaskChat, fetchData }) => {
 
   const fetchedData = async () => {
     setLoading(true);
+    // Always fetch fresh data to ensure we have the latest task status
+    const tasksData = await getHostawayTask();
+    dispatch(setTasks(tasksData));
+    
     const data = await fetchDataIfEmpty();
     setTask(data);
     setLoading(false);
-    console.log
     setSelectedTask(data);
     fetchData()
   };
@@ -85,6 +88,21 @@ const TaskDetail = ({ setOpenTaskChat, openTaskChat, fetchData }) => {
         <ul className="space-y-8">
           <li className="flex items-center gap-2">
             <span>Ticket: </span>#{task.id}
+          </li>
+          <li className="flex items-center gap-2">
+            <span>Status: </span>
+            <p className={`rounded-[20px] p-1 px-2 text-sm ${
+              task?.status === "completed" 
+                ? "text-green-700 bg-green-100" 
+                : task?.status === "inProgress" 
+                ? "text-blue-700 bg-blue-100" 
+                : "text-gray-700 bg-gray-100"
+            }`}>
+              {task?.status === "completed" ? "Completed" : 
+               task?.status === "inProgress" ? "In Progress" : 
+               task?.status === "pending" ? "Pending" : 
+               task?.status || "Unknown"}
+            </p>
           </li>
           <li className="flex items-center gap-2">
             <span>Urgency: </span>

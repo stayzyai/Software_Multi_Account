@@ -18,7 +18,18 @@ const Home = ({ role }) => {
         const response = await api.get("/user/profile");
         if (response?.status === 200 && response?.data) {
           const { firstname, lastname, email, role, ai_enable, chat_list, id, image_url } = response.data;
-          dispatch(setUser({ firstname, lastname, email, role, ai_enable, chat_list, id, image_url }));
+          // Preserve the current master_ai_enabled state and other existing state values
+          dispatch(setUser({ 
+            ...userProfile, // Keep existing state values
+            firstname, 
+            lastname, 
+            email, 
+            role, 
+            ai_enable, 
+            chat_list, 
+            id, 
+            image_url 
+          }));
         }
       } catch (error) {
         console.error("Error fetching profile:", error);

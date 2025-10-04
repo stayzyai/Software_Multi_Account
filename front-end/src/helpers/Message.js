@@ -508,6 +508,19 @@ const createTicket = async (payload) => {
   }
 };
 
+const deleteTask = async (id) => {
+  try {
+    const response = await api.delete(`/hostaway/delete/tasks/${id}`);
+    if (response?.status === 200) {
+      return response?.data?.detail?.data?.result;
+    }
+    return null;
+  } catch (Error) {
+    console.log("Error at delete task: ", Error);
+    return null;
+  }
+};
+
 const updateTask = async (payload, id) => {
   try {
     const response = await api.post(`/hostaway/update/tasks/${id}`, payload);
@@ -861,6 +874,7 @@ export {
   formattedNewMessage,
   createTicket,
   updateTask,
+  deleteTask,
   formatMessages,
   getSentiment,
   assignSentiment,

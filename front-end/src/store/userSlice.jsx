@@ -28,7 +28,11 @@ const userSlice = createSlice({
       state.chat_list = chat_list,
       state.image_url = image_url;
       state.property_ai_status = property_ai_status || {};
-      state.master_ai_enabled = master_ai_enabled !== undefined ? master_ai_enabled : true;
+      // Only update master_ai_enabled if it's explicitly provided in the payload
+      // Otherwise, preserve the existing value to prevent unintended resets
+      if (master_ai_enabled !== undefined) {
+        state.master_ai_enabled = master_ai_enabled;
+      }
       state.timezone = timezone || "America/Chicago";
     },
     clearUser: (state) => {

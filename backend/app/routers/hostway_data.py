@@ -403,6 +403,27 @@ async def delete_upsell(upsell_id: int, token: str = Depends(get_token), db: Ses
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.delete("/delete/{params}/{id}")
+async def delete_data(params: str, id: int, token: str = Depends(get_token), db: Session = Depends(get_db)):
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        account = db.query(HostawayAccount).filter(HostawayAccount.user_id == user_id).first()
+        if not account:
+            raise HTTPException(status_code=404, detail="Hostaway account not found")
+        
+        response = hostaway_delete_request(account.hostaway_token, f"/{params}/{id}")
+        data = json.loads(response)
+        if data['status'] == 'success':
+            return {"detail": {"message": "data deleted successfully..", "data": data}}
+        return {"detail": {"message": "Some error occurred at delete request.. ", "data": data}}
+
+    except HTTPException as exc:
+        logging.error(f"****some error at hostaway delete request*****{exc}")
+        raise exc
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error at hostaway delete request: {str(e)}")
+
 @router.post("/create/{params}")
 async def post_data(request: Request ,params:str, token: str = Depends(get_token), db: Session = Depends(get_db)):
     try:
