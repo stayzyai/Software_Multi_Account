@@ -16,6 +16,14 @@ import threading
 from app.common.ai_booking import update_booking
 from app.common.ai_schedule import is_ai_schedule_active
 
+# Import twilio_service with error handling
+try:
+    from app.common.twilio_service import twilio_service
+    TWILIO_AVAILABLE = True
+except ImportError:
+    TWILIO_AVAILABLE = False
+    twilio_service = None
+
 def generate_prompt(previous_conversation, latest_message, property_details, amenities_detail, reservation_details=None):
     try:
         return SYSTEM_PROMPT.format(
@@ -207,7 +215,9 @@ def create_issue_ticket(new_message):
 def send_whatsapp_task_notification(task_data, users, accountId, db):
     """Send WhatsApp notification for newly created task"""
     try:
-        from app.common.twilio_service import twilio_service
+        if not TWILIO_AVAILABLE:
+            print("❌ Twilio service not available, skipping WhatsApp notification")
+            return
         
         # Get the user who owns this Hostaway account
         hostaway_account = db.query(HostawayAccount).filter(HostawayAccount.account_id == accountId).first()
