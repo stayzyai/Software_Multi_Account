@@ -994,3 +994,156 @@ async def trigger_ai_catchup(
     except Exception as e:
         print(f"❌ Error in AI catchup endpoint: {e}")
         raise HTTPException(status_code=500, detail={"message": f"Error triggering AI catchup: {str(e)}"})
+
+@router.post("/settings/twilio")
+def save_twilio_settings(
+    request: dict,
+    db: Session = Depends(get_db),
+    token: str = Depends(get_token)
+):
+    """Save Twilio WhatsApp integration settings for the user"""
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Extract Twilio settings from request
+        account_sid = request.get('accountSid', '').strip()
+        auth_token = request.get('authToken', '').strip()
+        whatsapp_number = request.get('whatsappNumber', '').strip()
+        
+        if not account_sid or not auth_token or not whatsapp_number:
+            raise HTTPException(status_code=400, detail="All fields are required")
+        
+        # Validate WhatsApp number format (basic validation)
+        if not whatsapp_number.startswith('+'):
+            raise HTTPException(status_code=400, detail="WhatsApp number must include country code (e.g., +1234567890)")
+        
+        # Store Twilio settings in user's settings field
+        twilio_settings = {
+            "account_sid": account_sid,
+            "auth_token": auth_token,
+            "whatsapp_number": whatsapp_number,
+            "enabled": True,
+            "created_at": datetime.now().isoformat()
+        }
+        
+        # Update user's twilio_settings field
+        db_user.twilio_settings = twilio_settings
+        db.commit()
+        db.refresh(db_user)
+        
+        return {
+            "success": True,
+            "message": "Twilio settings saved successfully",
+            "settings": {
+                "whatsappNumber": whatsapp_number,
+                "enabled": True
+            }
+        }
+        
+    except HTTPException as exc:
+        raise exc
+    except Exception as e:
+        print(f"❌ Error saving Twilio settings: {e}")
+        raise HTTPException(status_code=500, detail=f"Error saving Twilio settings: {str(e)}")
+
+@router.get("/settings/twilio")
+def get_twilio_settings(
+    db: Session = Depends(get_db),
+    token: str = Depends(get_token)
+):
+    """Get Twilio WhatsApp integration settings for the user"""
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if not db_user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        twilio_settings = db_user.twilio_settings
+        if not twilio_settings:
+            raise HTTPException(status_code=404, detail="No Twilio settings found")
+        
+        # Debug: Print the type and content of twilio_settings
+        print(f"🔍 Debug: twilio_settings type: {type(twilio_settings)}")
+        print(f"🔍 Debug: twilio_settings content: {twilio_settings}")
+        
+        # Handle case where twilio_settings might be stored as a string
+        if isinstance(twilio_settings, str):
+            import json
+            try:
+                twilio_settings = json.loads(twilio_settings)
+                print(f"🔍 Debug: Parsed twilio_settings: {twilio_settings}")
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=500, detail="Invalid Twilio settings format")
+        
+        # Get the base URL for webhook
+        base_url = "http://3.82.36.110:8000"  # This should be configurable
+        webhook_url = f"{base_url}/hostaway/webhook/twilio/{user_id}"
+        
+        return {
+            "success": True,
+            "settings": {
+                "whatsappNumber": twilio_settings.get("whatsapp_number"),
+                "enabled": twilio_settings.get("enabled", False),
+                "created_at": twilio_settings.get("created_at"),
+                "webhookUrl": webhook_url
+            }
+        }
+        
+    except HTTPException as exc:
+        raise exc
+    except Exception as e:
+        print(f"❌ Error getting Twilio settings: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting Twilio settings: {str(e)}")
+
+@router.post("/settings/twilio/test")
+def test_twilio_connection(
+    request: dict,
+    db: Session = Depends(get_db),
+    token: str = Depends(get_token)
+):
+    """Test Twilio WhatsApp connection with provided credentials"""
+    try:
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        
+        # Extract Twilio settings from request
+        account_sid = request.get('accountSid', '').strip()
+        auth_token = request.get('authToken', '').strip()
+        whatsapp_number = request.get('whatsappNumber', '').strip()
+        
+        if not account_sid or not auth_token or not whatsapp_number:
+            raise HTTPException(status_code=400, detail="All fields are required")
+        
+        # Test Twilio connection by making a simple API call
+        import requests
+        
+        # Test basic authentication
+        test_url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}.json"
+        response = requests.get(test_url, auth=(account_sid, auth_token))
+        
+        if response.status_code == 200:
+            return {
+                "success": True,
+                "message": "Twilio connection successful"
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Invalid Twilio credentials"
+            }
+            
+    except HTTPException as exc:
+        raise exc
+    except Exception as e:
+        print(f"❌ Error testing Twilio connection: {e}")
+        return {
+            "success": False,
+            "message": f"Connection test failed: {str(e)}"
+        }

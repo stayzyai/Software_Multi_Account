@@ -179,3 +179,4 @@ const TaskModal = ({ task, onClose, onViewFullTask }) => {
 };
 
 export default TaskModal;
+

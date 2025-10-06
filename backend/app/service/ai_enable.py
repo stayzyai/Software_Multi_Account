@@ -195,9 +195,74 @@ def create_issue_ticket(new_message):
         create_task = hostaway_post_request(hostaway_token, "tasks", task_data)
         task_data = json.loads(create_task)
         if task_data['status'] == 'success':
+            # Send email notification
             email_response = send_email(email_data["userEmail"], email_data["subject"], email_data["body"])
+            
+            # Send WhatsApp notification if configured
+            send_whatsapp_task_notification(task_data, users, accountId, db)
+            
     except Exception as e:
         return {"status": "error", "message": str(e)}
+
+def send_whatsapp_task_notification(task_data, users, accountId, db):
+    """Send WhatsApp notification for newly created task"""
+    try:
+        from app.common.twilio_service import twilio_service
+        
+        # Get the user who owns this Hostaway account
+        hostaway_account = db.query(HostawayAccount).filter(HostawayAccount.account_id == accountId).first()
+        if not hostaway_account:
+            print("❌ No Hostaway account found for WhatsApp notification")
+            return
+        
+        user_id = hostaway_account.user_id
+        
+        # Get task details
+        task_id = task_data.get("result", {}).get("id")
+        task_title = task_data.get("result", {}).get("title", "New Task")
+        assignee_user_id = task_data.get("result", {}).get("assigneeUserId")
+        
+        if not task_id or not assignee_user_id:
+            print("❌ Missing task ID or assignee for WhatsApp notification")
+            return
+        
+        # Find assigned user details
+        assigned_user = None
+        for user in users:
+            if user.get("id") == assignee_user_id:
+                assigned_user = user
+                break
+        
+        if not assigned_user:
+            print(f"❌ Assigned user {assignee_user_id} not found for WhatsApp notification")
+            return
+        
+        # Get user's phone number (assuming it's in the user data)
+        staff_phone = assigned_user.get("phone")
+        if not staff_phone:
+            print(f"❌ No phone number found for user {assigned_user.get('firstName', 'Unknown')}")
+            return
+        
+        # Get listing address (you might need to fetch this from reservation data)
+        listing_address = "Property Address"  # This would need to be fetched from reservation/listing data
+        
+        # Send WhatsApp notification
+        result = twilio_service.send_task_notification(
+            staff_phone=staff_phone,
+            task_name=task_title,
+            ticket_number=str(task_id),
+            listing_address=listing_address,
+            user_id=user_id,
+            db=db
+        )
+        
+        if result.get("success"):
+            print(f"✅ WhatsApp notification sent to {staff_phone} for task {task_id}")
+        else:
+            print(f"❌ Failed to send WhatsApp notification: {result.get('error')}")
+            
+    except Exception as e:
+        print(f"❌ Error sending WhatsApp task notification: {e}")
 
 async def send_message(new_message, gpt_response, latest_incoming, user_id, listingMapId):
     try:

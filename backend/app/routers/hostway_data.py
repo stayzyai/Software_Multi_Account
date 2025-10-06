@@ -510,3 +510,58 @@ def send_task_email(request: EmailRequest, db: Session = Depends(get_db), token:
         raise HTTPException(status_code=404, detail="Not authorized to use this feature")
     return send_email(request.userEmail, request.subject, request.body)
 
+@router.post("/webhook/twilio/{user_id}")
+async def twilio_webhook(user_id: int, request: Request, db: Session = Depends(get_db)):
+    """Handle incoming WhatsApp messages from Twilio for a specific user"""
+    try:
+        # Parse the webhook data
+        form_data = await request.form()
+        
+        # Extract message details
+        from_number = form_data.get("From", "").replace("whatsapp:", "")
+        to_number = form_data.get("To", "").replace("whatsapp:", "")
+        message_body = form_data.get("Body", "")
+        media_url = form_data.get("MediaUrl0", "")  # First media attachment if any
+        
+        logging.info(f"WhatsApp webhook received from {from_number} for user {user_id}: {message_body}")
+        
+        # Validate user exists and has Twilio enabled
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            logging.error(f"User {user_id} not found")
+            return {"status": "error", "message": "User not found"}
+        
+        if not user.twilio_settings or not user.twilio_settings.get("enabled", False):
+            logging.error(f"Twilio not enabled for user {user_id}")
+            return {"status": "error", "message": "Twilio not enabled for this user"}
+        
+        # Verify the webhook is for the correct WhatsApp number
+        expected_whatsapp_number = user.twilio_settings.get("whatsapp_number")
+        if to_number != expected_whatsapp_number:
+            logging.error(f"Webhook to_number {to_number} doesn't match user's WhatsApp number {expected_whatsapp_number}")
+            return {"status": "error", "message": "Invalid webhook destination"}
+        
+        # Process the message using AI
+        from app.common.twilio_service import twilio_service
+        from app.common.ai_task_processor import process_whatsapp_response
+        
+        # Process the WhatsApp response
+        result = await process_whatsapp_response(
+            from_number=from_number,
+            message_body=message_body,
+            media_url=media_url,
+            user_id=user_id,
+            db=db
+        )
+        
+        if result.get("success"):
+            logging.info(f"Successfully processed WhatsApp response from {from_number} for user {user_id}")
+            return {"status": "success", "message": "Message processed successfully"}
+        else:
+            logging.error(f"Failed to process WhatsApp response: {result.get('error')}")
+            return {"status": "error", "message": result.get("error", "Unknown error")}
+            
+    except Exception as e:
+        logging.error(f"Error processing WhatsApp webhook: {e}")
+        return {"status": "error", "message": str(e)}
+

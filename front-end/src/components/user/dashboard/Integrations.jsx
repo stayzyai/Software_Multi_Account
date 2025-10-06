@@ -3,15 +3,18 @@ import api from "@/api/api";
 import { toast } from "sonner";
 import Header from "./Header";
 import { getItem } from "../../../helpers/localstorage";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Plus } from "lucide-react";
 import { FaRegCopy } from "react-icons/fa";
 import SettingShimmer from "../../common/shimmer/settingShimmer";
+import WhatsAppIntegrationModal from "./WhatsAppIntegrationModal";
 
 const Integrations = () => {
   const [extensionKey, setExtensionKey] = useState("");
   const [isHovered, setIsHovered] = useState(false);
   const [hostawayAccount, setHostawayAccount] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [whatsappSettings, setWhatsappSettings] = useState(null);
   const encrypt = import.meta.env.VITE_ENCRYPT_KEY;
 
   const handleCopy = () => {
@@ -29,7 +32,25 @@ const Integrations = () => {
       }
       setLoading(false);
     };
+    
+    const getWhatsAppSettings = async () => {
+      try {
+        const response = await api.get(`/user/settings/twilio`);
+        if (response?.data?.success) {
+          setWhatsappSettings(response.data.settings);
+        }
+      } catch (error) {
+        // 404 is expected when no settings exist yet
+        if (error.response?.status === 404) {
+          console.log("No WhatsApp settings found - this is normal for first time");
+        } else {
+          console.error("Error fetching WhatsApp settings:", error);
+        }
+      }
+    };
+
     getKey();
+    getWhatsAppSettings();
     setHostawayAccount(getItem("isHostwayAccount"));
   }, [extensionKey]);
 
@@ -48,6 +69,26 @@ const Integrations = () => {
     }
   };
 
+  const handleModalSuccess = () => {
+    // Refresh WhatsApp settings after successful save
+    const getWhatsAppSettings = async () => {
+      try {
+        const response = await api.get(`/user/settings/twilio`);
+        if (response?.data?.success) {
+          setWhatsappSettings(response.data.settings);
+        }
+      } catch (error) {
+        // 404 is expected when no settings exist yet
+        if (error.response?.status === 404) {
+          console.log("No WhatsApp settings found - this is normal for first time");
+        } else {
+          console.error("Error fetching WhatsApp settings:", error);
+        }
+      }
+    };
+    getWhatsAppSettings();
+  };
+
   if (isHovered) {
     toast.info("Click to copy to clipboard");
   }
@@ -57,6 +98,15 @@ const Integrations = () => {
       <Header title={"Integrations"} role={"user"} />
       {!loading ? (
         <div className="mt-24">
+          <div className="flex justify-end mb-6 px-8">
+            <button
+              onClick={() => setModalOpen(true)}
+              className="bg-[#2D8062] hover:bg-green-800 text-white px-4 py-2 rounded-xl flex items-center gap-2 text-sm transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              Add Integration
+            </button>
+          </div>
           <div className="flex justify-center pt-8 mx-8">
             <div className="w-full mx-auto p-7 bg-white shadow-md rounded-md border">
               <span className="text-2xl font-semibold text-gray-800 mb-4">
@@ -112,10 +162,75 @@ const Integrations = () => {
               </div>
             </div>
           </div>
+
+          {/* WhatsApp Integration Section */}
+        {whatsappSettings && (
+          <div className="flex justify-center pt-8 mx-8 mt-6">
+            <div className="w-full mx-auto p-7 bg-white shadow-md rounded-md border">
+              <span className="text-2xl font-semibold text-gray-800 mb-4">
+                WhatsApp Notifications
+              </span>
+              <p className="text-gray-700 mb-6 text-lg py-5 border-b">
+                Send task notifications to staff members via WhatsApp
+              </p>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                    <span className="text-green-700 font-medium">Connected</span>
+                    <span className="text-gray-500 text-sm">
+                      {whatsappSettings.whatsappNumber}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setModalOpen(true)}
+                    className="px-3 py-1 text-sm border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                  >
+                    Edit Settings
+                  </button>
+                </div>
+                
+                {whatsappSettings.webhookUrl && (
+                  <div className="bg-gray-50 border border-gray-200 rounded-md p-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Webhook URL
+                    </label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={whatsappSettings.webhookUrl}
+                        readOnly
+                        className="flex-1 p-2 bg-white border border-gray-300 rounded-md text-sm font-mono"
+                      />
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(whatsappSettings.webhookUrl);
+                          toast.success("Webhook URL copied to clipboard!");
+                        }}
+                        className="px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white text-sm rounded-md transition-colors"
+                      >
+                        Copy
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      This URL is configured in your Twilio Console for receiving WhatsApp responses
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
         </div>
       ) : (
         <SettingShimmer title={"Integrations"} />
       )}
+
+      <WhatsAppIntegrationModal
+        isOpen={modalOpen}
+        onClose={() => setModalOpen(false)}
+        onSuccess={handleModalSuccess}
+      />
     </>
   );
 };
