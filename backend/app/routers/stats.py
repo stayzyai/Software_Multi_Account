@@ -19,7 +19,7 @@ async def get_response_quality(days: int = 30, db: Session = Depends(get_db), to
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        is_admin = str(user.role).lower() == "admin"
+        is_admin = user.role.value.lower() == "admin"
         return get_average_response_quality(days, None if is_admin else user_id)
         # return get_average_response_quality(days, user_id)
 
@@ -75,7 +75,7 @@ async def get_conversation_time(days: int = 30, db: Session = Depends(get_db), t
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
-        is_admin = str(user.role).lower() == "admin"
+        is_admin = user.role.value.lower() == "admin"
         return get_conversation_time_stats(days, None if is_admin else user_id)
     except Exception as e:
         logging.error(f"Error at conversation-time {e}")
