@@ -20,6 +20,7 @@ class User(Base):
     profile_url = Column(String, default=None)
     ai_schedule = Column(JSON, nullable=True)  # AI schedule settings
     twilio_settings = Column(JSON, nullable=True)  # Twilio WhatsApp settings
+    timezone = Column(String, default="America/Chicago")  # User's timezone
 
     def __repr__(self):
         return f"<User(id={self.id}, firstname={self.firstname}, lastname={self.lastname}, email={self.email}, role={self.role})>"

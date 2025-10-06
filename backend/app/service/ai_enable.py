@@ -3,7 +3,7 @@ from app.data.chat_prompt import SYSTEM_PROMPT
 from app.data.task_create_prompt import TASK_GENERATION_PROMPT
 from app.common.hostaway_setup import hostaway_get_request, hostaway_post_request
 from app.database.db import get_db
-from app.models.user import HostawayAccount, ChatAIStatus
+from app.models.user import HostawayAccount, ChatAIStatus, User
 from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from app.common.chat_gpt_assistant import get_latest_model_id
