@@ -15,10 +15,8 @@ export const useConversationPolling = () => {
 
   const pollConversations = useCallback(async () => {
     try {
-      console.log('Polling conversations...');
       const data = await getConversationsWithResources();
       dispatch(setConversations(data));
-      console.log('Conversations updated via polling');
       return data;
     } catch (error) {
       console.error('Error polling conversations:', error);
@@ -37,10 +35,8 @@ export const useReservationPolling = () => {
 
   const pollReservations = useCallback(async () => {
     try {
-      console.log('Polling reservations...');
       const data = await getHostawayReservation();
       dispatch(setReservations(data));
-      console.log('Reservations updated via polling');
       return data;
     } catch (error) {
       console.error('Error polling reservations:', error);
@@ -59,10 +55,8 @@ export const useTaskPolling = () => {
 
   const pollTasks = useCallback(async () => {
     try {
-      console.log('Polling tasks...');
       const data = await getHostawayTask();
       dispatch(setTasks(data));
-      console.log('Tasks updated via polling');
       return data;
     } catch (error) {
       console.error('Error polling tasks:', error);

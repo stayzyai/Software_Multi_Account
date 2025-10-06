@@ -124,37 +124,93 @@ def authentication(auth: HostawayAuthentication, db: Session = Depends(get_db), 
 @router.get("/get-hostaway-accounts")
 def get_hostaway_accounts(db: Session = Depends(get_db), token: str = Depends(get_token)):
     try:
+        logging.info("Getting Hostaway accounts for user")
+        
         decode_token = decode_access_token(token)
         user_id = decode_token['sub']
+        logging.info(f"User ID from token: {user_id}")
+        
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
+            logging.error(f"User not found for ID: {user_id}")
             raise HTTPException(status_code=404, detail="User not found")
 
-        accounts = db.query(HostawayAccount).filter(HostawayAccount.user_id == user.id, HostawayAccount.is_active == True).all()
+        logging.info(f"Querying Hostaway accounts for user {user_id}")
+        accounts = db.query(HostawayAccount).filter(
+            HostawayAccount.user_id == user.id, 
+            HostawayAccount.is_active == True
+        ).all()
+        
         current_time = datetime.now()
+        logging.info(f"Found {len(accounts)} active accounts")
         
         if not accounts:
-            return JSONResponse(content={"detail": {"valid": False, "message": "No hostaway accounts found", "accounts": []}}, status_code=404)
+            logging.info("No active Hostaway accounts found")
+            return JSONResponse(content={
+                "detail": {
+                    "valid": False, 
+                    "message": "No hostaway accounts found", 
+                    "accounts": []
+                }
+            }, status_code=200)  # Changed from 404 to 200 for empty results
         
         # Check for expired accounts and filter valid ones
         valid_accounts = []
+        expired_accounts = []
+        
         for account in accounts:
-            if account.expires_at > current_time:
-                valid_accounts.append({
-                    "id": account.id,
-                    "account_id": account.account_id,
-                    "secret_id": account.secret_id,
-                    "account_name": account.account_name,
-                    "is_active": account.is_active,
-                    "created_at": account.created_at.isoformat(),
-                    "expires_at": account.expires_at.isoformat()
-                })
+            try:
+                # Handle potential None values
+                account_id = account.account_id or "Unknown"
+                secret_id = account.secret_id or "Unknown"
+                account_name = account.account_name or f"Account {account.id}"
+                
+                # Check if account is expired
+                if account.expires_at and account.expires_at > current_time:
+                    valid_accounts.append({
+                        "id": account.id,
+                        "account_id": account_id,
+                        "secret_id": secret_id,
+                        "account_name": account_name,
+                        "is_active": account.is_active,
+                        "created_at": account.created_at.isoformat() if account.created_at else None,
+                        "expires_at": account.expires_at.isoformat() if account.expires_at else None
+                    })
+                else:
+                    expired_accounts.append(account_id)
+                    logging.info(f"Account {account_id} is expired")
+                    
+            except Exception as account_error:
+                logging.error(f"Error processing account {account.id}: {str(account_error)}")
+                continue
+        
+        logging.info(f"Valid accounts: {len(valid_accounts)}, Expired accounts: {len(expired_accounts)}")
         
         if not valid_accounts:
-            return JSONResponse(content={"detail": {"valid": False, "message": "All hostaway tokens expired", "accounts": []}}, status_code=400)
+            logging.info("All Hostaway tokens are expired")
+            return JSONResponse(content={
+                "detail": {
+                    "valid": False, 
+                    "message": "All hostaway tokens expired", 
+                    "accounts": []
+                }
+            }, status_code=200)  # Changed from 400 to 200 for expired tokens
         
-        return JSONResponse(content={"detail": {"valid": True, "message": "Hostaway accounts retrieved successfully", "accounts": valid_accounts}}, status_code=200)
+        logging.info(f"Successfully retrieved {len(valid_accounts)} valid accounts")
+        return JSONResponse(content={
+            "detail": {
+                "valid": True, 
+                "message": "Hostaway accounts retrieved successfully", 
+                "accounts": valid_accounts
+            }
+        }, status_code=200)
+        
+    except HTTPException as exc:
+        logging.error(f"HTTP Exception in get_hostaway_accounts: {exc}")
+        raise exc
     except Exception as e:
+        logging.error(f"Unexpected error in get_hostaway_accounts: {str(e)}")
+        logging.error(f"Error type: {type(e).__name__}")
         raise HTTPException(status_code=500, detail=f"Error at get hostaway accounts: {str(e)}")
 
 @router.delete("/remove-account/{account_id}")

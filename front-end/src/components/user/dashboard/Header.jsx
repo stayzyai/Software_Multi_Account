@@ -104,9 +104,10 @@ const Header = ({
         title === "Listings" ||
         title === "Integrations" ||
         title === "Settings" ||
-        title === "Staff" ||
         title === "Tasks" ||
-        title === "Upsells"
+        title === "Upsells" ||
+        title === "Staff Info" ||
+        title === "Staff Details"
           ? "bg-white flex items-center justify-between px-7 pb-2"
           : "flex items-center justify-between"
       } `}

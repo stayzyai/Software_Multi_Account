@@ -2,7 +2,6 @@ import { useState } from "react";
 import Sidebar from "../components/common/sidebar/Sidebar";
 import HomePage from "../components/user/dashboard/home/Home";
 import Listings from "../components/user/dashboard/listings/Listings";
-import StaffTab from "../components/user/dashboard/staff/StaffTab";
 import MessageTab from "../components/user/dashboard/Messages/MessageTab";
 import Integrations from "../components/user/dashboard/Integrations";
 import { useEffect } from "react";
@@ -15,6 +14,8 @@ import MessageDetailsWrapper from "../components/user/dashboard/Messages/Message
 import ListingsWraper from "../components/user/dashboard/listings/ListingsWrapper"
 import TasksTab from "../components/user/dashboard/task/TasksTab";
 import TaskDetailsWrapper from "../components/user/dashboard/task/TaskDetailsWrapper"
+import StaffList from "../components/user/dashboard/task/StaffList";
+import StaffDetails from "../components/user/dashboard/task/StaffDetails";
 import UpsellTab from "../components/user/dashboard/upsell/UpsellTab"
 import ReportIssuePopup from "../components/user/dashboard/common/ReportIssue";
 
@@ -37,7 +38,6 @@ export function UserDashboardComponent({ role = "user" }) {
       } catch (error) {
         const msg = error?.response?.data?.detail?.message;
         setItem("hostawayMessage", msg);
-        console.log("Error at get hostaway token", error);
       }
     };
     getHostawayAuth();
@@ -54,8 +54,9 @@ export function UserDashboardComponent({ role = "user" }) {
             <Route path="dashboard" element={<HomePage role={role} />} />
             <Route path="messages" element={<MessageTab  />} />
             <Route path="listings" element={<Listings  />} />
-            <Route path="staff" element={<StaffTab  />} />
             <Route path="tasks" element={<TasksTab  />} />
+            <Route path="tasks/staff" element={<StaffList />} />
+            <Route path="tasks/staff/:staffId" element={<StaffDetails />} />
             <Route path="integrations" element={<Integrations />}/>
             <Route path="settings" element={<MainSetting />} />
             <Route path="chat/:messageId" element={ <MessageDetailsWrapper/>} />

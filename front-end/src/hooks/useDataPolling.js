@@ -14,24 +14,19 @@ export const useDataPolling = () => {
 
   const pollAllData = useCallback(async () => {
     try {
-      console.log('🔄 Polling all data...');
       
       // Poll conversations
       const conversations = await getConversationsWithResources();
       dispatch(setConversations(conversations));
-      console.log('✅ Conversations updated');
       
       // Poll reservations
       const reservations = await getHostawayReservation();
       dispatch(setReservations(reservations));
-      console.log('✅ Reservations updated');
       
       // Poll tasks
       const tasks = await getHostawayTask();
       dispatch(setTasks(tasks));
-      console.log('✅ Tasks updated');
       
-      console.log('🎉 All data polling completed successfully');
       return { conversations, reservations, tasks };
     } catch (error) {
       console.error('❌ Error during data polling:', error);
@@ -41,10 +36,8 @@ export const useDataPolling = () => {
 
   const pollConversations = useCallback(async () => {
     try {
-      console.log('🔄 Polling conversations...');
       const data = await getConversationsWithResources();
       dispatch(setConversations(data));
-      console.log('✅ Conversations updated');
       return data;
     } catch (error) {
       console.error('❌ Error polling conversations:', error);
@@ -54,10 +47,8 @@ export const useDataPolling = () => {
 
   const pollReservations = useCallback(async () => {
     try {
-      console.log('🔄 Polling reservations...');
       const data = await getHostawayReservation();
       dispatch(setReservations(data));
-      console.log('✅ Reservations updated');
       return data;
     } catch (error) {
       console.error('❌ Error polling reservations:', error);
@@ -67,10 +58,8 @@ export const useDataPolling = () => {
 
   const pollTasks = useCallback(async () => {
     try {
-      console.log('🔄 Polling tasks...');
       const data = await getHostawayTask();
       dispatch(setTasks(data));
-      console.log('✅ Tasks updated');
       return data;
     } catch (error) {
       console.error('❌ Error polling tasks:', error);

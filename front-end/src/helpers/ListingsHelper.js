@@ -23,7 +23,6 @@ const getListingstatus = async () => {
     }
     return [];
   } catch (error) {
-    console.log("Error at getListingstatus", error.message);
     console.error("Error fetching listing status:", error);
     return [];
   }
@@ -201,8 +200,6 @@ const formatReservations = (reservations, listingMapId) => {
       dateRanges.push(`${gapStart} - ${gapEnd}`);
     }
   }
-  console.log("----------bookings-------------", bookings)
-  console.log("---------------dateRanges---------", dateRanges)
   return { bookings, dateRanges };
 };
 
@@ -247,7 +244,6 @@ const updateListings = async (listings, listingId, type, value) => {
     return updatedListings;
   } catch (error) {
     toast.error("An error occurred while updating AI info");
-    console.log("Error at update listings", error);
     return [];
   }
 };

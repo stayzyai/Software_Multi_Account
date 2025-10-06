@@ -47,7 +47,6 @@ const TasksTab = () => {
       setFormatedTask(allTask);
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching data: ", error);
       setLoading(false);
     }
   };
@@ -67,7 +66,7 @@ const TasksTab = () => {
       setCompletedTask(allCompletedTask);
       setFormatedTask(allTask);
     } catch (error) {
-      console.error("Error refreshing tasks: ", error);
+      // Error refreshing tasks
     }
   };
 

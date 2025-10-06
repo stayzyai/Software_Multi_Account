@@ -50,7 +50,6 @@ const CheckInOutDropdown = ({ selectedTime, onSelect, chatInfo, type }) => {
         updatedReservation
       );
     } catch (error) {
-      console.log("error at update checkIn or checkOut", error);
     }
   };
 

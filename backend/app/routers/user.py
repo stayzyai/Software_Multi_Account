@@ -831,6 +831,117 @@ def get_user_profile(
     except Exception as e:
         raise HTTPException(status_code=500, detail={"message": str(e)})
 
+@router.post("/update-ai-schedule")
+def update_ai_schedule(
+    ai_schedule: dict,
+    db: Session = Depends(get_db),
+    token: str = Depends(get_token)
+):
+    """
+    Update AI schedule settings for the current user
+    """
+    try:
+        logging.info("Updating AI schedule for user")
+        
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        logging.info(f"User ID from token: {user_id}")
+        
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if not db_user:
+            logging.error(f"User not found for ID: {user_id}")
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Validate the AI schedule data structure
+        if not isinstance(ai_schedule, dict):
+            raise HTTPException(status_code=400, detail="AI schedule must be a valid object")
+        
+        # Validate required fields
+        required_fields = ['enabled', 'days', 'dateRanges', 'timezone']
+        for field in required_fields:
+            if field not in ai_schedule:
+                logging.warning(f"Missing field '{field}' in AI schedule, using default")
+        
+        # Update the AI schedule in the database
+        db_user.ai_schedule = ai_schedule
+        db.commit()
+        db.refresh(db_user)
+        
+        logging.info(f"Successfully updated AI schedule for user {user_id}")
+        return {
+            "detail": {
+                "message": "AI schedule updated successfully",
+                "data": {
+                    "ai_schedule": ai_schedule
+                }
+            }
+        }
+        
+    except HTTPException as exc:
+        logging.error(f"HTTP Exception in update_ai_schedule: {exc}")
+        raise exc
+    except Exception as e:
+        logging.error(f"Unexpected error in update_ai_schedule: {str(e)}")
+        logging.error(f"Error type: {type(e).__name__}")
+        raise HTTPException(status_code=500, detail=f"Error updating AI schedule: {str(e)}")
+
+@router.get("/get-ai-schedule")
+def get_ai_schedule(
+    db: Session = Depends(get_db),
+    token: str = Depends(get_token)
+):
+    """
+    Get AI schedule settings for the current user
+    """
+    try:
+        logging.info("Getting AI schedule for user")
+        
+        decode_token = decode_access_token(token)
+        user_id = decode_token['sub']
+        logging.info(f"User ID from token: {user_id}")
+        
+        db_user = db.query(User).filter(User.id == user_id).first()
+        if not db_user:
+            logging.error(f"User not found for ID: {user_id}")
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Return the AI schedule or default if not set
+        ai_schedule = db_user.ai_schedule
+        if not ai_schedule:
+            logging.info("No AI schedule found, returning default")
+            ai_schedule = {
+                "enabled": False,
+                "days": {
+                    "monday": {"enabled": True, "startTime": "09:00", "endTime": "17:00"},
+                    "tuesday": {"enabled": True, "startTime": "09:00", "endTime": "17:00"},
+                    "wednesday": {"enabled": True, "startTime": "09:00", "endTime": "17:00"},
+                    "thursday": {"enabled": True, "startTime": "09:00", "endTime": "17:00"},
+                    "friday": {"enabled": True, "startTime": "09:00", "endTime": "17:00"},
+                    "saturday": {"enabled": False, "startTime": "09:00", "endTime": "17:00"},
+                    "sunday": {"enabled": False, "startTime": "09:00", "endTime": "17:00"}
+                },
+                "dateRanges": [],
+                "timezone": "America/Chicago"
+            }
+        
+        logging.info(f"Successfully retrieved AI schedule for user {user_id}")
+        return {
+            "detail": {
+                "message": "AI schedule retrieved successfully",
+                "data": {
+                    "ai_schedule": ai_schedule
+                }
+            }
+        }
+        
+    except HTTPException as exc:
+        logging.error(f"HTTP Exception in get_ai_schedule: {exc}")
+        raise exc
+    except Exception as e:
+        logging.error(f"Unexpected error in get_ai_schedule: {str(e)}")
+        logging.error(f"Error type: {type(e).__name__}")
+        raise HTTPException(status_code=500, detail=f"Error getting AI schedule: {str(e)}")
+
 @router.post("/ai-catchup/{chat_id}")
 async def trigger_ai_catchup(
     chat_id: int,

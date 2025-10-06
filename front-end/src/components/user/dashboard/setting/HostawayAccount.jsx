@@ -28,7 +28,6 @@ const HostawayAccount = ({ setOpenModal }) => {
           dispatch(setHostawayAccounts([]));
         }
       } catch (error) {
-        console.log("Some error occurred at get hostaway accounts", error);
         dispatch(setHostawayAccounts([]));
       }
       setLoading(false);
@@ -48,7 +47,6 @@ const HostawayAccount = ({ setOpenModal }) => {
         }
       }
     } catch (error) {
-      console.log("Some error occurred at delete hostaway account", error);
       toast.error("Some error occurred. Please try again");
     }
   };
@@ -72,7 +70,6 @@ const HostawayAccount = ({ setOpenModal }) => {
           toast.success(response?.data?.detail?.message);
         }
       } catch (error) {
-        console.log("Some error occurred at set primary account", error);
         toast.error("Some error occurred. Please try again");
       }
     }
@@ -96,7 +93,6 @@ const HostawayAccount = ({ setOpenModal }) => {
         toast.success(response?.data?.detail?.message);
       }
     } catch (error) {
-      console.log("Some error occurred at rename account", error);
       toast.error("Some error occurred. Please try again");
     }
   };

@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
-import { updateTask, deleteTask } from "../../../../helpers/Message";
-import { toast } from "react-hot-toast";
+import { updateTask } from "../../../../helpers/Message";
+import { toast } from "sonner";
+import { Users } from "lucide-react";
 
 const Tasks = ({ tasks, showCompleted = false, onTasksUpdate }) => {
   const navigate = useNavigate();
@@ -84,7 +85,6 @@ const Tasks = ({ tasks, showCompleted = false, onTasksUpdate }) => {
             results.failed++;
           }
         } catch (error) {
-          console.error(`Failed to complete task ${taskId}:`, error);
           results.failed++;
         }
       }
@@ -105,51 +105,20 @@ const Tasks = ({ tasks, showCompleted = false, onTasksUpdate }) => {
     }
   };
 
-  const handleBulkDelete = async () => {
-    if (selectedTasks.size === 0) return;
-    
-    const confirmed = window.confirm(
-      `Are you sure you want to delete ${selectedTasks.size} task(s)? This action cannot be undone.`
-    );
-    
-    if (!confirmed) return;
-    
-    setIsLoading(true);
-    const results = { success: 0, failed: 0 };
-    
-    try {
-      for (const taskId of selectedTasks) {
-        try {
-          const response = await deleteTask(taskId);
-          if (response) {
-            results.success++;
-          } else {
-            results.failed++;
-          }
-        } catch (error) {
-          console.error(`Failed to delete task ${taskId}:`, error);
-          results.failed++;
-        }
-      }
-      
-      if (results.success > 0) {
-        toast.success(`${results.success} task(s) deleted successfully`);
-        setSelectedTasks(new Set());
-        onTasksUpdate && onTasksUpdate();
-      }
-      
-      if (results.failed > 0) {
-        toast.error(`${results.failed} task(s) failed to delete`);
-      }
-    } catch (error) {
-      toast.error("Error deleting tasks");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   return (
     <div className="overflow-x-auto px-4 pt-16 md:pl-10 md:pr-4 w-full">
+      {/* Staff Info Button */}
+      <div className="mb-4 flex justify-end">
+        <button
+          onClick={() => navigate('/user/tasks/staff')}
+          className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <Users className="w-4 h-4" />
+          Staff Info
+        </button>
+      </div>
+      
       <div className="border-[0.5px] border-[#D1D1D1] rounded-xl min-h-40 min-w-fit">
         {/* Bulk Actions Toolbar */}
         {selectedTasks.size > 0 && (
@@ -166,13 +135,6 @@ const Tasks = ({ tasks, showCompleted = false, onTasksUpdate }) => {
                 >
                   {isLoading ? "Processing..." : "Mark Complete"}
                 </button>
-                <button
-                  onClick={handleBulkDelete}
-                  disabled={isLoading}
-                  className="px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 disabled:opacity-50"
-                >
-                  {isLoading ? "Processing..." : "Delete"}
-                </button>
               </div>
             </div>
             <button
@@ -183,6 +145,7 @@ const Tasks = ({ tasks, showCompleted = false, onTasksUpdate }) => {
             </button>
           </div>
         )}
+
 
         <table className="lg:text-sm text-xs mb-8 w-full">
           <thead>

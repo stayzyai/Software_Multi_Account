@@ -23,7 +23,7 @@ const UserProfile = () => {
   const [upload, setUpload] = useState(null);
   const [newImage, setNewImage] = useState(false);
   const [loading, setLoading] = useState(false)
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
   const userProfile = useSelector((state) => state.user);
 
@@ -74,10 +74,10 @@ const UserProfile = () => {
   };
 
   const handleSave = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
       if (!upload) {
-        setLoading(false)
+        setLoading(false);
         return;
       }
       const formData = new FormData();
@@ -104,11 +104,11 @@ const UserProfile = () => {
       setUpload(response?.data?.url);
       setNewImage(false);
       toast.success("Upload image sucessfully..");
-      setLoading(false)
+      setLoading(false);
 
     } catch (error) {
       toast.error("Some error occured. Please try again");
-      setLoading(false)
+      setLoading(false);
       console.error("Upload error:", error.response?.data || error.message);
     }
   };

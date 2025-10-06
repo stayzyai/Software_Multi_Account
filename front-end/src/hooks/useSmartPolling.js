@@ -21,7 +21,7 @@ export const useSmartPolling = (callback, baseInterval = 30000) => {
       inactivityTimer = setTimeout(() => {
         setIsActive(false);
         setPollingInterval(60000); // Poll every 60s when inactive
-      }, 120000); // 2 minutes of inactivity
+      }, 30000); // 30 seconds of inactivity
     };
 
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];

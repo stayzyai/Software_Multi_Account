@@ -5,20 +5,23 @@ import { TASK_GENERATION_PROMPT } from "./taskPrompt";
 const filteredResult = (result) =>
   result
     .map((item) => {
-      const dateObj = new Date(item.date.replace(" ", "T"));
-      let hours = dateObj.getHours();
-      const minutes = dateObj.getMinutes();
-      const ampm = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12;
-      hours = hours === 0 ? 12 : hours;
-      const minutesStr = minutes < 10 ? "0" + minutes : minutes;
-      const time = `${hours}:${minutesStr} ${ampm}`;
       return {
         body: item.body.replace(/<\/?[^>]+>/g, ""),
-        time,
         imagesUrls: item.imagesUrls,
         isIncoming: item.isIncoming,
-        date: item.date,
+        date: item.date, // Keep raw date for timezone-aware formatting
+        createdAt: item.createdAt, // Keep raw createdAt
+        time: item.time, // Keep raw time
+        // Try different possible field names for browser time
+        browserTime: item.browserTime || item.browser_time || item.browserTimestamp || item.browser_timestamp,
+        browserDate: item.browserDate || item.browser_date || item.browserTimestamp || item.browser_timestamp,
+        listingTime: item.listingTime || item.listing_time || item.listingTimestamp || item.listing_timestamp,
+        listingDate: item.listingDate || item.listing_date || item.listingTimestamp || item.listing_timestamp,
+        // Also check for other common timestamp fields
+        receivedAt: item.receivedAt || item.received_at,
+        sentAt: item.sentAt || item.sent_at,
+        timestamp: item.timestamp,
+        messageTime: item.messageTime || item.message_time,
       };
     })
     .reverse();
@@ -40,7 +43,7 @@ const getSentiment = async (chatData) => {
     }
     return null;
   } catch (Error) {
-    console.log("Error at get sentiment: ", Error);
+    console.error("Error at get sentiment: ", Error);
   }
 };
 
@@ -69,10 +72,11 @@ const getAllconversation = async (chat_id) => {
     );
     if (response?.data?.detail?.data?.result) {
       const simplifiedData = response?.data?.detail?.data?.result;
+      
       return filteredResult(simplifiedData);
     }
   } catch (Error) {
-    console.log("Error at get all messages: ", Error);
+    console.error("Error at get all messages: ", Error);
   }
 };
 
@@ -91,7 +95,7 @@ const sendMessages = async (chat_id, payload) => {
     }
     return [];
   } catch (Error) {
-    console.log("Error at send messages: ", Error);
+    console.error("Error at send messages: ", Error);
     return [];
   }
 };
@@ -104,7 +108,7 @@ const getHostawayReservation = async () => {
       return data;
     }
   } catch (error) {
-    console.log("Error at get conversation: ", error);
+    console.error("Error at get conversation: ", error);
     return [];
   }
 };
@@ -121,7 +125,7 @@ const getConversations = async (limit = null) => {
     }
     return [];
   } catch (error) {
-    console.log("Error at get conversations: ", error);
+    console.error("Error at get conversations: ", error);
     return [];
   }
 };
@@ -136,7 +140,7 @@ const getConversationsWithResources = async () => {
     }
     return [];
   } catch (error) {
-    console.log("Error at get conversations: ", error);
+    console.error("Error at get conversations: ", error);
     return [];
   }
 };
@@ -153,7 +157,7 @@ const getAllListings = async (limit = null) => {
     }
     return [];
   } catch (error) {
-    console.log("Error at get  listings", error);
+    console.error("Error at get  listings", error);
     return [];
   }
 };
@@ -166,7 +170,7 @@ const getAmenity = async () => {
       return responseData;
     }
   } catch (error) {
-    console.log("Error get all amenity", error);
+    console.error("Error get all amenity", error);
     return [];
   }
 };
@@ -259,7 +263,7 @@ const sendEmail = async (payload) => {
     }
     return null;
   } catch (Error) {
-    console.log("Error at send message: ", Error);
+    console.error("Error at send message: ", Error);
     return null;
   }
 };
@@ -269,101 +273,116 @@ const formatDateTime = (date) => {
 };
 
 // Timezone Helper Functions
-// Timezone change event for triggering re-renders
-let timezoneChangeListeners = [];
+// Enhanced timezone change listeners
+const timezoneChangeListeners = new Set();
 
+// Debug function to log available timestamp fields from Hostaway
+export const logHostawayTimestampFields = (item) => {
+  console.log("🔍 Hostaway Message Timestamp Fields:", {
+    // Current fields we're using
+    date: item?.date,
+    createdAt: item?.createdAt,
+    time: item?.time,
+    // Possible browser time fields
+    browserTime: item?.browserTime,
+    browser_time: item?.browser_time,
+    browserTimestamp: item?.browserTimestamp,
+    browser_timestamp: item?.browser_timestamp,
+    // Possible listing time fields
+    listingTime: item?.listingTime,
+    listing_time: item?.listing_time,
+    listingTimestamp: item?.listingTimestamp,
+    listing_timestamp: item?.listing_timestamp,
+    // Other timestamp fields
+    receivedAt: item?.receivedAt,
+    received_at: item?.received_at,
+    sentAt: item?.sentAt,
+    sent_at: item?.sent_at,
+    timestamp: item?.timestamp,
+    messageTime: item?.messageTime,
+    message_time: item?.message_time,
+    messageReceivedOn: item?.messageReceivedOn,
+    messageSentOn: item?.messageSentOn,
+    latestMessageTime: item?.latestMessageTime,
+    // Show all available fields
+    allFields: Object.keys(item || {})
+  });
+};
+
+
+
+// Function to add timezone change listener
 export const addTimezoneChangeListener = (callback) => {
-  timezoneChangeListeners.push(callback);
+  timezoneChangeListeners.add(callback);
+  return () => timezoneChangeListeners.delete(callback);
 };
 
-export const removeTimezoneChangeListener = (callback) => {
-  timezoneChangeListeners = timezoneChangeListeners.filter(listener => listener !== callback);
-};
-
+// Function to notify timezone change (called from settings)
 export const notifyTimezoneChange = () => {
-  timezoneChangeListeners.forEach(listener => listener());
+  timezoneChangeListeners.forEach(callback => {
+    try {
+      callback(); // No arguments needed, components will read from Redux
+    } catch (error) {
+      console.error('Error in timezone change listener:', error);
+    }
+  });
 };
 
+// Function to get timezone from Redux store
 const getUserTimezone = () => {
   try {
-    // Try to get timezone from Redux store (if available)
+    // Get timezone from Redux store via localStorage
     const storedState = localStorage.getItem('persist:user');
     if (storedState) {
       const parsedState = JSON.parse(storedState);
       if (parsedState.timezone) {
-        // The timezone might be stored as a string or JSON string
         let timezone;
         try {
           timezone = JSON.parse(parsedState.timezone);
         } catch {
-          // If it's not JSON, use it directly
           timezone = parsedState.timezone;
         }
         
         if (timezone && typeof timezone === 'string') {
-          console.log('Using stored timezone:', timezone);
           return timezone;
         }
       }
     }
     
-    console.log('No stored timezone found, using Central Time as default');
-    // Don't fall back to browser timezone - use Central Time as default
-    return "America/Chicago";
+    // Fallback to browser timezone
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Chicago";
   } catch (error) {
-    console.log("Could not detect timezone:", error);
-    return "America/Chicago";
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Chicago";
   }
-};
-
-const getTimezoneAbbreviation = (timezone) => {
-  const timezoneAbbreviations = {
-    "America/New_York": "EST",
-    "America/Chicago": "CT", 
-    "America/Denver": "MST",
-    "America/Los_Angeles": "PST",
-    "America/Phoenix": "MST",
-    "Europe/London": "GMT",
-    "Europe/Paris": "CET",
-    "Asia/Kolkata": "IST",
-    "Asia/Tokyo": "JST",
-    "Asia/Shanghai": "CST",
-    "Australia/Sydney": "AEST",
-    "Pacific/Auckland": "NZST"
-  };
-  
-  return timezoneAbbreviations[timezone] || "CT";
 };
 
 const formatTimeWithTimezone = (dateString, timezone = null) => {
   try {
-    // Validate input
-    if (!dateString) {
-      return "Invalid Time";
+    if (!dateString) return "Invalid Time";
+    
+    // Hostaway timestamps appear to be in UTC format but without timezone indicator
+    // We need to treat them as UTC to avoid double timezone conversion
+    let date;
+    
+    // If the timestamp doesn't end with 'Z' or have timezone info, assume it's UTC
+    if (typeof dateString === 'string' && !dateString.includes('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
+      // Add 'Z' to indicate UTC timezone
+      date = new Date(dateString + 'Z');
+    } else {
+      date = new Date(dateString);
     }
     
-    const timezoneToUse = timezone || getUserTimezone();
-    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Invalid Time";
     
-    // Check if date is valid
-    if (isNaN(date.getTime())) {
-      return "Invalid Time";
-    }
+    const userTimezone = timezone || getUserTimezone();
     
-    // Format time in 12-hour format with timezone
-    const timeOptions = {
-      timeZone: timezoneToUse,
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
-    };
-    
-    const timeStr = date.toLocaleTimeString('en-US', timeOptions);
-    const timezoneAbbr = getTimezoneAbbreviation(timezoneToUse);
-    
-    return `${timeStr} ${timezoneAbbr}`;
+    return date.toLocaleTimeString('en-US', {
+      timeZone: userTimezone,
+      hour12: true,
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   } catch (error) {
-    console.log("Error formatting time with timezone:", error);
     return "Invalid Time";
   }
 };
@@ -376,7 +395,18 @@ const formatDateWithTimezone = (dateString, timezone = null) => {
     }
     
     const timezoneToUse = timezone || getUserTimezone();
-    const date = new Date(dateString);
+    
+    // Hostaway timestamps appear to be in UTC format but without timezone indicator
+    // We need to treat them as UTC to avoid double timezone conversion
+    let date;
+    
+    // If the timestamp doesn't end with 'Z' or have timezone info, assume it's UTC
+    if (typeof dateString === 'string' && !dateString.includes('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
+      // Add 'Z' to indicate UTC timezone
+      date = new Date(dateString + 'Z');
+    } else {
+      date = new Date(dateString);
+    }
     
     // Check if date is valid
     if (isNaN(date.getTime())) {
@@ -420,7 +450,6 @@ const formatDateWithTimezone = (dateString, timezone = null) => {
       day: 'numeric'
     });
   } catch (error) {
-    console.log("Error formatting date with timezone:", error);
     return "Invalid Date";
   }
 };
@@ -433,7 +462,18 @@ const formatSidebarTime = (dateString, timezone = null) => {
     }
     
     const timezoneToUse = timezone || getUserTimezone();
-    const date = new Date(dateString);
+    
+    // Hostaway timestamps appear to be in UTC format but without timezone indicator
+    // We need to treat them as UTC to avoid double timezone conversion
+    let date;
+    
+    // If the timestamp doesn't end with 'Z' or have timezone info, assume it's UTC
+    if (typeof dateString === 'string' && !dateString.includes('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
+      // Add 'Z' to indicate UTC timezone
+      date = new Date(dateString + 'Z');
+    } else {
+      date = new Date(dateString);
+    }
     
     // Check if date is valid
     if (isNaN(date.getTime())) {
@@ -454,7 +494,6 @@ const formatSidebarTime = (dateString, timezone = null) => {
     // Show date for other days
     return formatDateWithTimezone(dateString, timezoneToUse);
   } catch (error) {
-    console.log("Error formatting sidebar time:", error);
     return "Invalid Date";
   }
 };
@@ -490,7 +529,7 @@ const ticketCreateByAI = async (
     }
     return null;
   } catch (Error) {
-    console.log("Error at create ticket by AI: ", Error);
+    console.error("Error at create ticket by AI: ", Error);
     return null;
   }
 };
@@ -503,23 +542,11 @@ const createTicket = async (payload) => {
     }
     return null;
   } catch (Error) {
-    console.log("Error at create ticket: ", Error);
+    console.error("Error at create ticket: ", Error);
     return null;
   }
 };
 
-const deleteTask = async (id) => {
-  try {
-    const response = await api.delete(`/hostaway/delete/tasks/${id}`);
-    if (response?.status === 200) {
-      return response?.data?.detail?.data?.result;
-    }
-    return null;
-  } catch (Error) {
-    console.log("Error at delete task: ", Error);
-    return null;
-  }
-};
 
 const updateTask = async (payload, id) => {
   try {
@@ -529,7 +556,7 @@ const updateTask = async (payload, id) => {
     }
     return null;
   } catch (Error) {
-    console.log("Error at create ticket: ", Error);
+    console.error("Error at create ticket: ", Error);
     return null;
   }
 };
@@ -576,7 +603,7 @@ const openAISuggestion = async (
     }
     return { response: response?.data?.answer, taskId: null };
   } catch (Error) {
-    console.log("Error at get AI suggestion: ", Error);
+    console.error("Error at get AI suggestion: ", Error);
     return { response: null, taskId: null };
   }
 };
@@ -800,10 +827,15 @@ const filterReservations = (reservations, filters) => {
 const formattedNewMessage = (data) => {
   return {
     body: data.body,
-    time: formatedTime(data.date),
     imagesUrls: data.imagesUrls,
     isIncoming: data.isIncoming,
-    date: data.date,
+    date: data.date, // Keep raw date for timezone-aware formatting
+    createdAt: data.createdAt, // Keep raw createdAt
+    time: data.time, // Keep raw time
+    browserTime: data.browserTime, // Browser time from Hostaway
+    browserDate: data.browserDate, // Browser date from Hostaway
+    listingTime: data.listingTime, // Listing time from Hostaway
+    listingDate: data.listingDate, // Listing date from Hostaway
   };
 };
 
@@ -874,7 +906,6 @@ export {
   formattedNewMessage,
   createTicket,
   updateTask,
-  deleteTask,
   formatMessages,
   getSentiment,
   assignSentiment,

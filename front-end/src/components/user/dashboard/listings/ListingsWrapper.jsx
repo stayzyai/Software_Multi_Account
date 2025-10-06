@@ -27,7 +27,6 @@ const ListingsWraper = () => {
         return data;
       }
     } catch (error) {
-      console.log("Error at get reservations: ", error);
     }
   };
 
@@ -54,7 +53,6 @@ const ListingsWraper = () => {
           dispatch(setListings(data));
         }
       } catch (error) {
-        console.log("Error at get listings: ", error);
       }
     };
     getListings();

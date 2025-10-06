@@ -11,6 +11,14 @@ url = os.getenv('HOSTAWAY_URL')
 provider_id=os.getenv('PROVIDER_ID')
 provider = f'?&provider={provider_id}'
 
+# Parse the URL to extract just the hostname for HTTPSConnection
+if url and url.startswith('https://'):
+    hostname = url.replace('https://', '')
+elif url and url.startswith('http://'):
+    hostname = url.replace('http://', '')
+else:
+    hostname = url
+
 def hostaway_get_request(token, endpoint, id=None, limit=None, offset=None, includeResources=None, max_retries=3):
     """
     Make a GET request to the Hostaway API with retry logic for transient errors.
@@ -248,26 +256,48 @@ def hostaway_put_request(token, endpoint, data, id=None, force_overbooking=False
 
 def hostaway_delete_request(token, endpoint, id=None):
     try:
-        conn = http.client.HTTPSConnection(url)
-        api_url = f"/v1{endpoint}"
+        # Use the same pattern as hostaway_get_request
+        hostaway_url = os.getenv('HOSTAWAY_API_URL')
+        if not hostaway_url:
+            raise HTTPException(status_code=500, detail="HOSTAWAY_API_URL not configured")
+        
+        api_url = f"{hostaway_url}{endpoint}"
         if id:
             api_url = f"{api_url}/{id}"
-        api_url = api_url+provider
+        api_url = api_url + provider
 
         headers = {
-                'Authorization': f"Bearer {token}",
-                'Content-Type': 'application/json',
-                'Cache-control': "no-cache"
+            'Authorization': f"Bearer {token}",
+            'Content-Type': 'application/json',
+            'Cache-control': "no-cache"
         }
-        api_url = api_url+provider
-        logging.info("Hostaway url: ", api_url)
-        conn.request("DELETE", api_url, headers)
-        res = conn.getresponse()
-        data = res.read()
-        return data.decode("utf-8")
+        
+        # Log the request we're about to make
+        logging.info(f"Making Hostaway DELETE request to: {api_url}")
+        
+        # Use requests instead of http.client
+        response = requests.request(
+            "DELETE", 
+            api_url, 
+            headers=headers,
+            timeout=60,  # 60 second timeout
+            verify=True  # Ensure SSL verification is enabled
+        )
+        
+        # Check for HTTP errors
+        response.raise_for_status()
+        
+        # Return the response text
+        return response.text
 
+    except requests.exceptions.HTTPError as http_err:
+        logging.error(f"Hostaway API HTTP error: {http_err.response.status_code} - {http_err.response.text}")
+        raise HTTPException(status_code=500, detail=f"Hostaway API error: {http_err.response.status_code} - {http_err.response.text}")
+    except requests.exceptions.RequestException as req_err:
+        logging.error(f"Hostaway API request error: {str(req_err)}")
+        raise HTTPException(status_code=500, detail=f"Hostaway API request error: {str(req_err)}")
     except Exception as e:
-        logging.error(f"Error at hostaway delete request {str(e)}")
+        logging.error(f"Error at hostaway delete request: {str(e)}")
         raise HTTPException(status_code=500, detail=f"An error occurred at hostaway delete request: {str(e)}")
 
 

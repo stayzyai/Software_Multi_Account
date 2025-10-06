@@ -17,7 +17,7 @@ const StatCard = ({ title, stats, selectedRange, icon }) => {
             <span className="text-sm ml-1 font-normal">{stats?.unit}</span>
           )}
         </div>
-        <p className={`text-xs flex items-center text-nowrap`}>
+        <div className={`text-xs flex items-center text-nowrap`}>
           {title !== "Avg Sentiment" ? (
             <div className="flex">
               {stats?.is_increase ? (
@@ -36,7 +36,7 @@ const StatCard = ({ title, stats, selectedRange, icon }) => {
               {Math.abs(parseFloat(stats?.percentage_change)).toFixed(2)} % {" "}
             </div>
           ) : (
-            <p className="mx-2 text-lg">
+            <span className="mx-2 text-lg">
               {stats?.current_count == "N/A"
                 ? "😐"
                 : stats?.is_increase === true &&
@@ -47,15 +47,17 @@ const StatCard = ({ title, stats, selectedRange, icon }) => {
                   parseFloat(stats?.percentage_change) >= 10
                 ? "😐"
                 : "😟"}
-            </p>
+            </span>
           )}
-          {stats?.is_increase ? " increase" : " decrease"} from last{" "}
-          {selectedRange
-            ? selectedRange !== "Last 30 days"
-              ? "week"
-              : "month"
-            : "month"}
-        </p>
+          <span>
+            {stats?.is_increase ? " increase" : " decrease"} from last{" "}
+            {selectedRange
+              ? selectedRange !== "Last 30 days"
+                ? "week"
+                : "month"
+              : "month"}
+          </span>
+        </div>
         {stats?.subtitle && (
           <p className="text-xs text-gray-500 mt-1">{stats?.subtitle}</p>
         )}

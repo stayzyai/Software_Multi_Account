@@ -124,7 +124,6 @@ const getHostawayTask = async (limit = null) => {
     }
     return [];
   } catch (error) {
-    console.log("Error at get hostaway task", error);
     return [];
   }
 };
@@ -135,13 +134,13 @@ const getHostawayUser = async (limit = null) => {
       ? `/hostaway/get-all/users?limit=${limit}`
       : `/hostaway/get-all/users`;
     const response = await api.get(url);
+    
     if (response?.data?.detail?.data?.result) {
       const data = response?.data?.detail?.data?.result;
       return data;
     }
     return [];
   } catch (error) {
-    console.log("Error at get users", error);
     return [];
   }
 };

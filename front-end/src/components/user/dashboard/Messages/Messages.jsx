@@ -18,10 +18,9 @@ import { getHostawayTask } from "../../../../helpers/TaskHelper";
 import TaskMultiSelect from "./TaskMultiSelect";
 import MultipleSelectListing from "./MultiselectorListing"
 // NEW IMPORTS FOR POLLING
-import { useDataPolling } from "../../../../hooks/useDataPolling";
+import { useDataPolling } from "../../../../hooks/useDataPolling";  
 import { useSmartPolling } from "../../../../hooks/useSmartPolling";
 import StatusIndicator from "../../../common/StatusIndicator";
-
 const Messages = ({ handleClickMessages, title }) => {
   const [simplifiedConversation, setSimplifiedConversation] = useState([]);
   const [filteredConversations, setFilteredConversations] = useState([]);
@@ -44,7 +43,7 @@ const Messages = ({ handleClickMessages, title }) => {
 
   // POLLING HOOKS
   const { pollAllData } = useDataPolling();
-  const { isActive, pollingInterval, lastUpdate, error, isPolling, triggerUpdate } = useSmartPolling(pollAllData, 30000);
+  const { isActive, pollingInterval, lastUpdate, error, isPolling, triggerUpdate } = useSmartPolling(pollAllData, 15000);
 
   const fetchedEmptyData = async () => {
     const listingData = await getAllListings();
@@ -71,14 +70,11 @@ const Messages = ({ handleClickMessages, title }) => {
       transports: ["websocket"],
     });
     newSocket.on("connect", () => {
-      console.log("Connected to WebSocket server");
     });
     newSocket.on("received_message", (newMessage) => {
-      console.log("New message received: ", newMessage);
       getConversationData(newMessage);
     });
     newSocket.on("new_reservation", (reservations) => {
-      console.log("New reservation: ", reservations);
       const newReservation = async () => {
         const data = await getConversationsWithResources();
         dispatch(setConversations(data));

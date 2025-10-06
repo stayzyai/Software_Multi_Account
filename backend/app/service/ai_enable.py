@@ -14,6 +14,7 @@ import json
 from datetime import datetime
 import threading
 from app.common.ai_booking import update_booking
+from app.common.ai_schedule import is_ai_schedule_active
 
 def generate_prompt(previous_conversation, latest_message, property_details, amenities_detail, reservation_details=None):
     try:
@@ -281,29 +282,38 @@ async def send_auto_ai_messages(new_messages):
             if not is_ai_enabled:
                 print(f"❌ AI not enabled for chat {consversationsId}")
                 return False
-            else:
-                latest_incoming = new_messages.get("body", "")
-                print(f"📝 Processing message: {latest_incoming}")
+            
+            # Check AI schedule if enabled
+            user = db.query(User).filter(User.id == user_id).first()
+            if user and user.ai_schedule and user.ai_schedule.get("enabled", False):
+                schedule_active = is_ai_schedule_active(user.ai_schedule, user.timezone)
+                print(f"📅 AI Schedule check: {schedule_active}")
+                if not schedule_active:
+                    print(f"❌ AI not active due to schedule restrictions")
+                    return False
+            
+            latest_incoming = new_messages.get("body", "")
+            print(f"📝 Processing message: {latest_incoming}")
 
-                with ThreadPoolExecutor() as executor:
-                    future_previous_conversation = executor.submit(get_previous_conversation, new_messages)
-                    future_property_details = executor.submit(get_property_details, new_messages)
-                    future_amenities_detail = executor.submit(get_amenities_detail, new_messages)
-                    reservation = executor.submit(get_reservations, user_id, listingMapId)
-                    previous_conversation = future_previous_conversation.result()
-                    property_details = future_property_details.result()
-                    amenities_detail = future_amenities_detail.result()
-                    reservation_details = reservation.result()
+            with ThreadPoolExecutor() as executor:
+                future_previous_conversation = executor.submit(get_previous_conversation, new_messages)
+                future_property_details = executor.submit(get_property_details, new_messages)
+                future_amenities_detail = executor.submit(get_amenities_detail, new_messages)
+                reservation = executor.submit(get_reservations, user_id, listingMapId)
+                previous_conversation = future_previous_conversation.result()
+                property_details = future_property_details.result()
+                amenities_detail = future_amenities_detail.result()
+                reservation_details = reservation.result()
 
-                prompt = generate_prompt(previous_conversation, latest_incoming, property_details, amenities_detail, reservation_details)
-                print(f"🎯 Generated prompt length: {len(prompt)}")
-                
-                gpt_response = get_ai_response(prompt, latest_incoming, user_id)
-                print(f"🤖 GPT Response: {gpt_response}")
+            prompt = generate_prompt(previous_conversation, latest_incoming, property_details, amenities_detail, reservation_details)
+            print(f"🎯 Generated prompt length: {len(prompt)}")
+            
+            gpt_response = get_ai_response(prompt, latest_incoming, user_id)
+            print(f"🤖 GPT Response: {gpt_response}")
 
-                result = await send_message(new_messages, gpt_response, latest_incoming, user_id, listingMapId)
-                print(f"📤 Message sent result: {result}")
-                return result
+            result = await send_message(new_messages, gpt_response, latest_incoming, user_id, listingMapId)
+            print(f"📤 Message sent result: {result}")
+            return result
         else:
             print(f"❌ No user ID found for account: {new_messages.get('accountId')}")
             return False

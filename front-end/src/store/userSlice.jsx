@@ -13,11 +13,25 @@ const userSlice = createSlice({
     image_url: null,
     property_ai_status: {}, // { propertyId: { ai_enabled: boolean, last_updated: timestamp } }
     master_ai_enabled: true, // Master AI toggle - controls all AI functionality
-    timezone: "America/Chicago" // Default timezone - fallback to Central Time
+    timezone: "America/Chicago", // Default timezone - fallback to Central Time
+    ai_schedule: {
+      enabled: false, // Whether schedule control is enabled
+      days: {
+        monday: { enabled: true, startTime: "09:00", endTime: "17:00" },
+        tuesday: { enabled: true, startTime: "09:00", endTime: "17:00" },
+        wednesday: { enabled: true, startTime: "09:00", endTime: "17:00" },
+        thursday: { enabled: true, startTime: "09:00", endTime: "17:00" },
+        friday: { enabled: true, startTime: "09:00", endTime: "17:00" },
+        saturday: { enabled: false, startTime: "09:00", endTime: "17:00" },
+        sunday: { enabled: false, startTime: "09:00", endTime: "17:00" }
+      },
+      dateRanges: [], // Array of { startDate: "YYYY-MM-DD", endDate: "YYYY-MM-DD", enabled: boolean }
+      timezone: "America/Chicago" // Timezone for schedule
+    }
   },
   reducers: {
     setUser: (state, action) => {
-      const { id, firstname, lastname, email, role, ai_enable, chat_list, image_url, property_ai_status, master_ai_enabled, timezone } =
+      const { id, firstname, lastname, email, role, ai_enable, chat_list, image_url, property_ai_status, master_ai_enabled, timezone, ai_schedule } =
         action.payload;
       state.id = id;
       state.firstname = firstname;
@@ -34,6 +48,10 @@ const userSlice = createSlice({
         state.master_ai_enabled = master_ai_enabled;
       }
       state.timezone = timezone || "America/Chicago";
+      // Only update ai_schedule if it's explicitly provided in the payload
+      if (ai_schedule !== undefined) {
+        state.ai_schedule = { ...state.ai_schedule, ...ai_schedule };
+      }
     },
     clearUser: (state) => {
       state.id = null;
@@ -47,6 +65,20 @@ const userSlice = createSlice({
       state.property_ai_status = {};
       state.master_ai_enabled = true;
       state.timezone = "America/Chicago";
+      state.ai_schedule = {
+        enabled: false,
+        days: {
+          monday: { enabled: true, startTime: "09:00", endTime: "17:00" },
+          tuesday: { enabled: true, startTime: "09:00", endTime: "17:00" },
+          wednesday: { enabled: true, startTime: "09:00", endTime: "17:00" },
+          thursday: { enabled: true, startTime: "09:00", endTime: "17:00" },
+          friday: { enabled: true, startTime: "09:00", endTime: "17:00" },
+          saturday: { enabled: false, startTime: "09:00", endTime: "17:00" },
+          sunday: { enabled: false, startTime: "09:00", endTime: "17:00" }
+        },
+        dateRanges: [],
+        timezone: "America/Chicago"
+      };
     },
     updatePropertyAIStatus: (state, action) => {
       const { propertyId, ai_enabled } = action.payload;
@@ -61,8 +93,50 @@ const userSlice = createSlice({
     updateUserTimezone: (state, action) => {
       state.timezone = action.payload;
     },
+    updateAIScheduleEnabled: (state, action) => {
+      state.ai_schedule.enabled = action.payload;
+    },
+    updateAIScheduleDay: (state, action) => {
+      const { day, enabled, startTime, endTime } = action.payload;
+      state.ai_schedule.days[day] = {
+        enabled: enabled !== undefined ? enabled : state.ai_schedule.days[day].enabled,
+        startTime: startTime || state.ai_schedule.days[day].startTime,
+        endTime: endTime || state.ai_schedule.days[day].endTime
+      };
+    },
+    updateAIScheduleDateRange: (state, action) => {
+      const { index, startDate, endDate, enabled } = action.payload;
+      if (index >= 0 && index < state.ai_schedule.dateRanges.length) {
+        state.ai_schedule.dateRanges[index] = {
+          startDate: startDate || state.ai_schedule.dateRanges[index].startDate,
+          endDate: endDate || state.ai_schedule.dateRanges[index].endDate,
+          enabled: enabled !== undefined ? enabled : state.ai_schedule.dateRanges[index].enabled
+        };
+      }
+    },
+    addAIScheduleDateRange: (state, action) => {
+      const { startDate, endDate, enabled = true } = action.payload;
+      state.ai_schedule.dateRanges.push({ startDate, endDate, enabled });
+    },
+    removeAIScheduleDateRange: (state, action) => {
+      const index = action.payload;
+      if (index >= 0 && index < state.ai_schedule.dateRanges.length) {
+        state.ai_schedule.dateRanges.splice(index, 1);
+      }
+    },
   },
 });
 
-export const { setUser, clearUser, updatePropertyAIStatus, updateMasterAIStatus, updateUserTimezone } = userSlice.actions;
+export const { 
+  setUser, 
+  clearUser, 
+  updatePropertyAIStatus, 
+  updateMasterAIStatus, 
+  updateUserTimezone,
+  updateAIScheduleEnabled,
+  updateAIScheduleDay,
+  updateAIScheduleDateRange,
+  addAIScheduleDateRange,
+  removeAIScheduleDateRange
+} = userSlice.actions;
 export default userSlice.reducer;

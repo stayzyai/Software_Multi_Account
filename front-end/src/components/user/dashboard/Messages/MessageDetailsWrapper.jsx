@@ -61,6 +61,8 @@ const MessageDetailsWrapper = () => {
         setMessage([...messages, data[0]]);
         setMessagesLoader(false);
         setInput((prev) => ({ ...prev, [chat_id]: "" }));
+        // Trigger conversation list update
+        triggerUpdate();
       } else {
         toast.error(
           "An error occurred while sending messages. Please try again."
@@ -163,7 +165,6 @@ const MessageDetailsWrapper = () => {
       transports: ["websocket"],
     });
     newSocket.on("connect", () => {
-      console.log("Connected to WebSocket server");
     });
     newSocket.on("received_message", (newMessage) => {
       getConversationData(newMessage);

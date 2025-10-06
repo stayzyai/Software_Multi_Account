@@ -2,6 +2,8 @@ import { markChatAsRead } from "../../../../store/notificationSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import { formatSidebarTime } from "../../../../helpers/Message";
+import useTimezoneAware from "../../../../hooks/useTimezoneAware";
+import { useEffect } from "react";
 
 const ChatSidebar = ({
   handleClickMessages,
@@ -12,6 +14,18 @@ const ChatSidebar = ({
   const unreadChats = useSelector((state) => state.notifications.unreadChats);
   const { messageId } = useParams();
   const dispatch = useDispatch();
+
+  // Use timezone-aware hook for dynamic timestamp updates
+  const { forceUpdate } = useTimezoneAware();
+
+  // Get timezone directly from Redux (same as settings page)
+  const userProfile = useSelector((state) => state.user);
+  const timezone = userProfile.timezone || "America/Chicago";
+
+  useEffect(() => {
+    // This effect runs when forceUpdate changes (timezone change)
+    // It doesn't need to do anything, just trigger re-render
+  }, [forceUpdate]);
 
   const getFirstTwoWords = (name) => {
     const words = name?.split(" ");
@@ -68,7 +82,7 @@ const ChatSidebar = ({
                     : "Click here to reply"}
                 </div>
               </div>
-              <div className="text-xs">{formatSidebarTime(item?.latestMessageTime)}</div>
+                <div className="text-xs">{formatSidebarTime(item?.latestMessageTime, timezone)}</div>
             </div>
           </div>
         ))}

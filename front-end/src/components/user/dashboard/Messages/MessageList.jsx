@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { markChatAsRead } from "../../../../store/notificationSlice";
 import { useState, useEffect } from "react";
 import { formatSidebarTime } from "../../../../helpers/Message";
+import useTimezoneAware from "../../../../hooks/useTimezoneAware";
 
 const MessageList = ({
   title,
@@ -18,11 +19,23 @@ const MessageList = ({
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  // Use timezone-aware hook for dynamic timestamp updates
+  const { forceUpdate } = useTimezoneAware();
+
+  // Get timezone directly from Redux (same as settings page)
+  const userProfile = useSelector((state) => state.user);
+  const timezone = userProfile.timezone || "America/Chicago";
+
   useEffect(() => {
     const filterActive =
       selectedFilters.Date !== "" || selectedIds?.length !== 0 || selectedListingIds?.length != 0;
     setFilteringActive(filterActive);
   }, [selectedFilters, selectedIds, selectedListingIds]);
+
+  useEffect(() => {
+    // This effect runs when forceUpdate changes (timezone change)
+    // It doesn't need to do anything, just trigger re-render
+  }, [forceUpdate]);
 
   const getInitials = (name) => {
     let words = name?.trim().split(" ").slice(0, 1);
@@ -81,7 +94,7 @@ const MessageList = ({
                       {item?.recipientName}
                     </p>
                     <p className="text-xs text-gray-500 ml-2">
-                      {formatSidebarTime(item?.messageReceivedOn || item?.messageSentOn || item?.latestMessageTime)}
+                      {formatSidebarTime(item?.messageReceivedOn || item?.messageSentOn || item?.latestMessageTime, timezone)}
                     </p>
                   </div>
                   <p

@@ -5,7 +5,7 @@ import { getItem } from "../helpers/localstorage";
 import { jwtDecode } from "jwt-decode";
 
 //const baseURL = import.meta.env.VITE_API_HOST;
-const baseURL = import.meta.env.VITE_API_HOST || "http://3.82.36.110:8000/api";
+const baseURL = import.meta.env.VITE_API_HOST || "http://localhost:8000/api";
 
 
 
@@ -73,7 +73,6 @@ axiosInstance.interceptors.request.use(
 
         token = access_token;
       } catch (error) {
-        console.log(error);
         localStorage.removeItem("token");
         localStorage.removeItem("refreshToken");
         localStorage.removeItem("userRole");

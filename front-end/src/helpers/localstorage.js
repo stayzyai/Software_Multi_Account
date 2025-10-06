@@ -17,7 +17,6 @@ export const setItem = (key, value) => {
       typeof value === "string" ? value : JSON.stringify(value);
     localStorage.setItem(key, valueToStore);
   } catch (error) {
-    console.error("Error saving to localStorage:", error);
   }
 };
 
@@ -25,6 +24,5 @@ export const removeItem = (key) => {
   try {
     localStorage.removeItem(key);
   } catch (error) {
-    console.error("Error removing from localStorage:", error);
   }
 };

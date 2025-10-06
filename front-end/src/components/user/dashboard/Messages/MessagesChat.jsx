@@ -1,6 +1,6 @@
 import { FiChevronsLeft, FiChevronsRight } from "react-icons/fi";
 import { useEffect, useState, useRef } from "react";
-import { getAllconversation, formatTimeWithTimezone, formatDateWithTimezone } from "../../../../helpers/Message";
+import { getAllconversation, formatDateWithTimezone, formatTimeWithTimezone, logHostawayTimestampFields } from "../../../../helpers/Message";
 import { ScaleLoader } from 'react-spinners';
 import { getAmenity } from "../../../../helpers/Message";
 import { useSelector, useDispatch } from "react-redux";
@@ -9,6 +9,8 @@ import DetectIssue from "./DetectIssue"
 import {setTasks} from "../../../../store/taskSlice"
 import { getHostawayTask } from "../../../../helpers/TaskHelper"
 import useAISuggestion from "../../../../hooks/useAIsuggestion";
+import useTimezoneAware from "../../../../hooks/useTimezoneAware";
+import { useSmartPolling } from "../../../../hooks/useSmartPolling";
 
 const ChatMessages = ({ messages, handleSendMessage, setInput, input, setOpenBooking,
   openBooking, setOpenSidebarMessage, openSidebarMessage, chatInfo, setMessage, messageLoader}) => {
@@ -23,6 +25,27 @@ const dispatch = useDispatch();
 // const isSuggestion = useSelector((state)=>state.notifications.isSuggestion)
 const { handleAISuggestion } = useAISuggestion(setInput, chatInfo, amenity, tasks, setIsAISuggestion);
 
+// Add polling for individual chat messages
+const pollChatMessages = async () => {
+  if (chat_id) {
+    try {
+      const response = await getAllconversation(chat_id);
+      setMessage(response);
+    } catch (error) {
+      console.error('Error polling chat messages:', error);
+    }
+  }
+};
+
+const { isActive, pollingInterval, lastUpdate, error, isPolling, triggerUpdate } = useSmartPolling(pollChatMessages, 15000);
+
+// Use timezone-aware hook for dynamic timestamp updates
+const { forceUpdate } = useTimezoneAware();
+
+// Get timezone directly from Redux (same as settings page)
+const userProfile = useSelector((state) => state.user);
+const timezone = userProfile.timezone || "America/Chicago";
+
 const amenityList = async ()=>{
   const data = await getAmenity()
   setAmenity(data)
@@ -34,15 +57,23 @@ const fetchedTask = async ()=>{
   }
 }
 
-useEffect(()=> {
+  useEffect(()=> {
     const getAllMessages = async () => {
       setLoading(true)
       const response = await getAllconversation(chat_id)
+      
       setMessage(response)
       setLoading(false)
     };
     getAllMessages();
   },[chat_id])
+
+  // Add effect to trigger immediate update when chat_id changes
+  useEffect(() => {
+    if (chat_id) {
+      triggerUpdate(); // Trigger immediate poll when switching chats
+    }
+  }, [chat_id, triggerUpdate]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,6 +83,11 @@ useEffect(()=> {
     amenityList()
     fetchedTask()
   }, []);
+
+  useEffect(() => {
+    // This effect runs when forceUpdate changes (timezone change)
+    // It doesn't need to do anything, just trigger re-render
+  }, [forceUpdate]);
 
   const handleInputChange = (chatId, value) => {
     setInput((prev) => ({ ...prev, [chatId]: value }));
@@ -92,7 +128,7 @@ useEffect(()=> {
           return;
         }
         
-        const dateLabel = formatDateWithTimezone(dateString);
+        const dateLabel = formatDateWithTimezone(dateString, timezone);
         
         // If this is the first message or the date has changed, add a date label
         if (currentDate !== dateLabel) {
@@ -111,7 +147,6 @@ useEffect(()=> {
           key: `msg-${index}`
         });
       } catch (error) {
-        console.log("Error processing message date:", error);
         // Add message without date label if there's an error
         grouped.push({
           type: 'message',
@@ -154,7 +189,7 @@ return (
                     <p className="p-2 py-4">{item.body}</p>
                     <div className="flex justify-end mt-2">
                       <p className="text-xs text-gray-500">
-                        {formatTimeWithTimezone(item?.date || item?.createdAt || item?.time)}
+                        {formatTimeWithTimezone(item?.date || item?.createdAt || item?.time, timezone)}
                       </p>
                     </div>
                   </div>

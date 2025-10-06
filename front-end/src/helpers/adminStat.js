@@ -7,7 +7,6 @@ const getUserData = async (currentPage, pageSize) => {
     );
     return response;
   } catch (error) {
-    console.log("error at get user stat", error);
     return response;
   }
 };
@@ -17,7 +16,6 @@ const getTicketStat = async () => {
     const response = await api.get("/admin/get-all-tickets");
     return response;
   } catch (error) {
-    console.log("error at get automated messages: ", error);
     return response;
   }
 };
@@ -29,7 +27,6 @@ const getUserStat = async () =>{
       return response?.data?.user_statics
     }
   }catch(error){
-    console.log("Error at get user stat", error)
     return null
   }
 }

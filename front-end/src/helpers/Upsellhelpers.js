@@ -12,7 +12,6 @@ const saveUpsell = async (payload) => {
     toast.error("Something went wrong. Please try again.");
     return response;
   } catch (error) {
-    console.log("Error at save upsell data", error);
     return [];
   }
 };
@@ -25,7 +24,6 @@ const getUpsell = async () => {
     }
     return [];
   } catch (error) {
-    console.log("Error at get all upsell", error);
     return [];
   }
 };
@@ -69,7 +67,6 @@ const deleteUpsell = async (id) => {
     toast.error("Something went wrong. Please try again.");
     return false;
   } catch (error) {
-    console.log("Error at delete upsell data", error);
     return false
   }
 };

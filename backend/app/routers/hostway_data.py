@@ -412,16 +412,26 @@ async def delete_data(params: str, id: int, token: str = Depends(get_token), db:
         if not account:
             raise HTTPException(status_code=404, detail="Hostaway account not found")
         
-        response = hostaway_delete_request(account.hostaway_token, f"/{params}/{id}")
+        response = hostaway_delete_request(account.hostaway_token, f"/{params}", id)
         data = json.loads(response)
-        if data['status'] == 'success':
+        
+        # Check if the response indicates success
+        if 'status' in data and data['status'] == 'success':
             return {"detail": {"message": "data deleted successfully..", "data": data}}
-        return {"detail": {"message": "Some error occurred at delete request.. ", "data": data}}
+        else:
+            # If no status field or status is not success, check for errors
+            error_message = data.get('message', 'Unknown error occurred')
+            logging.error(f"Hostaway delete failed: {error_message}")
+            raise HTTPException(status_code=400, detail=f"Delete failed: {error_message}")
 
     except HTTPException as exc:
         logging.error(f"****some error at hostaway delete request*****{exc}")
         raise exc
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to parse Hostaway response: {e}")
+        raise HTTPException(status_code=500, detail="Invalid response from Hostaway API")
     except Exception as e:
+        logging.error(f"Unexpected error in delete_data: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error at hostaway delete request: {str(e)}")
 
 @router.post("/create/{params}")

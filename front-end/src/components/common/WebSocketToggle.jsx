@@ -10,7 +10,6 @@ const WebSocketToggle = () => {
   const toggleMode = () => {
     setUseWebSockets(!useWebSockets);
     // You can add logic here to actually switch between modes
-    console.log(`Switched to ${useWebSockets ? 'Polling' : 'WebSocket'} mode`);
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { updateUserTimezone } from "../../../../store/userSlice";
 import { notifyTimezoneChange } from "../../../../helpers/Message";
@@ -10,6 +10,12 @@ const TimezoneSettings = () => {
   const userProfile = useSelector((state) => state.user);
   const [selectedTimezone, setSelectedTimezone] = useState(userProfile.timezone || "America/Chicago");
   const [loading, setLoading] = useState(false);
+
+  // Initialize timezone from Redux store
+  useEffect(() => {
+    const userTimezone = userProfile.timezone || "America/Chicago";
+    setSelectedTimezone(userTimezone);
+  }, [userProfile.timezone]);
 
   // Comprehensive list of world timezones
   const timezones = [
@@ -100,7 +106,7 @@ const TimezoneSettings = () => {
     setSelectedTimezone(timezone);
     setLoading(true);
     
-    // Update Redux store immediately for better UX
+    // Update Redux store - this is the single source of truth
     dispatch(updateUserTimezone(timezone));
     
     // Notify all components that timezone has changed
@@ -108,9 +114,6 @@ const TimezoneSettings = () => {
     
     // Show success message
     toast.success(`Timezone updated to ${timezones.find(tz => tz.value === timezone)?.label}`);
-    
-    // TODO: Add API call to save timezone to backend if needed
-    // For now, we'll just store it in Redux which persists to localStorage
     
     setLoading(false);
   };

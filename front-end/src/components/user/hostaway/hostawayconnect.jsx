@@ -70,7 +70,6 @@ const HostawayConnectModal = () => {
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
-      console.error("Error submit data:", error);
       if (error?.response?.data?.detail?.message) {
         toast.error(error?.response?.data?.detail?.message);
         return

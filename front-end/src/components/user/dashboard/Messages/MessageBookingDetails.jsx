@@ -25,7 +25,6 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo, sentimen
 
   // POLLING HOOKS
   const pollReservations = async () => {
-    console.log('Polling reservations...');
     await fetchReservations();
   };
   const { isActive, pollingInterval, lastUpdate, error, isPolling, triggerUpdate } = useSmartPolling(pollReservations, 30000);
@@ -73,10 +72,8 @@ const MessageBookingDetails = ({ setOpenBooking, openBooking, chatInfo, sentimen
       transports: ["websocket"],
     });
     newSocket.on("connect", () => {
-      console.log("Connected to WebSocket server on booking details");
     });
     const handleCheckoutUpdate = async (payload) => {
-      console.log("Checkout date updated:", payload);
       await fetchReservations();
     };
     newSocket.on("checkout_date_updated", handleCheckoutUpdate);

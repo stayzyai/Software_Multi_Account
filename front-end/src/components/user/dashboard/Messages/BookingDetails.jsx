@@ -140,13 +140,11 @@ const BookingDetails = ({
         
         // Trigger AI catchup for unanswered messages
         try {
-          console.log("🔄 Triggering AI catchup for chat:", chatId);
           const catchupResult = await triggerAICatchup(chatId);
           
           if (catchupResult?.detail?.data?.sent_responses > 0) {
             toast.info(`AI caught up and sent ${catchupResult.detail.data.sent_responses} response(s) to recent messages`);
           } else if (catchupResult?.detail?.data?.processed_conversations > 0) {
-            console.log("✅ AI catchup completed - no responses needed");
           }
         } catch (error) {
           console.error("❌ AI catchup failed:", error);
